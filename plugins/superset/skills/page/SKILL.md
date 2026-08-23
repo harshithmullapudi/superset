@@ -36,15 +36,24 @@ The frame is `sandbox="allow-scripts allow-forms allow-popups"` with
 so the page runs in an *opaque origin*. Consequences, all of them silent in a
 local browser and fatal once published:
 
-- **`localStorage` and `sessionStorage` throw on access.** Not "return null" —
-  throw, taking the rest of your script with them. Hold state in a variable. If
-  you must touch storage, wrap every access in `try`/`catch`.
-- **No cookies**, read or write.
+- **Every storage API throws on access** — `localStorage`, `sessionStorage`,
+  `indexedDB`, `caches`, and `document.cookie`. Not "returns null", not "returns
+  an empty string": a `SecurityError` that takes the rest of your script with
+  it. `document.cookie` is the one that catches people, because everywhere else
+  on the web it degrades quietly. Hold state in a plain variable, and wrap any
+  access you cannot avoid in `try`/`catch`.
+- **`navigator.serviceWorker` is unavailable** for the same reason.
 - **`fetch`/`XHR`/WebSocket send `Origin: null`**, which almost every API and
   CORS policy rejects. Write pages that need no network at all: bake the data
   into the document as a literal.
-- **No parent access.** `window.parent`, `window.top`, and postMessage to the
-  host are unavailable.
+- **No parent access.** Reading `window.parent.document`, `window.top.location`
+  or `window.frameElement` throws a `SecurityError`. `postMessage` to the parent
+  is the exception — it does not throw, it simply has nothing listening, so
+  don't build a handshake on it.
+
+`location.origin` is not your app's origin: the desktop pane serves the page
+under a `superset-page://` scheme and the web viewer frames it as `srcdoc`, and
+either way cross-frame checks see the origin as `null`.
 
 Scripts, forms, and popups *do* work. Inline JS runs normally, so charts,
 filters, sorting, tabs, and interactive controls are all fine — as long as
