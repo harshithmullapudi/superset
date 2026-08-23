@@ -11,6 +11,8 @@ export const elementAnchorSchema = z.object({
 
 export const listPageCommentsSchema = z.object({
 	pageId: z.string().uuid(),
+	// Optional: a viewer scopes to the bytes on screen, agent tooling reads every thread.
+	version: z.number().int().positive().optional(),
 });
 
 export const createPageCommentThreadSchema = z

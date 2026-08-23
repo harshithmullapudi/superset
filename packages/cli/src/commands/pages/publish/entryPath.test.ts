@@ -77,6 +77,29 @@ describe("resolveEntryPath", () => {
 		).toBeNull();
 	});
 
+	test("keeps two case-variant workspaces apart on a case-sensitive volume", () => {
+		const root = mkdtempSync(join(realpathSync(tmpdir()), "entry-path-case-"));
+		const lower = join(root, "site");
+		mkdirSync(lower);
+
+		let caseSensitive = true;
+		try {
+			mkdirSync(join(root, "Site"));
+		} catch {
+			caseSensitive = false;
+		}
+
+		writeFileSync(join(root, "Site", "index.html"), "<!doctype html>");
+		const resolved = resolveEntryPath({
+			filePath: join(root, "Site", "index.html"),
+			workspacePath: lower,
+			cwd: root,
+		});
+
+		// Case-insensitive volumes fold the two into one directory, so it still re-bases there.
+		expect(resolved).toBe(caseSensitive ? null : "index.html");
+	});
+
 	test("re-bases a path that reaches the workspace through a symlink", () => {
 		// Until both sides were canonicalised this returned null, and every
 		// republish from a symlinked root minted a new page instead of a version.

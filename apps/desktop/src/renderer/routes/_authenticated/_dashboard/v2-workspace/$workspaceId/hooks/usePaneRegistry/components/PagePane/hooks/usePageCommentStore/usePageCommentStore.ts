@@ -1,21 +1,11 @@
+import type { RouterOutputs } from "@superset/trpc";
 import type { CommentStore, CommentThread } from "@superset/ui/page-comments";
 import { toast } from "@superset/ui/sonner";
 import { useCallback, useMemo } from "react";
 import { cloudTrpc } from "renderer/lib/cloud-trpc";
 
-type ServerThread = {
-	id: string;
-	anchor: { path: string; tag: string } | null;
-	anchorText: string | null;
-	resolved: boolean;
-	comments: {
-		id: string;
-		body: string;
-		authorName: string;
-		authorImage: string | null;
-		createdAt: Date;
-	}[];
-};
+/** Derived from the router, so a renamed or dropped field fails here instead of reading undefined. */
+type ServerThread = RouterOutputs["pageComment"]["list"][number];
 
 /** Page-anchored threads have no element to sit on, so the overlay skips them. */
 function toThreads(rows: ServerThread[]): CommentThread[] {
@@ -52,11 +42,15 @@ export function usePageCommentStore({
 	version: number;
 }): CommentStore {
 	const utils = cloudTrpc.useUtils();
-	const list = cloudTrpc.pageComment.list.useQuery({ pageId });
+	// 0 means `pull` has not resolved a version yet; an unscoped read would anchor against the wrong HTML.
+	const list = cloudTrpc.pageComment.list.useQuery(
+		{ pageId, version },
+		{ enabled: version > 0 },
+	);
 
 	const invalidate = useCallback(
-		() => utils.pageComment.list.invalidate({ pageId }),
-		[utils, pageId],
+		() => utils.pageComment.list.invalidate({ pageId, version }),
+		[utils, pageId, version],
 	);
 
 	const handlers = useMemo(
@@ -73,10 +67,7 @@ export function usePageCommentStore({
 	const resolve = cloudTrpc.pageComment.resolve.useMutation(handlers);
 	const remove = cloudTrpc.pageComment.delete.useMutation(handlers);
 
-	const threads = useMemo(
-		() => toThreads((list.data ?? []) as ServerThread[]),
-		[list.data],
-	);
+	const threads = useMemo(() => toThreads(list.data ?? []), [list.data]);
 
 	return useMemo<CommentStore>(
 		() => ({

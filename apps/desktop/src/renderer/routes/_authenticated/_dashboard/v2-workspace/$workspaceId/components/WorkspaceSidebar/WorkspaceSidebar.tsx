@@ -1,6 +1,8 @@
+import { FEATURE_FLAGS } from "@superset/shared/constants";
 import { workspaceTrpc } from "@superset/workspace-client";
 import { eq } from "@tanstack/db";
 import { useLiveQuery } from "@tanstack/react-db";
+import { useFeatureFlagEnabled } from "posthog-js/react";
 import { useEffect, useRef, useState } from "react";
 import { LuFile, LuFileText, LuGitCompareArrows } from "react-icons/lu";
 import { getChangesetFileKey } from "renderer/routes/_authenticated/_dashboard/v2-workspace/$workspaceId/hooks/useChangeset";
@@ -174,6 +176,9 @@ export function WorkspaceSidebar({
 		),
 	};
 
+	// `?? false` so an unloaded or offline flag hides the tab.
+	const isPagesEnabled =
+		useFeatureFlagEnabled(FEATURE_FLAGS.PAGES) ?? false;
 	const pagesTab: SidebarTabDefinition = {
 		id: "pages",
 		label: "Pages",
@@ -196,9 +201,10 @@ export function WorkspaceSidebar({
 		filesTab,
 		changesTab,
 		reviewTab,
-		pagesTab,
+		...(isPagesEnabled ? [pagesTab] : []),
 	];
-	const activeTabDef = tabs.find((t) => t.id === activeTab);
+	// The active tab is persisted, so one parked on Pages can outlive the flag.
+	const activeTabDef = tabs.find((t) => t.id === activeTab) ?? tabs[0];
 
 	return (
 		<div

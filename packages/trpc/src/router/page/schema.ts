@@ -3,7 +3,7 @@ import { z } from "zod";
 /** Narrower than the database enum: `everyone` needs a pages origin to enforce it, which does not exist yet. */
 export const OFFERED_VISIBILITIES = ["just_me", "org"] as const;
 
-export const publishPageSchema = z.object({
+const publishPageFieldsSchema = z.object({
 	/** Base64-encoded file bytes. Accepts a bare payload or a data: URL. */
 	content: z.string().min(1),
 	contentType: z.string().min(1),
@@ -20,6 +20,16 @@ export const publishPageSchema = z.object({
 	label: z.string().max(200).optional(),
 	visibility: z.enum(OFFERED_VISIBILITIES).optional(),
 });
+
+export const publishPageSchema = publishPageFieldsSchema.refine(
+	(value) => Boolean(value.workspaceId) === Boolean(value.entryPath),
+	{
+		// Half a link is silently no link: the page never reaches the workspace's
+		// Pages tab, and a later publish cannot reuse the edge as a new version.
+		message: "workspaceId and entryPath must be provided together",
+		path: ["entryPath"],
+	},
+);
 
 export type PublishPageInput = z.infer<typeof publishPageSchema>;
 

@@ -34,6 +34,7 @@ export function PageCommentsView({
 
 	const {
 		enabled,
+		submitting,
 		threads,
 		draft,
 		openDraft,
@@ -105,8 +106,10 @@ export function PageCommentsView({
 			if (data.type === "hover") setHoverRect(data.rect);
 			if (data.type === "pointer-down") {
 				notifyFramePointerDown();
-				discardDraft();
-				setActiveThreadId(null);
+				if (!submitting) {
+					discardDraft();
+					setActiveThreadId(null);
+				}
 			}
 			if (data.type === "rects") setRects(data.entries);
 			if (data.type === "pick") {
@@ -123,6 +126,7 @@ export function PageCommentsView({
 		setActiveThreadId,
 		setHoverRect,
 		setRects,
+		submitting,
 	]);
 
 	// A reloaded frame's runtime knows nothing, so the mode has to be sent again.

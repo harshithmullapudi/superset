@@ -1301,7 +1301,9 @@ export const pageCommentThreads = pgTable(
 		createdByUserId: uuid("created_by_user_id").references(() => users.id, {
 			onDelete: "set null",
 		}),
-		// An agent may only post into a thread a human has opened to it; cleared on republish.
+		// Reserved for per-thread agent activation, and unused so far: nothing writes
+		// these and `pageComment.reply` does not read them, so what actually gates an
+		// agent reply today is the handoff gesture in the viewer, not this column.
 		agentActivatedAt: timestamp("agent_activated_at", { withTimezone: true }),
 		agentActivatedByUserId: uuid("agent_activated_by_user_id").references(
 			() => users.id,

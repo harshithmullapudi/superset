@@ -11,7 +11,7 @@ import {
 const base64 = (text: string) => Buffer.from(text).toString("base64");
 
 describe("PAGE_CONTENT_TYPES", () => {
-	test("is html only — everything else belongs in the media library", () => {
+	test("is html only — a page is one self-contained file, with no assets beside it", () => {
 		expect([...PAGE_CONTENT_TYPES]).toEqual(["text/html"]);
 	});
 });

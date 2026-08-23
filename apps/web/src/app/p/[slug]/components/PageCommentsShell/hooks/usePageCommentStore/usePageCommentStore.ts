@@ -1,24 +1,14 @@
 "use client";
 
+import type { RouterOutputs } from "@superset/trpc";
 import type { CommentStore, CommentThread } from "@superset/ui/page-comments";
 import { toast } from "@superset/ui/sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { useTRPC } from "@/trpc/react";
 
-type ServerThread = {
-	id: string;
-	anchor: { path: string; tag: string } | null;
-	anchorText: string | null;
-	resolved: boolean;
-	comments: {
-		id: string;
-		body: string;
-		authorName: string;
-		authorImage: string | null;
-		createdAt: Date;
-	}[];
-};
+/** Derived from the router, so a renamed or dropped field fails here instead of reading undefined. */
+type ServerThread = RouterOutputs["pageComment"]["list"][number];
 
 /** Page-anchored threads have no element to sit on, so the overlay skips them. */
 function toThreads(rows: ServerThread[]): CommentThread[] {
@@ -55,7 +45,7 @@ export function usePageCommentStore({
 }): CommentStore {
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();
-	const listOptions = trpc.pageComment.list.queryOptions({ pageId });
+	const listOptions = trpc.pageComment.list.queryOptions({ pageId, version });
 	const list = useQuery(listOptions);
 
 	const invalidate = useCallback(
@@ -84,10 +74,7 @@ export function usePageCommentStore({
 		trpc.pageComment.delete.mutationOptions(onSettled),
 	);
 
-	const threads = useMemo(
-		() => toThreads((list.data ?? []) as ServerThread[]),
-		[list.data],
-	);
+	const threads = useMemo(() => toThreads(list.data ?? []), [list.data]);
 
 	return useMemo<CommentStore>(
 		() => ({

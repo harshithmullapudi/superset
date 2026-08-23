@@ -68,7 +68,7 @@ export function register(server: McpServer): void {
 				.max(1024)
 				.nullish()
 				.describe(
-					"Path of the source file relative to the workspace root. With `workspaceId`, this is the key a later publish reuses to add a version rather than a new page.",
+					"Path of the source file relative to the workspace root. Requires `workspaceId`; together they are the key a later publish reuses to add a version rather than a new page.",
 				),
 		},
 		handler: async (input, ctx) => {
@@ -76,11 +76,12 @@ export function register(server: McpServer): void {
 			// Base64 at this edge rather than in the tool schema: an agent holds the
 			// document as text, and making it encode first is a step it can get wrong.
 			const content = Buffer.from(input.html, "utf8").toString("base64");
-			// Both or neither — `entryPath` alone never reaches the republish lookup.
-			const link =
-				input.workspaceId && input.entryPath
-					? { workspaceId: input.workspaceId, entryPath: input.entryPath }
-					: {};
+			// Passed through even when only one side is set, so the router rejects a
+			// half-link instead of quietly publishing a page no workspace owns.
+			const link = {
+				...(input.workspaceId ? { workspaceId: input.workspaceId } : {}),
+				...(input.entryPath ? { entryPath: input.entryPath } : {}),
+			};
 
 			return caller.page.publish({
 				content,

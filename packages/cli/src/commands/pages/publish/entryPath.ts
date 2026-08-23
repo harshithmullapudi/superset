@@ -1,14 +1,10 @@
 import { realpathSync } from "node:fs";
 import { resolve, sep } from "node:path";
 
-const CASE_INSENSITIVE_FS =
-	process.platform === "darwin" || process.platform === "win32";
-
-// A symlinked root (macOS `/tmp` → `/private/tmp`) otherwise re-bases to null,
-// and every republish silently mints a new page instead of a version.
+// `.native` because only the OS call also folds casing to the real on-disk name.
 function canonical(path: string): string {
 	try {
-		return realpathSync(path);
+		return realpathSync.native(path);
 	} catch {
 		return path;
 	}
@@ -32,13 +28,9 @@ export function resolveEntryPath({
 	const root = canonical(resolve(workspacePath));
 	const prefix = root.endsWith(sep) ? root : root + sep;
 
-	const inside = CASE_INSENSITIVE_FS
-		? absolute.toLowerCase().startsWith(prefix.toLowerCase())
-		: absolute.startsWith(prefix);
-	if (!inside) return null;
+	// Exact: `process.platform` describes the OS, not the volume, which may hold both `site` and `Site`.
+	if (!absolute.startsWith(prefix)) return null;
 
-	// Sliced rather than `relative()`d so the on-disk casing survives the
-	// case-insensitive comparison above.
 	const rel = absolute.slice(prefix.length);
 	if (!rel) return null;
 

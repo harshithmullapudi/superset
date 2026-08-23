@@ -1,4 +1,3 @@
-import { auth } from "@superset/auth/server";
 import { Button } from "@superset/ui/button";
 import {
 	CommentModeToggle,
@@ -6,7 +5,6 @@ import {
 } from "@superset/ui/page-comments";
 import { TRPCClientError } from "@trpc/client";
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
@@ -14,6 +12,7 @@ import { MessageScreen } from "@/components/MessageScreen";
 import { api } from "../../../trpc/server";
 import { PageCommentsShell } from "./components/PageCommentsShell";
 import { PageVisibilityMenu } from "./components/PageVisibilityMenu";
+import { getPagesAccess } from "./utils/getPagesAccess";
 
 interface PageProps {
 	params: Promise<{ slug: string }>;
@@ -59,6 +58,8 @@ export async function generateMetadata({
 	params,
 }: PageProps): Promise<Metadata> {
 	const { slug } = await params;
+	const { hasPagesAccess } = await getPagesAccess();
+	if (!hasPagesAccess) return { title: "Page" };
 	try {
 		const page = await getPage(slug);
 		return { title: page.title, description: page.description ?? undefined };
@@ -69,6 +70,11 @@ export async function generateMetadata({
 
 export default async function PublishedPage({ params }: PageProps) {
 	const { slug } = await params;
+
+	// Checked before the page is read, so a gated viewer cannot tell a real slug from a made-up one.
+	const { hasPagesAccess, session } = await getPagesAccess();
+	if (!hasPagesAccess) notFound();
+
 	const trpc = await api();
 
 	let page: Awaited<ReturnType<typeof getPage>>;
@@ -115,9 +121,6 @@ export default async function PublishedPage({ params }: PageProps) {
 		throw new Error(`Could not load this page's content (${response.status})`);
 	}
 	const html = await response.text();
-
-	// Read server-side so the composer never renders a placeholder name first.
-	const session = await auth.api.getSession({ headers: await headers() });
 
 	return (
 		<PageCommentsShell

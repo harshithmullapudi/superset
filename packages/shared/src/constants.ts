@@ -209,6 +209,8 @@ export const FEATURE_FLAGS = {
 	 * desktop-local; the flag controls visibility, not capability.
 	 */
 	PLUGINS: "plugins",
+	/** Shows Pages (desktop sidebar tab + pane, web /p/[slug] viewer). Audience is an email release condition on the flag, so widening the rollout never needs a release. */
+	PAGES: "pages",
 } as const;
 
 /**

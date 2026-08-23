@@ -8,7 +8,7 @@ import {
 	users,
 } from "@superset/db/schema";
 import { TRPCError, type TRPCRouterRecord } from "@trpc/server";
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import { protectedProcedure } from "../../trpc";
 import { assertPageReadable } from "../page/access";
 import { requireActiveOrgMembership } from "../utils/active-org";
@@ -82,10 +82,29 @@ export const pageCommentRouter = {
 			const userId = ctx.session.user.id;
 			await loadReadablePage({ pageId: input.pageId, organizationId, userId });
 
+			// An anchor only locates an element in the version it was recorded on.
 			const threadRows = await db
 				.select()
 				.from(pageCommentThreads)
-				.where(eq(pageCommentThreads.pageId, input.pageId))
+				.where(
+					and(
+						eq(pageCommentThreads.pageId, input.pageId),
+						input.version === undefined
+							? undefined
+							: inArray(
+									pageCommentThreads.pageVersionId,
+									db
+										.select({ id: pageVersions.id })
+										.from(pageVersions)
+										.where(
+											and(
+												eq(pageVersions.pageId, input.pageId),
+												eq(pageVersions.version, input.version),
+											),
+										),
+								),
+					),
+				)
 				.orderBy(asc(pageCommentThreads.createdAt));
 
 			if (threadRows.length === 0) return [];

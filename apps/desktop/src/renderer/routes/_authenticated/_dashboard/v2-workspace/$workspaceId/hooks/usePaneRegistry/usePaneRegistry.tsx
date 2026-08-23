@@ -129,6 +129,9 @@ export function usePaneRegistry({
 	const { workspace } = useWorkspace();
 	const workspaceId = workspace.id;
 	const isChatV3Enabled = useFeatureFlagEnabled(FEATURE_FLAGS.CHAT_V3) ?? false;
+	// Gates restored layouts too, not just newly opened panes.
+	const isPagesEnabled =
+		useFeatureFlagEnabled(FEATURE_FLAGS.PAGES) ?? false;
 	const runAgent = workspaceTrpc.agents.run.useMutation();
 	const collections = useCollections();
 	const clearShortcut = useHotkeyDisplay("CLEAR_TERMINAL").text;
@@ -582,17 +585,21 @@ export function usePaneRegistry({
 						d.key === "close-pane" ? { ...d, label: "Close Comment" } : d,
 					),
 			},
-			page: {
-				getIcon: () => <FileText className="size-3.5" />,
-				getTitle: (pane) => (pane.data as PagePaneData).title,
-				renderPane: (ctx: RendererContext<PaneViewerData>) => (
-					<PagePane data={ctx.pane.data as PagePaneData} />
-				),
-				contextMenuActions: (_ctx, defaults) =>
-					defaults.map((d) =>
-						d.key === "close-pane" ? { ...d, label: "Close Page" } : d,
-					),
-			},
+			...(isPagesEnabled
+				? {
+						page: {
+							getIcon: () => <FileText className="size-3.5" />,
+							getTitle: (pane) => (pane.data as PagePaneData).title,
+							renderPane: (ctx: RendererContext<PaneViewerData>) => (
+								<PagePane data={ctx.pane.data as PagePaneData} />
+							),
+							contextMenuActions: (_ctx, defaults) =>
+								defaults.map((d) =>
+									d.key === "close-pane" ? { ...d, label: "Close Page" } : d,
+								),
+						},
+					}
+				: {}),
 			devtools: {
 				getTitle: () => "DevTools",
 				renderPane: (ctx: RendererContext<PaneViewerData>) => {
@@ -608,6 +615,7 @@ export function usePaneRegistry({
 		[
 			workspaceId,
 			isChatV3Enabled,
+			isPagesEnabled,
 			clearWorkspaceRunTerminal,
 			clearShortcut,
 			scrollToBottomShortcut,

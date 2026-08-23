@@ -107,14 +107,6 @@ export function PageHandoffMenu({
 	);
 }
 
-// A multi-line body would otherwise spill out of the list and read as instructions to the agent.
-function indent(text: string, prefix: string): string {
-	return text
-		.split("\n")
-		.map((line, index) => (index === 0 ? line : `${prefix}${line}`))
-		.join("\n");
-}
-
 // The anchor path goes to the agent too: a page is one self-contained .html file, so the
 // published DOM is the source it edits, and repeated text alone locates nothing.
 function buildPrompt(
@@ -136,7 +128,9 @@ function buildPrompt(
 		// JSON-quoted so the page's own copy cannot break the line structure the agent reads.
 		if (text) lines.push(`   text: ${JSON.stringify(text)}`);
 		for (const comment of thread.comments) {
-			lines.push(`   ${comment.authorName}: ${indent(comment.body, "   ")}`);
+			lines.push(
+				`   ${JSON.stringify(comment.authorName)}: ${JSON.stringify(comment.body)}`,
+			);
 		}
 		lines.push("");
 	});
