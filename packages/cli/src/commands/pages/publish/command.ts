@@ -51,12 +51,16 @@ export default command({
 		const workspaceId = entryPath
 			? process.env.SUPERSET_WORKSPACE_ID
 			: undefined;
+		// One value behind both the payload and the warning below, so the two
+		// cannot disagree about whether this publish is linked.
+		const link =
+			entryPath && workspaceId ? { entryPath, workspaceId } : undefined;
 
 		const page = await ctx.api.page.publish.mutate({
 			content: Buffer.from(html, "utf8").toString("base64"),
 			contentType: "text/html",
 			filename: basename(filePath),
-			...(entryPath && workspaceId ? { entryPath, workspaceId } : {}),
+			...(link ?? {}),
 			...(options.page ? { pageId: options.page } : {}),
 			...(options.title ? { title: options.title } : {}),
 			...(options.description ? { description: options.description } : {}),
@@ -67,7 +71,7 @@ export default command({
 		});
 
 		const unlinked =
-			entryPath || options.page
+			link || options.page
 				? ""
 				: "\nNot linked to a workspace — republish with --page to add a version";
 

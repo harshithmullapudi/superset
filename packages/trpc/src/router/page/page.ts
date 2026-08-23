@@ -1,5 +1,7 @@
 import { db } from "@superset/db/client";
 import {
+	members,
+	organizations,
 	pages,
 	pageVersions,
 	type SelectPage,
@@ -7,7 +9,7 @@ import {
 } from "@superset/db/schema";
 import { TRPCError, type TRPCRouterRecord } from "@trpc/server";
 import { head } from "@vercel/blob";
-import { and, desc, eq, or, sql } from "drizzle-orm";
+import { and, desc, eq, or, type SQL, sql } from "drizzle-orm";
 import { protectedProcedure } from "../../trpc";
 import { requireActiveOrgMembership } from "../utils/active-org";
 import { assertPageReadable, assertPageWritable } from "./access";
@@ -27,6 +29,34 @@ function visibilityFilter(userId: string) {
 		eq(pages.visibility, "org"),
 		and(eq(pages.visibility, "just_me"), eq(pages.createdByUserId, userId)),
 	);
+}
+
+// A shared link opens against whatever organization happens to be active, so a
+// page in another of the reader's orgs 404s with nothing to act on. Naming it
+// costs nothing: the lookup is scoped to their own memberships and readable
+// pages, which is precisely what they would see after switching.
+async function pageNotFound(identity: SQL, userId: string): Promise<TRPCError> {
+	const [elsewhere] = await db
+		.select({ organizationName: organizations.name })
+		.from(pages)
+		.innerJoin(
+			members,
+			and(
+				eq(members.organizationId, pages.organizationId),
+				eq(members.userId, userId),
+			),
+		)
+		.innerJoin(organizations, eq(organizations.id, pages.organizationId))
+		.where(and(identity, visibilityFilter(userId)))
+		.limit(1);
+
+	if (!elsewhere) {
+		return new TRPCError({ code: "NOT_FOUND", message: "Page not found" });
+	}
+	return new TRPCError({
+		code: "FORBIDDEN",
+		message: `This page belongs to ${elsewhere.organizationName}. Switch to that organization to open it.`,
+	});
 }
 
 async function loadPage({
@@ -55,7 +85,7 @@ async function loadPage({
 		.limit(1);
 
 	if (!page) {
-		throw new TRPCError({ code: "NOT_FOUND", message: "Page not found" });
+		throw await pageNotFound(identity, userId);
 	}
 	assertPageReadable(page, userId);
 	return page;

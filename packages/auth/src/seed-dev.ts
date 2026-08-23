@@ -17,9 +17,21 @@ import { auth } from "./server";
 // Must match CLIENT_ID and the redirect URIs in packages/cli/src/lib/auth.ts.
 const CLI_CLIENT_ID = "superset-cli";
 const CLI_LOOPBACK_PORTS = [51789, 51790, 51791, 51792, 51793];
+
+// The paste fallback is registered for every web origin the CLI might send,
+// because the CLI reads $SUPERSET_WEB_URL and this package reads
+// NEXT_PUBLIC_WEB_URL — a mismatch is exactly the `invalid_redirect_uri` the
+// seed exists to prevent.
+const CLI_WEB_URLS = [
+	...new Set(
+		[process.env.SUPERSET_WEB_URL, env.NEXT_PUBLIC_WEB_URL].filter(
+			(url): url is string => Boolean(url),
+		),
+	),
+];
 const CLI_REDIRECT_URIS = [
 	...CLI_LOOPBACK_PORTS.map((port) => `http://127.0.0.1:${port}/callback`),
-	new URL("/cli/auth/code", env.NEXT_PUBLIC_WEB_URL).toString(),
+	...CLI_WEB_URLS.map((url) => new URL("/cli/auth/code", url).toString()),
 ];
 
 async function seedDevAccount(): Promise<void> {
@@ -88,16 +100,7 @@ async function seedDevAccount(): Promise<void> {
  * plus the paste-the-code fallback on the web app for when none are free.
  */
 async function seedCliOAuthClient(): Promise<void> {
-	const existing = await db.query.oauthClients.findFirst({
-		where: eq(oauthClients.clientId, CLI_CLIENT_ID),
-	});
-	if (existing) {
-		console.log(`CLI OAuth client already registered: ${CLI_CLIENT_ID}`);
-		return;
-	}
-
-	await db.insert(oauthClients).values({
-		clientId: CLI_CLIENT_ID,
+	const registration = {
 		name: "Superset CLI",
 		redirectUris: CLI_REDIRECT_URIS,
 		grantTypes: ["authorization_code", "refresh_token"],
@@ -106,8 +109,28 @@ async function seedCliOAuthClient(): Promise<void> {
 		tokenEndpointAuthMethod: "none",
 		public: true,
 		disabled: false,
-		createdAt: new Date(),
 		updatedAt: new Date(),
+	};
+
+	const existing = await db.query.oauthClients.findFirst({
+		where: eq(oauthClients.clientId, CLI_CLIENT_ID),
+	});
+
+	// Refreshed rather than skipped: a row seeded against an older web URL or
+	// port list outlives the change and fails the next login.
+	if (existing) {
+		await db
+			.update(oauthClients)
+			.set(registration)
+			.where(eq(oauthClients.clientId, CLI_CLIENT_ID));
+		console.log(`Refreshed CLI OAuth client: ${CLI_CLIENT_ID}`);
+		return;
+	}
+
+	await db.insert(oauthClients).values({
+		clientId: CLI_CLIENT_ID,
+		...registration,
+		createdAt: new Date(),
 	});
 	console.log(`Seeded CLI OAuth client: ${CLI_CLIENT_ID}`);
 }

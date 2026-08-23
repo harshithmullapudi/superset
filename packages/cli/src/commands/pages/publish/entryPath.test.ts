@@ -1,4 +1,13 @@
 import { describe, expect, test } from "bun:test";
+import {
+	mkdirSync,
+	mkdtempSync,
+	realpathSync,
+	symlinkSync,
+	writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { resolveEntryPath } from "./entryPath";
 
 const workspacePath = "/Users/dev/ws";
@@ -66,5 +75,24 @@ describe("resolveEntryPath", () => {
 		expect(
 			resolveEntryPath({ filePath: workspacePath, workspacePath, cwd: "/" }),
 		).toBeNull();
+	});
+
+	test("re-bases a path that reaches the workspace through a symlink", () => {
+		// Until both sides were canonicalised this returned null, and every
+		// republish from a symlinked root minted a new page instead of a version.
+		const root = mkdtempSync(join(realpathSync(tmpdir()), "entry-path-"));
+		const real = join(root, "real");
+		const link = join(root, "link");
+		mkdirSync(join(real, "dist"), { recursive: true });
+		writeFileSync(join(real, "dist", "index.html"), "<!doctype html>");
+		symlinkSync(real, link, "dir");
+
+		expect(
+			resolveEntryPath({
+				filePath: "./dist/index.html",
+				workspacePath: real,
+				cwd: link,
+			}),
+		).toBe("dist/index.html");
 	});
 });

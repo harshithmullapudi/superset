@@ -11,7 +11,7 @@ export default command({
 		table(
 			(data as Record<string, unknown>[]).map((row) => ({
 				version: row.version,
-				label: row.label ?? "-",
+				label: row.label,
 				size: `${Math.max(1, Math.round((row.sizeBytes as number) / 1024))} KB`,
 				published: new Date(row.createdAt as string).toLocaleString(),
 			})),

@@ -392,10 +392,6 @@ export const pageCommentsRelations = relations(pageComments, ({ one }) => ({
 		fields: [pageComments.authorUserId],
 		references: [users.id],
 	}),
-	agentSession: one(chatSessions, {
-		fields: [pageComments.agentSessionId],
-		references: [chatSessions.id],
-	}),
 }));
 
 // No `workspace` relation: `workspaceId` may name a cloud_workspaces row or a local host.db one.

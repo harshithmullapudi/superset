@@ -209,8 +209,10 @@ export const pageCommentRouter = {
 				.insert(pageComments)
 				.values({
 					threadId: input.threadId,
-					authorKind: "human",
+					authorKind: input.agentSessionId ? "agent" : "human",
+					// Recorded either way: an agent reply is still made on someone's behalf.
 					authorUserId: userId,
+					agentSessionId: input.agentSessionId ?? null,
 					body: input.body,
 				})
 				.returning();

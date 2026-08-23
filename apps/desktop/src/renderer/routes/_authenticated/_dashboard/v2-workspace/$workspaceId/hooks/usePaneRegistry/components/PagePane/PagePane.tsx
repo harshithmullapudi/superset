@@ -4,8 +4,10 @@ import {
 	CommentProvider,
 	PageCommentsView,
 } from "@superset/ui/page-comments";
+import { Pixel404 } from "@superset/ui/pixel-404";
 import { Spinner } from "@superset/ui/spinner";
 import { useQuery } from "@tanstack/react-query";
+import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useRef } from "react";
 import { cloudTrpc } from "renderer/lib/cloud-trpc";
 import { electronTrpcClient } from "renderer/lib/trpc-client";
@@ -17,6 +19,32 @@ import { usePageCommentStore } from "./hooks/usePageCommentStore";
 
 interface PagePaneProps {
 	data: PagePaneData;
+}
+
+// No logo or home button, unlike the web viewer: this is a pane inside the app,
+// so the chrome around it is already ours.
+function PagePaneMessage({
+	title,
+	description,
+	notFound,
+}: {
+	title: string;
+	description?: string;
+	notFound?: boolean;
+}) {
+	return (
+		<div className="flex h-full w-full flex-col items-center justify-center gap-3 px-6 text-center">
+			{notFound ? (
+				<Pixel404 className="max-w-[200px] pb-3 text-foreground" />
+			) : null}
+			<p className="font-medium text-sm">{title}</p>
+			{description ? (
+				<p className="max-w-xs text-balance text-muted-foreground text-xs">
+					{description}
+				</p>
+			) : null}
+		</div>
+	);
 }
 
 export function PagePane({ data }: PagePaneProps) {
@@ -73,12 +101,22 @@ export function PagePane({ data }: PagePaneProps) {
 	);
 
 	if (pull.error || content.error) {
-		return (
-			<div className="flex h-full w-full items-center justify-center px-6 text-center text-muted-foreground text-sm">
-				{pull.error?.message ??
-					content.error?.message ??
-					"This page could not be opened"}
-			</div>
+		// A deleted page and a blob that would not load are different dead ends,
+		// and only the first is a 404 — saying so beats one message for both.
+		const missing =
+			pull.error instanceof TRPCClientError &&
+			pull.error.data?.code === "NOT_FOUND";
+		return missing ? (
+			<PagePaneMessage
+				notFound
+				title="This page isn't here"
+				description="It may have been deleted, or you may not have access to it."
+			/>
+		) : (
+			<PagePaneMessage
+				title="This page could not be opened"
+				description={pull.error?.message ?? content.error?.message}
+			/>
 		);
 	}
 

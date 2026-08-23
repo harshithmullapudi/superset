@@ -1,15 +1,24 @@
 import { string, table } from "@superset/cli-framework";
 import { command } from "../../../lib/command";
+import { resolveWorkspaceId } from "../workspaceRef";
 
 export default command({
 	description: "List pages in the organization",
 	options: {
 		workspace: string().desc(
-			"Only pages published from this workspace (defaults to $SUPERSET_WORKSPACE_ID)",
+			"Only pages published from this workspace, by name or id (defaults to $SUPERSET_WORKSPACE_ID)",
 		),
 	},
 	run: async ({ ctx, options }) => {
-		const workspaceId = options.workspace ?? process.env.SUPERSET_WORKSPACE_ID;
+		const workspace = options.workspace ?? process.env.SUPERSET_WORKSPACE_ID;
+		const workspaceId = workspace
+			? await resolveWorkspaceId({
+					value: workspace,
+					organizationId: ctx.config.organizationId,
+					userJwt: ctx.bearer,
+					api: ctx.api,
+				})
+			: undefined;
 		return await ctx.api.page.list.query(
 			workspaceId ? { workspaceId } : undefined,
 		);
@@ -18,7 +27,7 @@ export default command({
 		table(
 			(data as Record<string, unknown>[]).map((row) => ({
 				title: row.title,
-				version: row.latestVersion ?? "-",
+				version: row.latestVersion,
 				visibility: row.visibility,
 				url: row.url,
 				id: row.id,

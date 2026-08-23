@@ -1,4 +1,5 @@
 import { auth } from "@superset/auth/server";
+import { Button } from "@superset/ui/button";
 import {
 	CommentModeToggle,
 	PageCommentsView,
@@ -6,8 +7,10 @@ import {
 import { TRPCClientError } from "@trpc/client";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
+import { MessageScreen } from "@/components/MessageScreen";
 import { api } from "../../../trpc/server";
 import { PageCommentsShell } from "./components/PageCommentsShell";
 import { PageVisibilityMenu } from "./components/PageVisibilityMenu";
@@ -18,11 +21,29 @@ interface PageProps {
 
 const CONTENT_TIMEOUT_MS = 10_000;
 
-function isNotFound(error: unknown): boolean {
+function hasCode(error: unknown, code: string): boolean {
 	return (
 		error instanceof TRPCClientError &&
-		(error.data?.code === "NOT_FOUND" ||
-			error.shape?.data?.code === "NOT_FOUND")
+		(error.data?.code === code || error.shape?.data?.code === code)
+	);
+}
+
+const isNotFound = (error: unknown) => hasCode(error, "NOT_FOUND");
+const isForbidden = (error: unknown) => hasCode(error, "FORBIDDEN");
+
+// Rendered inline rather than thrown: Next strips an error boundary's message in
+// production, and the organization's name is the whole point of this screen.
+function WrongOrganization({ message }: { message: string }) {
+	return (
+		<MessageScreen
+			title="This page is in another organization"
+			description={message}
+			action={
+				<Button asChild size="sm" variant="outline">
+					<Link href="/">Switch organization</Link>
+				</Button>
+			}
+		/>
 	);
 }
 
@@ -55,6 +76,9 @@ export default async function PublishedPage({ params }: PageProps) {
 		page = await getPage(slug);
 	} catch (error) {
 		if (isNotFound(error)) notFound();
+		if (isForbidden(error) && error instanceof TRPCClientError) {
+			return <WrongOrganization message={error.message} />;
+		}
 		throw error;
 	}
 

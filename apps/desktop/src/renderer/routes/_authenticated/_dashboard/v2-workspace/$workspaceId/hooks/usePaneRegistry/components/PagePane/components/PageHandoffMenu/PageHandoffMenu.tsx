@@ -131,6 +131,8 @@ function buildPrompt(
 	threads.forEach((thread, index) => {
 		const { path, tag, text } = thread.anchor;
 		lines.push(`${index + 1}. <${tag}> at: ${path || "body"}`);
+		// The id is what the CLI acts on; without it the agent can read threads but not answer them.
+		lines.push(`   thread: ${thread.id}`);
 		// JSON-quoted so the page's own copy cannot break the line structure the agent reads.
 		if (text) lines.push(`   text: ${JSON.stringify(text)}`);
 		for (const comment of thread.comments) {
@@ -138,5 +140,15 @@ function buildPrompt(
 		}
 		lines.push("");
 	});
+	lines.push(
+		"When you have addressed one, answer it and close it, in that order:",
+		"",
+		'  superset pages comments reply --threadId <id> "<what you changed>"',
+		"  superset pages comments resolve --threadId <id>",
+		"",
+		"Only act on the thread ids listed above. To re-read them: `superset pages comments list --page " +
+			pageSlug +
+			"`.",
+	);
 	return lines.join("\n");
 }

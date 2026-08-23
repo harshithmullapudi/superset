@@ -35,6 +35,12 @@ export const createPageCommentThreadSchema = z
 export const replyPageCommentSchema = z.object({
 	threadId: z.string().uuid(),
 	body: z.string().min(1).max(10_000),
+	/**
+	 * Set only by a non-human caller (the CLI, from `$SUPERSET_PANE_ID`), which
+	 * stamps the reply as agent-authored. The account behind the call is still
+	 * recorded, so every row traces back to a person.
+	 */
+	agentSessionId: z.string().min(1).max(200).optional(),
 });
 
 export const editPageCommentSchema = z.object({

@@ -1349,9 +1349,9 @@ export const pageComments = pgTable(
 		authorUserId: uuid("author_user_id").references(() => users.id, {
 			onDelete: "set null",
 		}),
-		agentSessionId: uuid("agent_session_id").references(() => chatSessions.id, {
-			onDelete: "set null",
-		}),
+		// Opaque session ref, deliberately not an FK: a terminal agent replying
+		// through the CLI runs in a desktop pane, which has no chat_sessions row.
+		agentSessionId: text("agent_session_id"),
 		body: text().notNull(),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.notNull()
