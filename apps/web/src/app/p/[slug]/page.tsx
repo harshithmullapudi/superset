@@ -1,8 +1,16 @@
+import { auth } from "@superset/auth/server";
+import {
+	CommentModeToggle,
+	PageCommentsView,
+} from "@superset/ui/page-comments";
 import { TRPCClientError } from "@trpc/client";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { api } from "../../../trpc/server";
-import { PageFrame } from "./components/PageFrame";
+import { PageCommentsShell } from "./components/PageCommentsShell";
+import { PageVisibilityMenu } from "./components/PageVisibilityMenu";
 
 interface PageProps {
 	params: Promise<{ slug: string }>;
@@ -18,15 +26,20 @@ function isNotFound(error: unknown): boolean {
 	);
 }
 
-// Not in `publicRoutes`, so anonymous visitors are sent to sign-in — which
-// matches the access model while `just_me` and `org` both require a session.
+// `api()` caches the client, not the result, so without this the same query runs twice per request.
+const getPage = cache(async (slug: string) => {
+	const trpc = await api();
+	return trpc.page.get.query({ slug });
+});
+
+// No OG/Twitter tags on purpose: an unfurler is anonymous, so they would only leak a
+// private page's title into link previews. Do not add them without a public visibility tier.
 export async function generateMetadata({
 	params,
 }: PageProps): Promise<Metadata> {
 	const { slug } = await params;
 	try {
-		const trpc = await api();
-		const page = await trpc.page.get.query({ slug });
+		const page = await getPage(slug);
 		return { title: page.title, description: page.description ?? undefined };
 	} catch {
 		return { title: "Page" };
@@ -37,9 +50,9 @@ export default async function PublishedPage({ params }: PageProps) {
 	const { slug } = await params;
 	const trpc = await api();
 
-	let page: Awaited<ReturnType<typeof trpc.page.get.query>>;
+	let page: Awaited<ReturnType<typeof getPage>>;
 	try {
-		page = await trpc.page.get.query({ slug });
+		page = await getPage(slug);
 	} catch (error) {
 		if (isNotFound(error)) notFound();
 		throw error;
@@ -53,9 +66,7 @@ export default async function PublishedPage({ params }: PageProps) {
 		throw error;
 	}
 
-	// Fetched server-side because the blob store serves HTML as an attachment
-	// under its own `default-src 'none'` CSP, and so the blob URL stays out of
-	// the page source.
+	// Fetched server-side so the blob URL stays out of the page source.
 	let response: Response;
 	try {
 		response = await fetch(content.downloadUrl, {
@@ -68,7 +79,8 @@ export default async function PublishedPage({ params }: PageProps) {
 			version: content.version,
 			error,
 		});
-		notFound();
+		// Not `notFound()`: the record resolved, so it is the blob read that failed.
+		throw new Error("Could not load this page's content", { cause: error });
 	}
 	if (!response.ok) {
 		console.error("[pages] failed to fetch page content", {
@@ -76,30 +88,48 @@ export default async function PublishedPage({ params }: PageProps) {
 			version: content.version,
 			status: response.status,
 		});
-		notFound();
+		throw new Error(`Could not load this page's content (${response.status})`);
 	}
 	const html = await response.text();
 
-	return (
-		<div className="flex h-dvh flex-col bg-background">
-			<header className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b px-4 py-3">
-				<div className="min-w-0 flex-1">
-					<h1 className="truncate font-medium text-sm">{page.title}</h1>
-					{page.description ? (
-						<p className="truncate text-muted-foreground text-xs">
-							{page.description}
-						</p>
-					) : null}
-				</div>
-				<span className="text-muted-foreground text-xs">
-					v{content.version} ·{" "}
-					{page.visibility === "just_me" ? "Private" : "Organization"}
-				</span>
-			</header>
+	// Read server-side so the composer never renders a placeholder name first.
+	const session = await auth.api.getSession({ headers: await headers() });
 
-			<main className="min-h-0 flex-1">
-				<PageFrame html={html} title={page.title} />
-			</main>
-		</div>
+	return (
+		<PageCommentsShell
+			pageId={page.id}
+			version={content.version}
+			user={{
+				id: session?.user.id ?? "",
+				name: session?.user.name ?? "You",
+				image: session?.user.image ?? null,
+			}}
+		>
+			<div className="flex h-dvh flex-col bg-background">
+				<header className="flex h-11 shrink-0 items-center gap-x-3 border-b px-3">
+					<div className="min-w-0 flex-1">
+						<h1 className="truncate font-medium text-sm">{page.title}</h1>
+						{page.description ? (
+							<p className="truncate text-muted-foreground text-xs">
+								{page.description}
+							</p>
+						) : null}
+					</div>
+					<span className="shrink-0 text-muted-foreground text-xs tabular-nums">
+						v{content.version}
+					</span>
+					<PageVisibilityMenu
+						pageId={page.id}
+						visibility={page.visibility === "just_me" ? "just_me" : "org"}
+						createdByUserId={page.createdByUserId}
+					/>
+					<CommentModeToggle />
+				</header>
+
+				<main className="min-h-0 flex-1">
+					<PageCommentsView html={html} title={page.title} />
+				</main>
+			</div>
+		</PageCommentsShell>
 	);
 }

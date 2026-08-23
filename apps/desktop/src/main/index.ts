@@ -32,6 +32,7 @@ import { loadWebviewBrowserExtension } from "./lib/extensions";
 import { getHostServiceCoordinator } from "./lib/host-service-coordinator";
 import { localDb } from "./lib/local-db";
 import { requestLocalNetworkAccess } from "./lib/local-network-permission";
+import { PAGE_SCHEME, pageProtocolHandler } from "./lib/pageContent";
 import {
 	initTanstackDbPersistence,
 	shutdownTanstackDbPersistence,
@@ -339,6 +340,15 @@ protocol.registerSchemesAsPrivileged([
 			supportFetchAPI: true,
 		},
 	},
+	{
+		// No `bypassCSP`: the whole point of this scheme is that the page is
+		// governed by the policy its own response carries.
+		scheme: PAGE_SCHEME,
+		privileges: {
+			standard: true,
+			secure: true,
+		},
+	},
 ]);
 
 const gotTheLock = app.requestSingleInstanceLock();
@@ -375,6 +385,12 @@ if (!gotTheLock) {
 		session
 			.fromPartition("persist:superset")
 			.protocol.handle("superset-icon", iconProtocolHandler);
+
+		// Serves published page HTML to the page pane's iframe under its own CSP.
+		protocol.handle(PAGE_SCHEME, pageProtocolHandler);
+		session
+			.fromPartition("persist:superset")
+			.protocol.handle(PAGE_SCHEME, pageProtocolHandler);
 
 		// Serve system fonts (e.g. SF Mono on macOS) via custom protocol
 		// so the renderer can use @font-face with font-src 'self' CSP

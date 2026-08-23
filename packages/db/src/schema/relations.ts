@@ -15,10 +15,10 @@ import {
 } from "./github";
 import {
 	agentCommands,
-	attachments,
 	chatSessions,
-	files,
 	integrationConnections,
+	pageComments,
+	pageCommentThreads,
 	pages,
 	pageVersions,
 	projects,
@@ -350,6 +350,7 @@ export const pagesRelations = relations(pages, ({ one, many }) => ({
 	}),
 	versions: many(pageVersions),
 	workspaceLinks: many(workspacePages),
+	commentThreads: many(pageCommentThreads),
 }));
 
 export const pageVersionsRelations = relations(pageVersions, ({ one }) => ({
@@ -363,38 +364,44 @@ export const pageVersionsRelations = relations(pageVersions, ({ one }) => ({
 	}),
 }));
 
-// No `workspace` relation: `workspaceId` is a bare uuid that may name a row in
-// cloud_workspaces or one that only exists in a machine's local host.db.
+export const pageCommentThreadsRelations = relations(
+	pageCommentThreads,
+	({ one, many }) => ({
+		page: one(pages, {
+			fields: [pageCommentThreads.pageId],
+			references: [pages.id],
+		}),
+		version: one(pageVersions, {
+			fields: [pageCommentThreads.pageVersionId],
+			references: [pageVersions.id],
+		}),
+		createdBy: one(users, {
+			fields: [pageCommentThreads.createdByUserId],
+			references: [users.id],
+		}),
+		comments: many(pageComments),
+	}),
+);
+
+export const pageCommentsRelations = relations(pageComments, ({ one }) => ({
+	thread: one(pageCommentThreads, {
+		fields: [pageComments.threadId],
+		references: [pageCommentThreads.id],
+	}),
+	author: one(users, {
+		fields: [pageComments.authorUserId],
+		references: [users.id],
+	}),
+	agentSession: one(chatSessions, {
+		fields: [pageComments.agentSessionId],
+		references: [chatSessions.id],
+	}),
+}));
+
+// No `workspace` relation: `workspaceId` may name a cloud_workspaces row or a local host.db one.
 export const workspacePagesRelations = relations(workspacePages, ({ one }) => ({
 	page: one(pages, {
 		fields: [workspacePages.pageId],
 		references: [pages.id],
-	}),
-}));
-
-export const filesRelations = relations(files, ({ one, many }) => ({
-	organization: one(organizations, {
-		fields: [files.organizationId],
-		references: [organizations.id],
-	}),
-	createdBy: one(users, {
-		fields: [files.createdByUserId],
-		references: [users.id],
-	}),
-	// A file's lifetime is the count of these: no attachments means the sweep
-	// may collect it.
-	attachments: many(attachments),
-}));
-
-// No `parent` relation: parentId is a bare uuid whose table depends on
-// parentKind, and may name a row Neon does not hold at all.
-export const attachmentsRelations = relations(attachments, ({ one }) => ({
-	file: one(files, {
-		fields: [attachments.fileId],
-		references: [files.id],
-	}),
-	createdBy: one(users, {
-		fields: [attachments.createdByUserId],
-		references: [users.id],
 	}),
 }));

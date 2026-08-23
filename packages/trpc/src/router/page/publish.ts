@@ -1,7 +1,5 @@
 import { dbWs } from "@superset/db/client";
 import {
-	attachments,
-	files,
 	pages,
 	pageVersions,
 	type SelectPage,
@@ -10,8 +8,8 @@ import {
 import { mintPageSlug } from "@superset/shared/page-slug";
 import { TRPCError } from "@trpc/server";
 import { del, put } from "@vercel/blob";
-import { and, desc, eq, inArray } from "drizzle-orm";
-import { assertPageReadable } from "./access";
+import { and, desc, eq } from "drizzle-orm";
+import { assertPageWritable } from "./access";
 import { pageUrl } from "./page-url";
 import {
 	isVersionConflict,
@@ -21,7 +19,7 @@ import {
 import type { PublishPageInput } from "./schema";
 import { assertWorkspaceAccess } from "./workspace-access";
 
-const MAX_PUBLISH_ATTEMPTS = 3;
+const MAX_PUBLISH_ATTEMPTS = 5;
 
 export async function publishPage({
 	input,
@@ -44,8 +42,13 @@ export async function publishPage({
 				sha256,
 			});
 		} catch (error) {
-			if (isVersionConflict(error) && attempt < MAX_PUBLISH_ATTEMPTS) continue;
-			throw error;
+			if (!isVersionConflict(error)) throw error;
+			if (attempt < MAX_PUBLISH_ATTEMPTS) continue;
+			// Losing the race this many times is contention, not a server fault, and it is retryable.
+			throw new TRPCError({
+				code: "CONFLICT",
+				message: "This page is being published from somewhere else — retry",
+			});
 		}
 	}
 }
@@ -63,13 +66,29 @@ async function runPublish({
 	buffer: Buffer;
 	sha256: string;
 }) {
-	// The blob upload sits inside the transaction so a failed version insert
-	// rolls the page back with it.
-	let uploadedUrl: string | null = null;
+	// A cheap gate before spending an upload; the transaction below re-runs it as the real boundary.
+	await resolveTargetPage({ executor: dbWs, input, organizationId, userId });
+
+	// Outside the transaction so a multi-MB upload does not hold a write-pool connection open.
+	const blob = await put(
+		`pages/${organizationId}/${sha256}/${input.filename}`,
+		buffer,
+		{
+			access: "public",
+			contentType: input.contentType,
+			// Defence in depth, not the gate: the bytes are world-readable once the URL is known.
+			addRandomSuffix: true,
+		},
+	);
+	const uploadedUrl: string = blob.url;
+
+	// Set as the callback's last act: false means the failure preceded COMMIT and the blob is
+	// certainly orphaned, true means the commit itself may well have landed.
+	let bodyCompleted = false;
 	try {
 		return await dbWs.transaction(async (tx) => {
 			const existing = await resolveTargetPage({
-				tx,
+				executor: tx,
 				input,
 				organizationId,
 				userId,
@@ -103,19 +122,6 @@ async function runPublish({
 				.limit(1);
 			const version = (latest?.version ?? 0) + 1;
 
-			const blob = await put(
-				`pages/${page.id}/${version}/${input.filename}`,
-				buffer,
-				{
-					access: "public",
-					contentType: input.contentType,
-					// Defence in depth, not the gate: the bytes are world-readable
-					// once the URL is known.
-					addRandomSuffix: true,
-				},
-			);
-			uploadedUrl = blob.url;
-
 			const [row] = await tx
 				.insert(pageVersions)
 				.values({
@@ -137,14 +143,7 @@ async function runPublish({
 				});
 			}
 
-			await attachFiles({
-				tx,
-				pageVersionId: row.id,
-				fileIds: input.fileIds ?? [],
-				organizationId,
-				userId,
-			});
-
+			bodyCompleted = true;
 			return {
 				id: page.id,
 				slug: page.slug,
@@ -160,7 +159,8 @@ async function runPublish({
 			};
 		});
 	} catch (error) {
-		if (uploadedUrl) {
+		if (!bodyCompleted) {
+			// Best-effort: a failure here leaks the blob, since nothing sweeps orphans yet.
 			await del(uploadedUrl).catch((cleanupError) => {
 				console.error("[pages] failed to clean up orphaned blob", {
 					url: uploadedUrl,
@@ -174,21 +174,23 @@ async function runPublish({
 
 type Tx = Parameters<Parameters<typeof dbWs.transaction>[0]>[0];
 
-// `--page <id>` wins; otherwise the workspace edge answers it. Neither
-// resolving means a new page.
+/** Satisfied by both the pooled client and a transaction handle. */
+type Executor = Pick<Tx, "select">;
+
+// `--page <id>` wins, then the workspace edge; neither resolving means a new page.
 async function resolveTargetPage({
-	tx,
+	executor,
 	input,
 	organizationId,
 	userId,
 }: {
-	tx: Tx;
+	executor: Executor;
 	input: PublishPageInput;
 	organizationId: string;
 	userId: string;
 }): Promise<SelectPage | null> {
 	if (input.pageId) {
-		const [page] = await tx
+		const [page] = await executor
 			.select()
 			.from(pages)
 			.where(
@@ -201,12 +203,12 @@ async function resolveTargetPage({
 		if (!page) {
 			throw new TRPCError({ code: "NOT_FOUND", message: "Page not found" });
 		}
-		assertPageReadable(page, userId);
+		assertPageWritable(page, userId);
 		return page;
 	}
 
 	if (input.workspaceId && input.entryPath) {
-		const [row] = await tx
+		const [row] = await executor
 			.select({ page: pages })
 			.from(workspacePages)
 			.innerJoin(pages, eq(pages.id, workspacePages.pageId))
@@ -215,18 +217,19 @@ async function resolveTargetPage({
 					eq(workspacePages.workspaceId, input.workspaceId),
 					eq(workspacePages.entryPath, input.entryPath),
 					eq(pages.organizationId, organizationId),
+					// Own pages only: a colleague's edge could only produce a FORBIDDEN, so skip it and mint a new page.
+					eq(pages.createdByUserId, userId),
 				),
 			)
 			.limit(1);
-		if (row?.page) assertPageReadable(row.page, userId);
+		if (row?.page) assertPageWritable(row.page, userId);
 		return row?.page ?? null;
 	}
 
 	return null;
 }
 
-// The slug is never patched here. The write happens even with no flags passed
-// because `list` orders by updatedAt.
+// The slug is never patched here, and the write happens even with no flags because `list` orders by updatedAt.
 async function applyMetadata({
 	tx,
 	page,
@@ -269,7 +272,7 @@ async function createPage({
 			createdByUserId: userId,
 			title,
 			description: input.description ?? null,
-			visibility: input.visibility ?? "org",
+			visibility: input.visibility ?? "just_me",
 		})
 		.returning();
 
@@ -280,51 +283,4 @@ async function createPage({
 		});
 	}
 	return page;
-}
-
-// Attached to the version, not the page: a pinned version must keep serving
-// what it published, so a later version dropping an asset cannot free the blob.
-async function attachFiles({
-	tx,
-	pageVersionId,
-	fileIds,
-	organizationId,
-	userId,
-}: {
-	tx: Tx;
-	pageVersionId: string;
-	fileIds: string[];
-	organizationId: string;
-	userId: string;
-}): Promise<void> {
-	if (fileIds.length === 0) return;
-
-	const unique = [...new Set(fileIds)];
-	// Without this a caller could attach another org's file and read it through
-	// the page.
-	const owned = await tx
-		.select({ id: files.id })
-		.from(files)
-		.where(
-			and(eq(files.organizationId, organizationId), inArray(files.id, unique)),
-		);
-
-	if (owned.length !== unique.length) {
-		throw new TRPCError({
-			code: "NOT_FOUND",
-			message: "One or more files were not found",
-		});
-	}
-
-	await tx
-		.insert(attachments)
-		.values(
-			unique.map((fileId) => ({
-				fileId,
-				parentKind: "page_version" as const,
-				parentId: pageVersionId,
-				createdByUserId: userId,
-			})),
-		)
-		.onConflictDoNothing();
 }

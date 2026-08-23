@@ -1,27 +1,16 @@
 import { afterAll, beforeAll, describe, expect, mock, test } from "bun:test";
 
 /**
- * Publish, end to end, against a real Postgres.
- *
- * Deliberately not named `*.test.ts`: it needs a migrated database and the
- * whole of `env.ts` to validate, so `bun test` would fail at import time in
- * any environment without them. Run it explicitly instead, from the repo root:
+ * Publish, end to end, against a real Postgres. Not named `*.test.ts` because it needs a
+ * migrated database, so run it explicitly from the repo root (the leading `./` matters,
+ * or bun treats the argument as a name filter and runs nothing):
  *
  *   BLAXEL_API_KEY=test BLAXEL_REGION=test BLAXEL_SANDBOX_IMAGE=test \
  *   BLAXEL_WORKSPACE=test OPENAI_API_KEY=test \
  *   bun test --env-file=.env ./packages/trpc/src/router/page/publish.integration.ts
- *
- * The leading `./` matters — without it bun treats the argument as a name
- * filter and, finding no `.test.` in it, runs nothing.
- *
- * It creates its own organization and users and deletes them afterwards, so it
- * is safe to re-run, but never point it at a database anyone else is using.
  */
 
-// Vercel Blob is stubbed: the local BLOB_READ_WRITE_TOKEN is a placeholder, so
-// real uploads cannot work here. Everything below the blob call — resolution,
-// version arithmetic, attachments, dedup, visibility — runs against real
-// Postgres.
+// Vercel Blob is stubbed because the local token is a placeholder; everything below it hits real Postgres.
 const blobStore = new Map<string, Buffer>();
 let putCalls = 0;
 mock.module("@vercel/blob", () => ({
@@ -40,8 +29,6 @@ mock.module("@vercel/blob", () => ({
 
 const { db, dbWs } = await import("@superset/db/client");
 const {
-	attachments,
-	files,
 	members,
 	organizations,
 	cloudWorkspaces,
@@ -296,7 +283,9 @@ describe("publish", () => {
 
 		expect(row?.sizeBytes).toBe(Buffer.byteLength(body));
 		expect(row?.sha256).toHaveLength(64);
-		expect(row?.blobPathname).toContain(`pages/${result.id}/1/`);
+		// Keyed by content hash because page id and version are not known until after the upload.
+		expect(row?.blobPathname).toContain(`pages/${ORG}/`);
+		expect(row?.blobPathname).toContain(row?.sha256 ?? "no-hash");
 	});
 });
 
@@ -307,8 +296,7 @@ describe("visibility", () => {
 			visibility: "just_me",
 		});
 
-		// Same organization, different member — the org check alone would let
-		// this through, which is exactly the hole being closed.
+		// Same organization, different member: the org check alone would let this through.
 		await expect(
 			publishPage({
 				input: {
@@ -355,8 +343,7 @@ describe("visibility", () => {
 });
 
 describe("workspace access", () => {
-	// A cloud workspace is the case Neon *can* verify, so it is the one with a
-	// real boundary to test.
+	// A cloud workspace is the case Neon can verify, so it is the one with a real boundary to test.
 	const makeCloudWorkspace = async (organizationId: string, tag: string) => {
 		const [project] = await db
 			.insert(v2Projects)
@@ -404,96 +391,6 @@ describe("workspace access", () => {
 			title: "Local Workspace",
 		});
 		expect(result.version).toBe(1);
-	});
-});
-
-describe("attachments", () => {
-	const makeFile = async (organizationId: string, sha: string) => {
-		const [row] = await db
-			.insert(files)
-			.values({
-				organizationId,
-				blobPathname: `files/${sha}/logo.png`,
-				filename: "logo.png",
-				contentType: "image/png",
-				sizeBytes: 10,
-				sha256: sha,
-				createdByUserId: USER,
-			})
-			.returning();
-		if (!row) throw new Error("failed to insert test file");
-		return row;
-	};
-
-	test("attaches uploaded files to the new version", async () => {
-		const file = await makeFile(ORG, `sha-${suffix}-1`);
-		const result = await publish({ title: "With Assets", fileIds: [file.id] });
-
-		const [version] = await db
-			.select()
-			.from(pageVersions)
-			.where(eq(pageVersions.pageId, result.id));
-		const rows = await db
-			.select()
-			.from(attachments)
-			.where(eq(attachments.parentId, version?.id ?? ""));
-
-		expect(rows).toHaveLength(1);
-		expect(rows[0]?.fileId).toBe(file.id);
-		expect(rows[0]?.parentKind).toBe("page_version");
-	});
-
-	test("refuses to attach a file from another organization", async () => {
-		const foreign = await makeFile(OTHER_ORG, `sha-${suffix}-2`);
-		await expect(
-			publish({ title: "Cross Org", fileIds: [foreign.id] }),
-		).rejects.toThrow(/not found/i);
-	});
-
-	test("attaching the same file twice yields one row", async () => {
-		const file = await makeFile(ORG, `sha-${suffix}-3`);
-		const result = await publish({
-			title: "Dup Attach",
-			fileIds: [file.id, file.id],
-		});
-		const [version] = await db
-			.select()
-			.from(pageVersions)
-			.where(eq(pageVersions.pageId, result.id));
-		const rows = await db
-			.select()
-			.from(attachments)
-			.where(eq(attachments.parentId, version?.id ?? ""));
-		expect(rows).toHaveLength(1);
-	});
-
-	test("each version gets its own attachments, so a pin keeps its assets", async () => {
-		const file = await makeFile(ORG, `sha-${suffix}-4`);
-		const v1 = await publish({
-			entryPath: "pinned/index.html",
-			workspaceId: WORKSPACE,
-			fileIds: [file.id],
-		});
-		const v2 = await publish({
-			entryPath: "pinned/index.html",
-			workspaceId: WORKSPACE,
-			fileIds: [file.id],
-		});
-		expect(v2.version).toBe(2);
-
-		const versions = await db
-			.select()
-			.from(pageVersions)
-			.where(eq(pageVersions.pageId, v1.id));
-		expect(versions).toHaveLength(2);
-
-		const attached = await Promise.all(
-			versions.map((v) =>
-				db.select().from(attachments).where(eq(attachments.parentId, v.id)),
-			),
-		);
-		// Both versions reference the same file; neither depends on the other.
-		expect(attached.every((rows) => rows.length === 1)).toBe(true);
 	});
 });
 

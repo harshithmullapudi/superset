@@ -2,9 +2,7 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import { basename, extname, resolve } from "node:path";
 import { CLIError, positional, string } from "@superset/cli-framework";
 import { command } from "../../../lib/command";
-import { collectAssetReferences, rewriteAssetReferences } from "./assets";
 import { resolveEntryPath } from "./entryPath";
-import { uploadAssets } from "./uploadAssets";
 
 const VISIBILITIES = ["just_me", "org"] as const;
 
@@ -31,7 +29,7 @@ export default command({
 		if (extname(filePath).toLowerCase() !== ".html") {
 			throw new CLIError(
 				"Only .html files can be published as a page",
-				"Images and other media upload as assets referenced from the HTML",
+				"A page is one self-contained file: inline your CSS and JS, and embed images as data: URIs",
 			);
 		}
 		if (
@@ -46,21 +44,6 @@ export default command({
 
 		const html = readFileSync(filePath, "utf8");
 
-		// Containment boundary; without a workspace it is the HTML's directory.
-		const rootDir = process.env.SUPERSET_WORKSPACE_PATH;
-
-		// Assets first: the HTML is not final until their URLs exist.
-		const assets = collectAssetReferences(html, filePath, rootDir);
-		const uploaded = await uploadAssets(ctx.api, assets);
-		const finalHtml = uploaded.length
-			? rewriteAssetReferences(
-					html,
-					filePath,
-					new Map(uploaded.map((asset) => [asset.reference, asset.url])),
-					rootDir,
-				)
-			: html;
-
 		const entryPath = resolveEntryPath({
 			filePath,
 			workspacePath: process.env.SUPERSET_WORKSPACE_PATH,
@@ -70,7 +53,7 @@ export default command({
 			: undefined;
 
 		const page = await ctx.api.page.publish.mutate({
-			content: Buffer.from(finalHtml, "utf8").toString("base64"),
+			content: Buffer.from(html, "utf8").toString("base64"),
 			contentType: "text/html",
 			filename: basename(filePath),
 			...(entryPath && workspaceId ? { entryPath, workspaceId } : {}),
@@ -81,24 +64,16 @@ export default command({
 			...(options.visibility
 				? { visibility: options.visibility as (typeof VISIBILITIES)[number] }
 				: {}),
-			fileIds: uploaded.map((asset) => asset.fileId),
 		});
 
-		const assetLine = uploaded.length
-			? `\n${uploaded.length} asset${uploaded.length === 1 ? "" : "s"}${
-					uploaded.some((asset) => asset.reused)
-						? ` (${uploaded.filter((a) => a.reused).length} already uploaded)`
-						: ""
-				}`
-			: "";
 		const unlinked =
 			entryPath || options.page
 				? ""
 				: "\nNot linked to a workspace — republish with --page to add a version";
 
 		return {
-			data: { ...page, assets: uploaded },
-			message: `Published "${page.title}" v${page.version}\n${page.url}${assetLine}${unlinked}`,
+			data: page,
+			message: `Published "${page.title}" v${page.version}\n${page.url}${unlinked}`,
 		};
 	},
 });

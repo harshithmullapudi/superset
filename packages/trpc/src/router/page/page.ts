@@ -7,10 +7,10 @@ import {
 } from "@superset/db/schema";
 import { TRPCError, type TRPCRouterRecord } from "@trpc/server";
 import { head } from "@vercel/blob";
-import { and, desc, eq, or } from "drizzle-orm";
+import { and, desc, eq, or, sql } from "drizzle-orm";
 import { protectedProcedure } from "../../trpc";
 import { requireActiveOrgMembership } from "../utils/active-org";
-import { assertPageReadable } from "./access";
+import { assertPageReadable, assertPageWritable } from "./access";
 import { pageUrl } from "./page-url";
 import { publishPage } from "./publish";
 import {
@@ -18,6 +18,7 @@ import {
 	pageRefSchema,
 	publishPageSchema,
 	pullPageSchema,
+	setPageVisibilitySchema,
 } from "./schema";
 import { assertWorkspaceAccess } from "./workspace-access";
 
@@ -89,8 +90,7 @@ export const pageRouter = {
 			const organizationId = await requireActiveOrgMembership(ctx);
 			const userId = ctx.session.user.id;
 
-			// Same gate as publish: a caller-supplied workspaceId must not become
-			// a way to probe another tenant.
+			// Same gate as publish: a caller-supplied workspaceId must not probe another tenant.
 			if (input?.workspaceId) {
 				await assertWorkspaceAccess({
 					executor: db,
@@ -99,16 +99,18 @@ export const pageRouter = {
 				});
 			}
 
+			// A LATERAL runs once per in-scope page and stops at the first row; DISTINCT ON sorted every tenant's versions.
 			const latest = db
-				.selectDistinctOn([pageVersions.pageId], {
-					pageId: pageVersions.pageId,
+				.select({
 					version: pageVersions.version,
 					contentType: pageVersions.contentType,
 					sizeBytes: pageVersions.sizeBytes,
 					publishedAt: pageVersions.createdAt,
 				})
 				.from(pageVersions)
-				.orderBy(pageVersions.pageId, desc(pageVersions.version))
+				.where(eq(pageVersions.pageId, pages.id))
+				.orderBy(desc(pageVersions.version))
+				.limit(1)
 				.as("latest");
 
 			const base = db
@@ -127,7 +129,7 @@ export const pageRouter = {
 					publishedAt: latest.publishedAt,
 				})
 				.from(pages)
-				.leftJoin(latest, eq(latest.pageId, pages.id));
+				.leftJoinLateral(latest, sql`true`);
 
 			const scoped = input?.workspaceId
 				? base
@@ -167,6 +169,27 @@ export const pageRouter = {
 			servedVersion: page.sharedVersion ?? latestVersion,
 		};
 	}),
+
+	// Creator only, same as publishing: changing who sees a page can expose a colleague's work.
+	setVisibility: protectedProcedure
+		.input(setPageVisibilitySchema)
+		.mutation(async ({ ctx, input }) => {
+			const organizationId = await requireActiveOrgMembership(ctx);
+			const userId = ctx.session.user.id;
+			const page = await loadPage({ id: input.id, organizationId, userId });
+			assertPageWritable(page, userId);
+
+			const [updated] = await db
+				.update(pages)
+				.set({ visibility: input.visibility })
+				.where(eq(pages.id, page.id))
+				.returning();
+
+			if (!updated) {
+				throw new TRPCError({ code: "NOT_FOUND", message: "Page not found" });
+			}
+			return { id: updated.id, visibility: updated.visibility };
+		}),
 
 	versions: protectedProcedure
 		.input(pageRefSchema)
@@ -254,6 +277,9 @@ export const pageRouter = {
 				slug: page.slug,
 				url: pageUrl(page.slug),
 				title: page.title,
+				// Projected from the row `loadPage` already fetched, to save a second `get` round trip.
+				visibility: page.visibility,
+				createdByUserId: page.createdByUserId,
 				version: row.version,
 				label: row.label,
 				contentType: row.contentType,

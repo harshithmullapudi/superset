@@ -52,6 +52,15 @@ export interface CommentPaneData {
 	line?: number;
 }
 
+// A published page opened natively rather than in a browser pane: the comment
+// layer here is the desktop one, which a webview pointed at the web app could
+// not give us.
+export interface PagePaneData {
+	pageId: string;
+	slug: string;
+	title: string;
+}
+
 export interface ChatV3PaneData {
 	sessionId: string | null;
 }
@@ -63,4 +72,5 @@ export type PaneViewerData =
 	| BrowserPaneData
 	| DevtoolsPaneData
 	| DiffPaneData
-	| CommentPaneData;
+	| CommentPaneData
+	| PagePaneData;

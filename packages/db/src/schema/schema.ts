@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { desc, sql } from "drizzle-orm";
 import {
 	boolean,
 	check,
@@ -18,7 +18,6 @@ import {
 } from "drizzle-orm/pg-core";
 import { organizations, users } from "./auth";
 import {
-	attachmentParentKindValues,
 	automationPromptSourceValues,
 	automationRunStatusValues,
 	automationSessionKindValues,
@@ -29,6 +28,8 @@ import {
 	desktopNoticeSeverityValues,
 	desktopNoticeTriggerValues,
 	integrationProviderValues,
+	pageCommentAnchorKindValues,
+	pageCommentAuthorKindValues,
 	pageVisibilityValues,
 	taskPriorityValues,
 	taskStatusEnumValues,
@@ -67,9 +68,13 @@ export const v2WorkspaceType = pgEnum(
 	v2WorkspaceTypeValues,
 );
 export const pageVisibility = pgEnum("page_visibility", pageVisibilityValues);
-export const attachmentParentKind = pgEnum(
-	"attachment_parent_kind",
-	attachmentParentKindValues,
+export const pageCommentAnchorKind = pgEnum(
+	"page_comment_anchor_kind",
+	pageCommentAnchorKindValues,
+);
+export const pageCommentAuthorKind = pgEnum(
+	"page_comment_author_kind",
+	pageCommentAuthorKindValues,
 );
 
 export const taskStatuses = pgTable(
@@ -1183,7 +1188,8 @@ export const pages = pgTable(
 		}),
 		title: text().notNull(),
 		description: text(),
-		visibility: pageVisibility().notNull().default("org"),
+		// Narrowest audience by default, so widening a page is always a deliberate act.
+		visibility: pageVisibility().notNull().default("just_me"),
 		// Null serves the latest; set pins the viewer to that version.
 		sharedVersion: integer("shared_version"),
 		createdAt: timestamp("created_at", { withTimezone: true })
@@ -1196,7 +1202,11 @@ export const pages = pgTable(
 	},
 	(table) => [
 		uniqueIndex("pages_slug_unique").on(table.slug),
-		index("pages_organization_id_idx").on(table.organizationId),
+		// Composite because `page.list` filters by org then sorts by updatedAt; org-only lookups still ride the leading column.
+		index("pages_organization_id_updated_at_idx").on(
+			table.organizationId,
+			desc(table.updatedAt),
+		),
 		index("pages_created_by_user_id_idx").on(table.createdByUserId),
 	],
 );
@@ -1270,77 +1280,100 @@ export const workspacePages = pgTable(
 export type InsertWorkspacePage = typeof workspacePages.$inferInsert;
 export type SelectWorkspacePage = typeof workspacePages.$inferSelect;
 
-// Parentless by design: assets are uploaded before the version they attach to
-// exists, so an unattached file is normal. Lifetime is a refcount over
-// `attachments`, collected by a sweep rather than a cascade.
-export const files = pgTable(
-	"files",
+// One conversation pinned to one place in a page. Stores the anchor, never a
+// position — the viewer re-resolves coordinates on every layout change.
+export const pageCommentThreads = pgTable(
+	"page_comment_threads",
 	{
 		id: uuid().primaryKey().defaultRandom(),
-		organizationId: uuid("organization_id")
+		pageId: uuid("page_id")
 			.notNull()
-			.references(() => organizations.id, { onDelete: "cascade" }),
-		blobPathname: text("blob_pathname").notNull(),
-		filename: text().notNull(),
-		contentType: text("content_type").notNull(),
-		sizeBytes: integer("size_bytes").notNull(),
-		sha256: text().notNull(),
+			.references(() => pages.id, { onDelete: "cascade" }),
+		// Not nullable: an anchor only means something against the bytes it was recorded on.
+		pageVersionId: uuid("page_version_id")
+			.notNull()
+			.references(() => pageVersions.id, { onDelete: "cascade" }),
+		anchorKind: pageCommentAnchorKind("anchor_kind").notNull(),
+		// `{ path, tag }` for an element pin, null for a page-level thread; validated by zod at the API edge.
+		anchor: jsonb(),
+		// Denormalized out of `anchor` for readers that cannot use a CSS path: humans and agents.
+		anchorText: text("anchor_text"),
 		createdByUserId: uuid("created_by_user_id").references(() => users.id, {
+			onDelete: "set null",
+		}),
+		// An agent may only post into a thread a human has opened to it; cleared on republish.
+		agentActivatedAt: timestamp("agent_activated_at", { withTimezone: true }),
+		agentActivatedByUserId: uuid("agent_activated_by_user_id").references(
+			() => users.id,
+			{ onDelete: "set null" },
+		),
+		resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+		resolvedByUserId: uuid("resolved_by_user_id").references(() => users.id, {
 			onDelete: "set null",
 		}),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.notNull()
 			.defaultNow(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.notNull()
+			.defaultNow()
+			.$onUpdate(() => new Date()),
 	},
 	(table) => [
-		// Structural invariant only; the precise allowlist lives in app code.
-		// LIKE rather than equality because a media type is case-insensitive and
-		// may carry parameters, and because a `;` literal breaks drizzle-kit's
-		// statement splitter.
+		index("page_comment_threads_page_id_idx").on(table.pageId),
+		index("page_comment_threads_page_version_id_idx").on(table.pageVersionId),
+		// For open-threads-only reads; `pageComment.list` still returns resolved threads too.
+		index("page_comment_threads_open_idx")
+			.on(table.pageId)
+			.where(sql`resolved_at IS NULL`),
+		// Keeps "null anchor means page-level" a rule rather than a convention.
 		check(
-			"files_never_a_page",
-			sql`lower(btrim(${table.contentType})) NOT LIKE 'text/html%' AND lower(btrim(${table.contentType})) NOT LIKE 'text/markdown%'`,
+			"page_comment_threads_anchor_matches_kind",
+			sql`(anchor_kind = 'page') = (anchor IS NULL)`,
 		),
-		index("files_organization_id_idx").on(table.organizationId),
-		index("files_org_sha256_idx").on(table.organizationId, table.sha256),
 	],
 );
 
-export type InsertFile = typeof files.$inferInsert;
-export type SelectFile = typeof files.$inferSelect;
+export type InsertPageCommentThread = typeof pageCommentThreads.$inferInsert;
+export type SelectPageCommentThread = typeof pageCommentThreads.$inferSelect;
 
-// A file placed on a parent; access is the parent's access. `parent_id` has no
-// FK so a parent can live outside Neon. Integrity is the sweep's job — an
-// ancestor cascade deletes rows without running any application code.
-export const attachments = pgTable(
-	"attachments",
+export const pageComments = pgTable(
+	"page_comments",
 	{
 		id: uuid().primaryKey().defaultRandom(),
-		fileId: uuid("file_id")
+		threadId: uuid("thread_id")
 			.notNull()
-			.references(() => files.id, { onDelete: "cascade" }),
-		parentKind: attachmentParentKind("parent_kind").notNull(),
-		parentId: uuid("parent_id").notNull(),
-		label: text(),
-		createdByUserId: uuid("created_by_user_id").references(() => users.id, {
+			.references(() => pageCommentThreads.id, { onDelete: "cascade" }),
+		authorKind: pageCommentAuthorKind("author_kind").notNull().default("human"),
+		// On an agent reply this is whoever dispatched it, so every row has a person behind it.
+		authorUserId: uuid("author_user_id").references(() => users.id, {
 			onDelete: "set null",
 		}),
+		agentSessionId: uuid("agent_session_id").references(() => chatSessions.id, {
+			onDelete: "set null",
+		}),
+		body: text().notNull(),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.notNull()
 			.defaultNow(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.notNull()
+			.defaultNow()
+			.$onUpdate(() => new Date()),
+		// Soft delete: hard-deleting the first comment would take the thread's anchor and replies with it.
+		deletedAt: timestamp("deleted_at", { withTimezone: true }),
 	},
 	(table) => [
-		index("attachments_parent_idx").on(table.parentKind, table.parentId),
-		index("attachments_file_id_idx").on(table.fileId),
-		// One row per file per parent, so a repeat attach cannot inflate the
-		// refcount the sweep reads.
-		unique("attachments_parent_file_unique").on(
-			table.parentKind,
-			table.parentId,
-			table.fileId,
+		index("page_comments_thread_id_created_at_idx").on(
+			table.threadId,
+			table.createdAt,
+		),
+		check(
+			"page_comments_agent_has_session",
+			sql`author_kind <> 'agent' OR agent_session_id IS NOT NULL`,
 		),
 	],
 );
 
-export type InsertAttachment = typeof attachments.$inferInsert;
-export type SelectAttachment = typeof attachments.$inferSelect;
+export type InsertPageComment = typeof pageComments.$inferInsert;
+export type SelectPageComment = typeof pageComments.$inferSelect;

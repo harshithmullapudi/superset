@@ -155,9 +155,12 @@ export const pageVisibilityValues = ["just_me", "org", "everyone"] as const;
 export const pageVisibilityEnum = z.enum(pageVisibilityValues);
 export type PageVisibility = z.infer<typeof pageVisibilityEnum>;
 
-// New kinds arrive via ALTER TYPE ... ADD VALUE. Postgres refuses to *use* a
-// new value in the transaction that added it, so adding and backfilling are
-// two migrations.
-export const attachmentParentKindValues = ["page_version"] as const;
-export const attachmentParentKindEnum = z.enum(attachmentParentKindValues);
-export type AttachmentParentKind = z.infer<typeof attachmentParentKindEnum>;
+// What a thread is pinned to; `page` carries no anchor and `text` is reserved for quote ranges.
+export const pageCommentAnchorKindValues = ["element", "text", "page"] as const;
+export const pageCommentAnchorKindEnum = z.enum(pageCommentAnchorKindValues);
+export type PageCommentAnchorKind = z.infer<typeof pageCommentAnchorKindEnum>;
+
+// An agent reply still names the person who dispatched it, so this records who wrote the body.
+export const pageCommentAuthorKindValues = ["human", "agent"] as const;
+export const pageCommentAuthorKindEnum = z.enum(pageCommentAuthorKindValues);
+export type PageCommentAuthorKind = z.infer<typeof pageCommentAuthorKindEnum>;
