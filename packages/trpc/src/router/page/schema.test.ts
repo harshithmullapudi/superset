@@ -31,8 +31,8 @@ describe("publishPageSchema", () => {
 			...base,
 			entryPath: "site/index.html",
 		});
-		expect(result.success).toBe(false);
-		expect(result.error?.issues[0]?.message).toBe(
+		if (result.success) throw new Error("expected a validation failure");
+		expect(result.error.issues[0]?.message).toBe(
 			"workspaceId and entryPath must be provided together",
 		);
 	});

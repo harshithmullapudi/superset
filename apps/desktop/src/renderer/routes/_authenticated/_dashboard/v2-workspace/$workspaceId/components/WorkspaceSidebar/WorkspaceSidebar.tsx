@@ -177,8 +177,7 @@ export function WorkspaceSidebar({
 	};
 
 	// `?? false` so an unloaded or offline flag hides the tab.
-	const isPagesEnabled =
-		useFeatureFlagEnabled(FEATURE_FLAGS.PAGES) ?? false;
+	const isPagesEnabled = useFeatureFlagEnabled(FEATURE_FLAGS.PAGES) ?? false;
 	const pagesTab: SidebarTabDefinition = {
 		id: "pages",
 		label: "Pages",
@@ -218,7 +217,7 @@ export function WorkspaceSidebar({
 			/>
 			<SidebarHeader
 				tabs={tabs}
-				activeTab={activeTab}
+				activeTab={activeTabDef?.id ?? activeTab}
 				onTabChange={setActiveTab}
 				compact={compact}
 			/>
