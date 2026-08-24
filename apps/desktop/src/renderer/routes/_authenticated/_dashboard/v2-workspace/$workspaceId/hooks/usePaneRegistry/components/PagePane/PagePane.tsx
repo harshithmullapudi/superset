@@ -6,7 +6,6 @@ import {
 } from "@superset/ui/page-comments";
 import { Spinner } from "@superset/ui/spinner";
 import { useQuery } from "@tanstack/react-query";
-import { notFound } from "@tanstack/react-router";
 import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useRef } from "react";
 import { cloudTrpc } from "renderer/lib/cloud-trpc";
@@ -20,17 +19,35 @@ import { usePageCommentStore } from "./hooks/usePageCommentStore";
 
 interface PagePaneProps {
 	data: PagePaneData;
+	onDataChange: (data: PagePaneData) => void;
 }
 
-export function PagePane({ data }: PagePaneProps) {
+export function PagePane({ data, onDataChange }: PagePaneProps) {
 	const { workspace } = useWorkspace();
 	const { data: session } = authClient.useSession();
-	const pull = cloudTrpc.page.pull.useQuery({ id: data.pageId });
+	const pull = cloudTrpc.page.pull.useQuery(
+		data.pageId ? { id: data.pageId } : { slug: data.slug },
+	);
 	const downloadUrl = pull.data?.downloadUrl;
+	const pageId = data.pageId ?? pull.data?.id;
+	const title = data.title ?? pull.data?.title ?? data.slug;
 	const store = usePageCommentStore({
-		pageId: data.pageId,
+		pageId: pageId ?? "",
 		version: pull.data?.version ?? 0,
 	});
+
+	const onDataChangeRef = useRef(onDataChange);
+	onDataChangeRef.current = onDataChange;
+	const resolved = pull.data;
+	useEffect(() => {
+		if (!resolved) return;
+		if (data.pageId === resolved.id && data.title === resolved.title) return;
+		onDataChangeRef.current({
+			slug: resolved.slug,
+			pageId: resolved.id,
+			title: resolved.title ?? undefined,
+		});
+	}, [resolved, data.pageId, data.title]);
 
 	const content = useQuery({
 		queryKey: ["page-content", downloadUrl],
@@ -76,11 +93,18 @@ export function PagePane({ data }: PagePaneProps) {
 		const missing =
 			pull.error instanceof TRPCClientError &&
 			pull.error.data?.code === "NOT_FOUND";
-		if (missing) throw notFound();
 		return (
 			<PagePaneMessage
-				title="This page could not be opened"
-				description={pull.error?.message ?? content.error?.message}
+				title={
+					missing
+						? "This page no longer exists"
+						: "This page could not be opened"
+				}
+				description={
+					missing
+						? "It may have been deleted, or it belongs to another organization."
+						: (pull.error?.message ?? content.error?.message)
+				}
 			/>
 		);
 	}
@@ -104,9 +128,9 @@ export function PagePane({ data }: PagePaneProps) {
 		>
 			<div className="flex h-full w-full flex-col">
 				<div className="flex h-9 shrink-0 items-center justify-end gap-1 border-b px-2">
-					{pull.data ? (
+					{pull.data && pageId ? (
 						<PageVisibilityMenu
-							pageId={data.pageId}
+							pageId={pageId}
 							visibility={
 								pull.data.visibility === "just_me" ? "just_me" : "org"
 							}
@@ -115,7 +139,7 @@ export function PagePane({ data }: PagePaneProps) {
 					) : null}
 					<PageHandoffMenu
 						workspaceId={workspace.id}
-						pageTitle={data.title}
+						pageTitle={title}
 						pageSlug={data.slug}
 					/>
 					<CommentModeToggle />
@@ -123,7 +147,7 @@ export function PagePane({ data }: PagePaneProps) {
 				<div className="min-h-0 min-w-0 flex-1">
 					<PageCommentsView
 						html={content.data}
-						title={data.title}
+						title={title}
 						serveHtml={serveHtml}
 					/>
 				</div>

@@ -587,9 +587,17 @@ export function usePaneRegistry({
 				? {
 						page: {
 							getIcon: () => <FileText className="size-3.5" />,
-							getTitle: (pane) => (pane.data as PagePaneData).title,
+							getTitle: (pane) => {
+								const data = pane.data as PagePaneData;
+								return data.title ?? data.slug;
+							},
 							renderPane: (ctx: RendererContext<PaneViewerData>) => (
-								<PagePane data={ctx.pane.data as PagePaneData} />
+								<PagePane
+									data={ctx.pane.data as PagePaneData}
+									onDataChange={(data) =>
+										ctx.actions.updateData(data as PaneViewerData)
+									}
+								/>
 							),
 							contextMenuActions: (_ctx, defaults) =>
 								defaults.map((d) =>

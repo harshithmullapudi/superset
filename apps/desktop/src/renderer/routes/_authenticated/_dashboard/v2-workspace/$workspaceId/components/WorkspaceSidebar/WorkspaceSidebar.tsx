@@ -23,6 +23,9 @@ import type { SidebarTabDefinition } from "./types";
 // exist in v2 yet. The PR status group (link + merge dropdown for an open PR)
 // always renders so users can see PR state and merge once a PR exists.
 
+const LABELLED_TAB_WIDTH = 88;
+const LABEL_HYSTERESIS = 20;
+
 type SidebarTabId = "changes" | "files" | "review" | "pages";
 
 const VALID_TAB_IDS: readonly SidebarTabId[] = [
@@ -92,19 +95,6 @@ export function WorkspaceSidebar({
 
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [compact, setCompact] = useState(false);
-	useEffect(() => {
-		const el = containerRef.current;
-		if (!el) return;
-		const ro = new ResizeObserver(([entry]) => {
-			if (!entry) return;
-			const width = entry.contentRect.width;
-			// Hysteresis: expand back to labels only once we're clearly past
-			// the breakpoint, so the labels don't jitter on the edge.
-			setCompact((prev) => (prev ? width < 280 : width < 260));
-		});
-		ro.observe(el);
-		return () => ro.disconnect();
-	}, []);
 
 	const changesTabDef = useChangesTab({
 		workspaceId,
@@ -202,6 +192,27 @@ export function WorkspaceSidebar({
 		...(isPagesEnabled ? [pagesTab] : []),
 	];
 	const activeTabDef = tabs.find((t) => t.id === activeTab) ?? tabs[0];
+
+	// A labelled tab needs ~88px (px-3 padding + icon + gap + label, plus room
+	// for a badge). Scaling by tab count keeps three tabs collapsing where they
+	// always have while giving the four-tab layout the ~350px it actually needs.
+	const tabCount = tabs.length;
+	useEffect(() => {
+		const el = containerRef.current;
+		if (!el) return;
+		const collapseBelow = tabCount * LABELLED_TAB_WIDTH;
+		const ro = new ResizeObserver(([entry]) => {
+			if (!entry) return;
+			const width = entry.contentRect.width;
+			// Hysteresis: expand back to labels only once we're clearly past
+			// the breakpoint, so the labels don't jitter on the edge.
+			setCompact((prev) =>
+				prev ? width < collapseBelow + LABEL_HYSTERESIS : width < collapseBelow,
+			);
+		});
+		ro.observe(el);
+		return () => ro.disconnect();
+	}, [tabCount]);
 
 	return (
 		<div
