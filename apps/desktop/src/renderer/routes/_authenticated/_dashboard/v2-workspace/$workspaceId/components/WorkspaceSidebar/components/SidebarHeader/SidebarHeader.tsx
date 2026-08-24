@@ -40,9 +40,7 @@ export function SidebarHeader({
 									compact,
 									inverted: true,
 								}),
-								// `shrink` overrides the helper's `shrink-0` so an
-								// over-full strip ellipsises labels instead of clipping them.
-								"relative min-w-0 flex-1 shrink justify-center",
+								"relative min-w-0 flex-1 justify-center",
 								// The resizable panel already draws the sidebar's left edge.
 								index === 0 && "border-l-transparent",
 							)}

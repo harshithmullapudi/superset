@@ -193,9 +193,6 @@ export function WorkspaceSidebar({
 	];
 	const activeTabDef = tabs.find((t) => t.id === activeTab) ?? tabs[0];
 
-	// A labelled tab needs ~88px (px-3 padding + icon + gap + label, plus room
-	// for a badge). Scaling by tab count keeps three tabs collapsing where they
-	// always have while giving the four-tab layout the ~350px it actually needs.
 	const tabCount = tabs.length;
 	useEffect(() => {
 		const el = containerRef.current;
@@ -204,8 +201,6 @@ export function WorkspaceSidebar({
 		const ro = new ResizeObserver(([entry]) => {
 			if (!entry) return;
 			const width = entry.contentRect.width;
-			// Hysteresis: expand back to labels only once we're clearly past
-			// the breakpoint, so the labels don't jitter on the edge.
 			setCompact((prev) =>
 				prev ? width < collapseBelow + LABEL_HYSTERESIS : width < collapseBelow,
 			);
