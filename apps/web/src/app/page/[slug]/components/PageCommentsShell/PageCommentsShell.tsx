@@ -14,7 +14,6 @@ interface PageCommentsShellProps {
 	children: ReactNode;
 }
 
-// The store needs hooks, so the server/client boundary lands here.
 export function PageCommentsShell({
 	pageId,
 	version,

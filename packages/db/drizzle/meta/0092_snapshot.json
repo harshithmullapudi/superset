@@ -1,6 +1,6 @@
 {
-  "id": "b2cf212a-df59-4992-8bc3-9a7720c91c8f",
-  "prevId": "9f31dd19-917e-4b9d-a3dc-f519b459d262",
+  "id": "c3c56d83-b9e8-4905-989d-97b91ae0480b",
+  "prevId": "920d77db-3857-4c6b-9147-a351c29ccb64",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -6088,6 +6088,12 @@
         "sync_error": {
           "name": "sync_error",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "external_updated_at": {
+          "name": "external_updated_at",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": false
         },

@@ -7,7 +7,6 @@ const STACK_OFFSET = 20;
 
 interface CommentBubbleProps {
 	rect: FrameRect;
-	/** Position among threads sharing this anchor, so they sit beside each other rather than stacked. */
 	stackIndex?: number;
 	initials: string;
 	count: number;
@@ -16,7 +15,6 @@ interface CommentBubbleProps {
 	onClick: () => void;
 }
 
-// Sits half outside the anchor's top-left corner, so it reads as attached to the element rather than as page content.
 export function CommentBubble({
 	rect,
 	stackIndex = 0,

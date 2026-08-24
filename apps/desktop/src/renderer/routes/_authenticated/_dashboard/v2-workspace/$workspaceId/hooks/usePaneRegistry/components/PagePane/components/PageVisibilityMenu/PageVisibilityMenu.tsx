@@ -11,7 +11,6 @@ interface PageVisibilityMenuProps {
 	createdByUserId: string | null;
 }
 
-// Desktop wiring for the shared menu; only the client and the re-read differ from web.
 export function PageVisibilityMenu({
 	pageId,
 	visibility,
@@ -28,7 +27,6 @@ export function PageVisibilityMenu({
 			currentUserId={session?.user?.id}
 			onChange={async (next) => {
 				await setVisibility.mutateAsync({ id: pageId, visibility: next });
-				// `pull` feeds this pane's label and `list` the sidebar's lock icon; both are awaited so the menu stays busy until each catches up.
 				await Promise.all([
 					utils.page.pull.invalidate({ id: pageId }),
 					utils.page.list.invalidate(),

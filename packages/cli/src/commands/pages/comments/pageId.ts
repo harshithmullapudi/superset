@@ -1,8 +1,6 @@
 import type { CliContext } from "../../../lib/command";
 import { pageRefFromArg } from "../pageRef";
 
-// `pageComment.list` keys off a uuid, but `--page` takes whatever `pages list`
-// printed, so a slug costs one extra round trip.
 export async function resolvePageId(
 	ctx: CliContext,
 	ref: string,

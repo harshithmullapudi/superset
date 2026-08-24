@@ -150,17 +150,14 @@ export const desktopNoticeCtaActionValues = [
 	"open-url",
 ] as const;
 
-// `everyone` is not offered by the API yet; Postgres cannot drop an enum value.
 export const pageVisibilityValues = ["just_me", "org", "everyone"] as const;
 export const pageVisibilityEnum = z.enum(pageVisibilityValues);
 export type PageVisibility = z.infer<typeof pageVisibilityEnum>;
 
-// What a thread is pinned to; `page` carries no anchor and `text` is reserved for quote ranges.
 export const pageCommentAnchorKindValues = ["element", "text", "page"] as const;
 export const pageCommentAnchorKindEnum = z.enum(pageCommentAnchorKindValues);
 export type PageCommentAnchorKind = z.infer<typeof pageCommentAnchorKindEnum>;
 
-// An agent reply still names the person who dispatched it, so this records who wrote the body.
 export const pageCommentAuthorKindValues = ["human", "agent"] as const;
 export const pageCommentAuthorKindEnum = z.enum(pageCommentAuthorKindValues);
 export type PageCommentAuthorKind = z.infer<typeof pageCommentAuthorKindEnum>;

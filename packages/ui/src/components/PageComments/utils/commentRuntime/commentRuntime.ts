@@ -1,11 +1,6 @@
-// The page frame is sandboxed without `allow-same-origin`, so this script is injected
-// into it to report geometry outward — the parent draws everything a reader sees.
-
 export interface CommentAnchor {
-	// `:nth-of-type` chain from <body>, re-resolved on every geometry sync.
 	path: string;
 	tag: string;
-	// Kept for showing what a comment was left on once the path stops resolving.
 	text: string;
 }
 
@@ -19,7 +14,6 @@ export interface FrameRect {
 export const HOST_CHANNEL = "superset-comments/host";
 export const FRAME_CHANNEL = "superset-comments/frame";
 
-// Split from the channel tag so senders can pass a bare body; `Omit` over a union would not.
 export type HostMessageBody =
 	| { type: "set-mode"; enabled: boolean }
 	| { type: "track"; anchors: { id: string; anchor: CommentAnchor }[] };
@@ -29,7 +23,6 @@ export type HostMessage = HostMessageBody & { channel: typeof HOST_CHANNEL };
 export type FrameMessage =
 	| { channel: typeof FRAME_CHANNEL; type: "ready" }
 	| { channel: typeof FRAME_CHANNEL; type: "hover"; rect: FrameRect | null }
-	// A click inside the frame raises no event in this document.
 	| { channel: typeof FRAME_CHANNEL; type: "pointer-down" }
 	| {
 			channel: typeof FRAME_CHANNEL;
@@ -43,7 +36,6 @@ export type FrameMessage =
 			entries: { id: string; rect: FrameRect | null }[];
 	  };
 
-// Rects are viewport-relative inside the frame, which is the iframe's content box, so the overlay maps them 1:1.
 const RUNTIME_SOURCE = `(() => {
 	const HOST = ${JSON.stringify(HOST_CHANNEL)};
 	const FRAME = ${JSON.stringify(FRAME_CHANNEL)};
@@ -53,7 +45,6 @@ const RUNTIME_SOURCE = `(() => {
 	let lastHoverPath = null;
 	let frame = 0;
 
-	// targetOrigin "*" is forced by the opaque origin; safe only because every message is geometry.
 	const post = (message) => {
 		parent.postMessage({ channel: FRAME, ...message }, "*");
 	};
@@ -89,7 +80,6 @@ const RUNTIME_SOURCE = `(() => {
 		return { top: r.top, left: r.left, width: r.width, height: r.height };
 	};
 
-	// Skips the wrappers that would swallow the whole page in one anchor.
 	const targetAt = (x, y) => {
 		const el = document.elementFromPoint(x, y);
 		if (!el || el === document.body || el === document.documentElement) return null;
@@ -133,7 +123,6 @@ const RUNTIME_SOURCE = `(() => {
 		post({ type: "hover", rect: null });
 	});
 
-	// Always reported, mode or not, so an open card closes when the reader clicks back onto the page.
 	document.addEventListener(
 		"mousedown",
 		() => {
@@ -142,7 +131,6 @@ const RUNTIME_SOURCE = `(() => {
 		true,
 	);
 
-	// Capture phase, so the page's own click handlers cannot swallow the pick.
 	document.addEventListener(
 		"click",
 		(event) => {
@@ -196,7 +184,6 @@ const RUNTIME_SOURCE = `(() => {
 	post({ type: "ready" });
 })();`;
 
-// Injected on every load; the script idles until switched on, and injecting late would miss the first pick.
 export function injectCommentRuntime(html: string): string {
 	const tag = `<script>${RUNTIME_SOURCE}</script>`;
 	const close = html.lastIndexOf("</body>");

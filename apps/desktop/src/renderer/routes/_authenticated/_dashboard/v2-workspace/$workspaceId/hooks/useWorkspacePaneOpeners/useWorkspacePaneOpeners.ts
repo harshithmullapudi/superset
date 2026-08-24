@@ -191,8 +191,6 @@ export function useWorkspacePaneOpeners({
 		[store],
 	);
 
-	// Its own tab per page, but the same page twice focuses what is already
-	// open — a page is a place, not a stream of results like the comment pane.
 	const openPagePane = useCallback(
 		(page: PagePaneData) => {
 			const state = store.getState();

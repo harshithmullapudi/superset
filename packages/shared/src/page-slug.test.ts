@@ -5,7 +5,6 @@ import {
 	mintPageSlug,
 } from "./page-slug";
 
-// Deterministic stand-in for crypto.getRandomValues so slug output is assertable.
 function fixedRandom(...values: number[]): (length: number) => Uint8Array {
 	return (length) => Uint8Array.from({ length }, (_, i) => values[i] ?? 0);
 }
@@ -31,8 +30,6 @@ describe("generateBasePageSlug", () => {
 	});
 
 	test("truncates to 50 characters without leaving a trailing hyphen", () => {
-		// 49 a's puts the separator exactly on the 50-char boundary, which would
-		// otherwise leave "...a-" and a double hyphen once the suffix lands.
 		const slug = generateBasePageSlug(`${"a".repeat(49)} tail`);
 		expect(slug).toBe("a".repeat(49));
 		expect(slug.endsWith("-")).toBe(false);
@@ -46,7 +43,6 @@ describe("generatePageSlugSuffix", () => {
 	});
 
 	test("maps random bytes through the alphabet", () => {
-		// 0 -> 'a', 1 -> 'b', 36 wraps back to 'a', 35 -> '9'.
 		expect(generatePageSlugSuffix(fixedRandom(0, 1, 36, 35, 2, 3))).toBe(
 			"aba9cd",
 		);

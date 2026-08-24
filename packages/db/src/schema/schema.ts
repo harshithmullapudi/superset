@@ -1172,13 +1172,10 @@ export const desktopNotices = pgTable(
 export type InsertDesktopNotice = typeof desktopNotices.$inferInsert;
 export type SelectDesktopNotice = typeof desktopNotices.$inferSelect;
 
-// Latest version is derived from max(page_versions.version); what a page *is*
-// comes from its latest version's content_type.
 export const pages = pgTable(
 	"pages",
 	{
 		id: uuid().primaryKey().defaultRandom(),
-		// Frozen once minted: a retitle never moves a shared link.
 		slug: text().notNull(),
 		organizationId: uuid("organization_id")
 			.notNull()
@@ -1188,9 +1185,7 @@ export const pages = pgTable(
 		}),
 		title: text().notNull(),
 		description: text(),
-		// Narrowest audience by default, so widening a page is always a deliberate act.
 		visibility: pageVisibility().notNull().default("just_me"),
-		// Null serves the latest; set pins the viewer to that version.
 		sharedVersion: integer("shared_version"),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.notNull()
@@ -1202,7 +1197,6 @@ export const pages = pgTable(
 	},
 	(table) => [
 		uniqueIndex("pages_slug_unique").on(table.slug),
-		// Composite because `page.list` filters by org then sorts by updatedAt; org-only lookups still ride the leading column.
 		index("pages_organization_id_updated_at_idx").on(
 			table.organizationId,
 			desc(table.updatedAt),
@@ -1214,7 +1208,6 @@ export const pages = pgTable(
 export type InsertPage = typeof pages.$inferInsert;
 export type SelectPage = typeof pages.$inferSelect;
 
-// Immutable once written — hence no updatedAt. A correction is a new version.
 export const pageVersions = pgTable(
 	"page_versions",
 	{
@@ -1236,8 +1229,6 @@ export const pageVersions = pgTable(
 		}),
 	},
 	(table) => [
-		// Also the race guard for two concurrent publishes computing the same
-		// max(version) + 1.
 		unique("page_versions_page_id_version_unique").on(
 			table.pageId,
 			table.version,
@@ -1249,18 +1240,13 @@ export const pageVersions = pgTable(
 export type InsertPageVersion = typeof pageVersions.$inferInsert;
 export type SelectPageVersion = typeof pageVersions.$inferSelect;
 
-// Republish resolution, not identity: answers "which page am I updating?" so a
-// second publish adds a version instead of minting a new page.
 export const workspacePages = pgTable(
 	"workspace_pages",
 	{
-		// No FK: local workspaces live in their machine's SQLite, so Neon has no
-		// row to reference.
 		workspaceId: uuid("workspace_id").notNull(),
 		pageId: uuid("page_id")
 			.notNull()
 			.references(() => pages.id, { onDelete: "cascade" }),
-		// Relative to the workspace root; compared for equality, never resolved.
 		entryPath: text("entry_path").notNull(),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.notNull()
@@ -1268,7 +1254,6 @@ export const workspacePages = pgTable(
 	},
 	(table) => [
 		primaryKey({ columns: [table.workspaceId, table.pageId] }),
-		// The lookup key; without it one page could be reached from two paths.
 		uniqueIndex("workspace_pages_workspace_id_entry_path_unique").on(
 			table.workspaceId,
 			table.entryPath,
@@ -1280,8 +1265,6 @@ export const workspacePages = pgTable(
 export type InsertWorkspacePage = typeof workspacePages.$inferInsert;
 export type SelectWorkspacePage = typeof workspacePages.$inferSelect;
 
-// One conversation pinned to one place in a page. Stores the anchor, never a
-// position — the viewer re-resolves coordinates on every layout change.
 export const pageCommentThreads = pgTable(
 	"page_comment_threads",
 	{
@@ -1289,21 +1272,15 @@ export const pageCommentThreads = pgTable(
 		pageId: uuid("page_id")
 			.notNull()
 			.references(() => pages.id, { onDelete: "cascade" }),
-		// Not nullable: an anchor only means something against the bytes it was recorded on.
 		pageVersionId: uuid("page_version_id")
 			.notNull()
 			.references(() => pageVersions.id, { onDelete: "cascade" }),
 		anchorKind: pageCommentAnchorKind("anchor_kind").notNull(),
-		// `{ path, tag }` for an element pin, null for a page-level thread; validated by zod at the API edge.
 		anchor: jsonb(),
-		// Denormalized out of `anchor` for readers that cannot use a CSS path: humans and agents.
 		anchorText: text("anchor_text"),
 		createdByUserId: uuid("created_by_user_id").references(() => users.id, {
 			onDelete: "set null",
 		}),
-		// Reserved for per-thread agent activation, and unused so far: nothing writes
-		// these and `pageComment.reply` does not read them, so what actually gates an
-		// agent reply today is the handoff gesture in the viewer, not this column.
 		agentActivatedAt: timestamp("agent_activated_at", { withTimezone: true }),
 		agentActivatedByUserId: uuid("agent_activated_by_user_id").references(
 			() => users.id,
@@ -1324,11 +1301,9 @@ export const pageCommentThreads = pgTable(
 	(table) => [
 		index("page_comment_threads_page_id_idx").on(table.pageId),
 		index("page_comment_threads_page_version_id_idx").on(table.pageVersionId),
-		// For open-threads-only reads; `pageComment.list` still returns resolved threads too.
 		index("page_comment_threads_open_idx")
 			.on(table.pageId)
 			.where(sql`resolved_at IS NULL`),
-		// Keeps "null anchor means page-level" a rule rather than a convention.
 		check(
 			"page_comment_threads_anchor_matches_kind",
 			sql`(anchor_kind = 'page') = (anchor IS NULL)`,
@@ -1347,12 +1322,9 @@ export const pageComments = pgTable(
 			.notNull()
 			.references(() => pageCommentThreads.id, { onDelete: "cascade" }),
 		authorKind: pageCommentAuthorKind("author_kind").notNull().default("human"),
-		// On an agent reply this is whoever dispatched it, so every row has a person behind it.
 		authorUserId: uuid("author_user_id").references(() => users.id, {
 			onDelete: "set null",
 		}),
-		// Opaque session ref, deliberately not an FK: a terminal agent replying
-		// through the CLI runs in a desktop pane, which has no chat_sessions row.
 		agentSessionId: text("agent_session_id"),
 		body: text().notNull(),
 		createdAt: timestamp("created_at", { withTimezone: true })
@@ -1362,7 +1334,6 @@ export const pageComments = pgTable(
 			.notNull()
 			.defaultNow()
 			.$onUpdate(() => new Date()),
-		// Soft delete: hard-deleting the first comment would take the thread's anchor and replies with it.
 		deletedAt: timestamp("deleted_at", { withTimezone: true }),
 	},
 	(table) => [

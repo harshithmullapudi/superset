@@ -7,7 +7,6 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@superset/ui/dropdown-menu";
-import type { CommentThread } from "@superset/ui/page-comments";
 import { useComments, useFramePointerDown } from "@superset/ui/page-comments";
 import { toast } from "@superset/ui/sonner";
 import { workspaceTrpc } from "@superset/workspace-client";
@@ -15,15 +14,15 @@ import { formatDistanceToNowStrict } from "date-fns";
 import { Bot, ChevronDown } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useTerminalAgentBindings } from "renderer/hooks/host-service/useTerminalAgentBindings";
+import { cloudTrpc } from "renderer/lib/cloud-trpc";
+import { buildPrompt } from "./utils/buildPrompt";
 
 interface PageHandoffMenuProps {
 	workspaceId: string;
 	pageTitle: string;
-	/** Identifies the page unambiguously, unlike the title, which is free text. */
 	pageSlug: string;
 }
 
-// Desktop-only: the web viewer has no agents to hand off to.
 export function PageHandoffMenu({
 	workspaceId,
 	pageTitle,
@@ -32,21 +31,33 @@ export function PageHandoffMenu({
 	const { threads } = useComments();
 	const bindings = useTerminalAgentBindings(workspaceId);
 	const send = workspaceTrpc.terminal.send.useMutation();
+	const activate = cloudTrpc.pageComment.activate.useMutation();
 	const [menuOpen, setMenuOpen] = useState(false);
 
-	// Radix only dismisses on an outside press this document sees, which a press in the iframe is not.
 	useFramePointerDown(useCallback(() => setMenuOpen(false), []));
 
 	const open = threads.filter((thread) => !thread.resolved);
-	// Nothing to hand off, nothing to show.
 	if (open.length === 0) return null;
 
-	// Live sessions only: a binding with `endedAt` cannot receive a prompt.
 	const running = [...bindings.values()]
 		.filter((binding) => !binding.endedAt)
 		.sort((a, b) => b.lastEventAt - a.lastEventAt);
 
-	const handoff = (terminalId: string) => {
+	// Activate first, then prompt. The agent can only act on threads the server
+	// has been told were handed to it, so sending the prompt before the stamp
+	// lands would hand over ids the agent is refused on.
+	const handoff = async (terminalId: string) => {
+		try {
+			await activate.mutateAsync({
+				threadIds: open.map((thread) => thread.id),
+			});
+		} catch (error) {
+			toast.error("Could not hand off these comments", {
+				description: error instanceof Error ? error.message : undefined,
+			});
+			return;
+		}
+
 		send.mutate(
 			{
 				workspaceId,
@@ -67,7 +78,11 @@ export function PageHandoffMenu({
 	return (
 		<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
 			<DropdownMenuTrigger asChild>
-				<Button size="xs" variant="ghost" disabled={send.isPending}>
+				<Button
+					size="xs"
+					variant="ghost"
+					disabled={send.isPending || activate.isPending}
+				>
 					<Bot className="size-3.5" />
 					Hand off
 					<ChevronDown className="size-3" />
@@ -105,44 +120,4 @@ export function PageHandoffMenu({
 			</DropdownMenuContent>
 		</DropdownMenu>
 	);
-}
-
-// The anchor path goes to the agent too: a page is one self-contained .html file, so the
-// published DOM is the source it edits, and repeated text alone locates nothing.
-function buildPrompt(
-	pageTitle: string,
-	pageSlug: string,
-	threads: CommentThread[],
-): string {
-	const lines = [
-		`There are ${threads.length} unresolved comment${threads.length === 1 ? "" : "s"} on the published page "${pageTitle}" (slug: ${pageSlug}). Address each one in the source this page was published from.`,
-		"",
-		"Each comment is anchored to one element. `at` is a CSS selector path from <body> in the published HTML, and `text` is what that element contained when the comment was written (truncated).",
-		"",
-	];
-	threads.forEach((thread, index) => {
-		const { path, tag, text } = thread.anchor;
-		lines.push(`${index + 1}. <${tag}> at: ${path || "body"}`);
-		// The id is what the CLI acts on; without it the agent can read threads but not answer them.
-		lines.push(`   thread: ${thread.id}`);
-		// JSON-quoted so the page's own copy cannot break the line structure the agent reads.
-		if (text) lines.push(`   text: ${JSON.stringify(text)}`);
-		for (const comment of thread.comments) {
-			lines.push(
-				`   ${JSON.stringify(comment.authorName)}: ${JSON.stringify(comment.body)}`,
-			);
-		}
-		lines.push("");
-	});
-	lines.push(
-		"When you have addressed one, answer it and close it, in that order:",
-		"",
-		'  superset pages comments reply --threadId <id> "<what you changed>"',
-		"  superset pages comments resolve --threadId <id>",
-		"",
-		"Only act on the thread ids listed above. To re-read them: `superset pages comments list --page " +
-			pageSlug +
-			"`.",
-	);
-	return lines.join("\n");
 }

@@ -1,5 +1,6 @@
 import { dbWs } from "@superset/db/client";
 import {
+	pageCommentThreads,
 	pages,
 	pageVersions,
 	type SelectPage,
@@ -12,6 +13,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { assertPageWritable } from "./access";
 import { pageUrl } from "./page-url";
 import {
+	isEntryPathConflict,
 	isVersionConflict,
 	titleFromFilename,
 	validatePublishContent,
@@ -44,7 +46,6 @@ export async function publishPage({
 		} catch (error) {
 			if (!isVersionConflict(error)) throw error;
 			if (attempt < MAX_PUBLISH_ATTEMPTS) continue;
-			// Losing the race this many times is contention, not a server fault, and it is retryable.
 			throw new TRPCError({
 				code: "CONFLICT",
 				message: "This page is being published from somewhere else — retry",
@@ -66,24 +67,19 @@ async function runPublish({
 	buffer: Buffer;
 	sha256: string;
 }) {
-	// A cheap gate before spending an upload; the transaction below re-runs it as the real boundary.
 	await resolveTargetPage({ executor: dbWs, input, organizationId, userId });
 
-	// Outside the transaction so a multi-MB upload does not hold a write-pool connection open.
 	const blob = await put(
 		`pages/${organizationId}/${sha256}/${input.filename}`,
 		buffer,
 		{
 			access: "public",
 			contentType: input.contentType,
-			// Defence in depth, not the gate: the bytes are world-readable once the URL is known.
 			addRandomSuffix: true,
 		},
 	);
 	const uploadedUrl: string = blob.url;
 
-	// Set as the callback's last act: false means the failure preceded COMMIT and the blob is
-	// certainly orphaned, true means the commit itself may well have landed.
 	let bodyCompleted = false;
 	try {
 		return await dbWs.transaction(async (tx) => {
@@ -104,14 +100,30 @@ async function runPublish({
 					workspaceId: input.workspaceId,
 					organizationId,
 				});
-				await tx
-					.insert(workspacePages)
-					.values({
-						workspaceId: input.workspaceId,
-						pageId: page.id,
-						entryPath: input.entryPath,
-					})
-					.onConflictDoNothing();
+				try {
+					await tx
+						.insert(workspacePages)
+						.values({
+							workspaceId: input.workspaceId,
+							pageId: page.id,
+							entryPath: input.entryPath,
+						})
+						// Targeted at the primary key, so re-linking a page to the path it
+						// already holds stays a no-op. An untargeted version would also
+						// swallow the entry-path collision below, committing a page linked
+						// to no workspace and reporting it as a success.
+						.onConflictDoNothing({
+							target: [workspacePages.workspaceId, workspacePages.pageId],
+						});
+				} catch (error) {
+					if (!isEntryPathConflict(error)) throw error;
+					// Reachable because the republish lookup only matches the caller's own
+					// pages: a colleague's page holding this path is invisible to it.
+					throw new TRPCError({
+						code: "CONFLICT",
+						message: `Someone else has already published ${input.entryPath} from this workspace. Publish with an explicit page id to add a version to their page, or move the file.`,
+					});
+				}
 			}
 
 			const [latest] = await tx
@@ -143,6 +155,14 @@ async function runPublish({
 				});
 			}
 
+			// A new version is not what anyone handed off, so agent activation does
+			// not carry over to it. Someone has to look at the page again and hand
+			// off the threads that still apply.
+			await tx
+				.update(pageCommentThreads)
+				.set({ agentActivatedAt: null, agentActivatedByUserId: null })
+				.where(eq(pageCommentThreads.pageId, page.id));
+
 			bodyCompleted = true;
 			return {
 				id: page.id,
@@ -160,7 +180,6 @@ async function runPublish({
 		});
 	} catch (error) {
 		if (!bodyCompleted) {
-			// Best-effort: a failure here leaks the blob, since nothing sweeps orphans yet.
 			await del(uploadedUrl).catch((cleanupError) => {
 				console.error("[pages] failed to clean up orphaned blob", {
 					url: uploadedUrl,
@@ -174,10 +193,8 @@ async function runPublish({
 
 type Tx = Parameters<Parameters<typeof dbWs.transaction>[0]>[0];
 
-/** Satisfied by both the pooled client and a transaction handle. */
 type Executor = Pick<Tx, "select">;
 
-// `--page <id>` wins, then the workspace edge; neither resolving means a new page.
 async function resolveTargetPage({
 	executor,
 	input,
@@ -217,7 +234,6 @@ async function resolveTargetPage({
 					eq(workspacePages.workspaceId, input.workspaceId),
 					eq(workspacePages.entryPath, input.entryPath),
 					eq(pages.organizationId, organizationId),
-					// Own pages only: a colleague's edge could only produce a FORBIDDEN, so skip it and mint a new page.
 					eq(pages.createdByUserId, userId),
 				),
 			)
@@ -229,7 +245,6 @@ async function resolveTargetPage({
 	return null;
 }
 
-// The slug is never patched here, and the write happens even with no flags because `list` orders by updatedAt.
 async function applyMetadata({
 	tx,
 	page,

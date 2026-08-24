@@ -44,7 +44,6 @@ describe("isVersionConflict", () => {
 	});
 
 	test("does not retry a different unique violation", () => {
-		// A slug collision must surface, not spin the retry loop.
 		expect(
 			isVersionConflict({ code: "23505", constraint: "pages_slug_unique" }),
 		).toBe(false);

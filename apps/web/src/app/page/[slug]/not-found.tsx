@@ -3,9 +3,6 @@ import { Pixel404 } from "@superset/ui/pixel-404";
 import Link from "next/link";
 import { MessageScreen } from "@/components/MessageScreen";
 
-// Also the answer for a page the reader may not see: `page.get` returns
-// NOT_FOUND rather than FORBIDDEN so a private page's existence stays private,
-// and this copy has to be true of both.
 export default function PageNotFound() {
 	return (
 		<MessageScreen

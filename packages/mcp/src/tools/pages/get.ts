@@ -1,8 +1,13 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import {
+	hasPageRef,
+	PAGE_REF_MESSAGE,
+	pageFields,
+} from "@superset/trpc/page-schema";
 import { z } from "zod";
 import { createMcpCaller } from "../../caller";
 import { defineTool } from "../../define-tool";
-import { pageRef } from "./pageRef";
+import { optionalish } from "../../optionalish";
 
 export function register(server: McpServer): void {
 	defineTool(server, {
@@ -10,18 +15,17 @@ export function register(server: McpServer): void {
 		annotations: { readOnlyHint: true },
 		description:
 			"Show one published page's metadata: title, description, visibility, public URL, and which version is currently served. Does NOT return the page's HTML — use pages_pull for that. Address the page by id or by slug; exactly one is required.",
-		inputSchema: {
-			id: z.string().uuid().nullish().describe("Page UUID."),
-			slug: z
-				.string()
-				.min(1)
-				.max(120)
-				.nullish()
-				.describe("Page slug, the last path segment of its public URL."),
-		},
+		inputSchema: z
+			.object({
+				id: optionalish(pageFields.id).describe("Page UUID."),
+				slug: optionalish(pageFields.slug).describe(
+					"Page slug, the last path segment of its public URL.",
+				),
+			})
+			.refine(hasPageRef, PAGE_REF_MESSAGE),
 		handler: async (input, ctx) => {
 			const caller = createMcpCaller(ctx);
-			return caller.page.get(pageRef(input));
+			return caller.page.get(input);
 		},
 	});
 }

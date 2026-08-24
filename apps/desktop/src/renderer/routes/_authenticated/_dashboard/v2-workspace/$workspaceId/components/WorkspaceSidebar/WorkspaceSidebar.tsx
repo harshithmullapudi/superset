@@ -176,7 +176,6 @@ export function WorkspaceSidebar({
 		),
 	};
 
-	// `?? false` so an unloaded or offline flag hides the tab.
 	const isPagesEnabled = useFeatureFlagEnabled(FEATURE_FLAGS.PAGES) ?? false;
 	const pagesTab: SidebarTabDefinition = {
 		id: "pages",
@@ -202,7 +201,6 @@ export function WorkspaceSidebar({
 		reviewTab,
 		...(isPagesEnabled ? [pagesTab] : []),
 	];
-	// The active tab is persisted, so one parked on Pages can outlive the flag.
 	const activeTabDef = tabs.find((t) => t.id === activeTab) ?? tabs[0];
 
 	return (

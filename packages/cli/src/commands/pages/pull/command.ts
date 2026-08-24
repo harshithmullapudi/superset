@@ -23,11 +23,8 @@ export default command({
 			.desc("Version to fetch (defaults to the one currently served)"),
 	},
 	run: async ({ ctx, args, options }) => {
-		const ref = pageRefFromArg(args.page as string);
-		const id = "id" in ref ? ref.id : (await ctx.api.page.get.query(ref)).id;
-
 		const version = await ctx.api.page.pull.query({
-			id,
+			...pageRefFromArg(args.page as string),
 			...(options.version ? { version: options.version } : {}),
 		});
 
@@ -42,7 +39,6 @@ export default command({
 					`The blob store answered ${response.status}`,
 				);
 			}
-			// The timeout can fire mid-body, after headers arrive.
 			body = await response.arrayBuffer();
 		} catch (error) {
 			if (error instanceof CLIError) throw error;

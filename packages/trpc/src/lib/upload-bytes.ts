@@ -3,8 +3,6 @@ import { TRPCError } from "@trpc/server";
 
 const DATA_URL_PREFIX_SLACK = 256;
 
-// Upper bound: four base64 chars carry three bytes, so this never rejects a
-// payload that would have passed.
 function maxEncodedLength(maxBytes: number): number {
 	return Math.ceil(maxBytes / 3) * 4 + DATA_URL_PREFIX_SLACK;
 }
@@ -34,8 +32,6 @@ export function validateUploadBytes({
 		});
 	}
 
-	// Checked on the encoded string first, so an oversized payload is not
-	// decoded into a Buffer before being rejected.
 	if (content.length > maxEncodedLength(maxBytes)) {
 		throw new TRPCError({
 			code: "BAD_REQUEST",

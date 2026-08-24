@@ -7,10 +7,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { useTRPC } from "@/trpc/react";
 
-/** Derived from the router, so a renamed or dropped field fails here instead of reading undefined. */
 type ServerThread = RouterOutputs["pageComment"]["list"][number];
 
-/** Page-anchored threads have no element to sit on, so the overlay skips them. */
 function toThreads(rows: ServerThread[]): CommentThread[] {
 	return rows.flatMap((row) =>
 		row.anchor
@@ -53,7 +51,6 @@ export function usePageCommentStore({
 		[queryClient, listOptions.queryKey],
 	);
 
-	// Refetch rather than patch: a thread's id and resolved anchor both come from the server.
 	const onSettled = useMemo(
 		() => ({
 			onSuccess: invalidate,
@@ -80,7 +77,6 @@ export function usePageCommentStore({
 		() => ({
 			threads,
 			isLoading: list.isPending,
-			// Returning `invalidate`'s promise makes the caller's await cover the refetch, not just the mutation.
 			createThread: async ({ anchor, anchorText, body }) => {
 				await create.mutateAsync({
 					pageId,

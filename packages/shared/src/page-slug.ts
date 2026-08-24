@@ -13,8 +13,6 @@ export function generateBasePageSlug(title: string): string {
 	return slug || "page";
 }
 
-// Every slug gets a suffix, not just colliding ones — that removes the
-// "is this taken" lookup entirely. The unique index stays as the backstop.
 export function generatePageSlugSuffix(
 	randomValues: (length: number) => Uint8Array = defaultRandomValues,
 ): string {
@@ -26,7 +24,6 @@ export function generatePageSlugSuffix(
 	return suffix;
 }
 
-/** Minted once and frozen: a retitle never moves a link someone has shared. */
 export function mintPageSlug(
 	title: string,
 	randomValues: (length: number) => Uint8Array = defaultRandomValues,

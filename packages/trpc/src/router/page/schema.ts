@@ -1,59 +1,91 @@
 import { z } from "zod";
 
-/** Narrower than the database enum: `everyone` needs a pages origin to enforce it, which does not exist yet. */
 export const OFFERED_VISIBILITIES = ["just_me", "org"] as const;
 
+/**
+ * Field-level schemas shared by this router's inputs and by the MCP tool
+ * definitions that front them. A constraint declared here is declared once —
+ * the agent-facing tool schema decorates these rather than restating them,
+ * so the two can't drift.
+ */
+export const pageFields = {
+	id: z.string().uuid(),
+	slug: z.string().min(1).max(120),
+	version: z.number().int().positive(),
+	filename: z.string().min(1).max(255),
+	entryPath: z.string().min(1).max(1024),
+	workspaceId: z.string().uuid(),
+	title: z.string().min(1).max(200),
+	description: z.string().max(2000),
+	label: z.string().max(200),
+	visibility: z.enum(OFFERED_VISIBILITIES),
+} as const;
+
 const publishPageFieldsSchema = z.object({
-	/** Base64-encoded file bytes. Accepts a bare payload or a data: URL. */
 	content: z.string().min(1),
 	contentType: z.string().min(1),
-	filename: z.string().min(1).max(255),
-	/** Path relative to the workspace root; with `workspaceId` this is the republish lookup key. */
-	entryPath: z.string().min(1).max(1024).optional(),
-	/** Whatever $SUPERSET_WORKSPACE_ID names — cloud sandbox or local machine. */
-	workspaceId: z.string().uuid().optional(),
-	/** Explicit republish target. Wins over the workspace lookup. */
-	pageId: z.string().uuid().optional(),
-	title: z.string().min(1).max(200).optional(),
-	description: z.string().max(2000).optional(),
-	/** What changed in this version. Display-only; never rewritten. */
-	label: z.string().max(200).optional(),
-	visibility: z.enum(OFFERED_VISIBILITIES).optional(),
+	filename: pageFields.filename,
+	entryPath: pageFields.entryPath.optional(),
+	workspaceId: pageFields.workspaceId.optional(),
+	pageId: pageFields.id.optional(),
+	title: pageFields.title.optional(),
+	description: pageFields.description.optional(),
+	label: pageFields.label.optional(),
+	visibility: pageFields.visibility.optional(),
 });
 
+/**
+ * `workspaceId` and `entryPath` are one key, not two fields — exported so the
+ * MCP publish tool can enforce the pairing at its edge rather than letting a
+ * model send half of it and get a runtime error back.
+ */
+export const hasCompleteWorkspaceLink = (value: {
+	workspaceId?: string | undefined;
+	entryPath?: string | undefined;
+}) => Boolean(value.workspaceId) === Boolean(value.entryPath);
+
+export const WORKSPACE_LINK_MESSAGE = {
+	message: "workspaceId and entryPath must be provided together",
+	path: ["entryPath"],
+};
+
 export const publishPageSchema = publishPageFieldsSchema.refine(
-	(value) => Boolean(value.workspaceId) === Boolean(value.entryPath),
-	{
-		// Half a link is silently no link: the page never reaches the workspace's
-		// Pages tab, and a later publish cannot reuse the edge as a new version.
-		message: "workspaceId and entryPath must be provided together",
-		path: ["entryPath"],
-	},
+	hasCompleteWorkspaceLink,
+	WORKSPACE_LINK_MESSAGE,
 );
 
 export type PublishPageInput = z.infer<typeof publishPageSchema>;
 
 export const listPagesSchema = z
-	.object({ workspaceId: z.string().uuid().optional() })
+	.object({ workspaceId: pageFields.workspaceId.optional() })
 	.optional();
 
-/** Pages are addressable by either identifier: id internally, slug in URLs. */
-export const pageRefSchema = z
-	.object({
-		id: z.string().uuid().optional(),
-		slug: z.string().min(1).max(120).optional(),
-	})
-	.refine((value) => Boolean(value.id ?? value.slug), {
-		message: "Provide either id or slug",
-	});
+const pageRefFieldsSchema = z.object({
+	id: pageFields.id.optional(),
+	slug: pageFields.slug.optional(),
+});
+
+/**
+ * "Exactly one of id or slug" — exported so the MCP tools can enforce the same
+ * rule at their edge instead of letting a model discover it at call time.
+ */
+export const hasPageRef = (value: {
+	id?: string | undefined;
+	slug?: string | undefined;
+}) => Boolean(value.id ?? value.slug);
+
+export const PAGE_REF_MESSAGE = { message: "Provide either id or slug" };
+
+export const pageRefSchema = pageRefFieldsSchema.refine(
+	hasPageRef,
+	PAGE_REF_MESSAGE,
+);
 
 export const setPageVisibilitySchema = z.object({
-	id: z.string().uuid(),
-	visibility: z.enum(OFFERED_VISIBILITIES),
+	id: pageFields.id,
+	visibility: pageFields.visibility,
 });
 
-export const pullPageSchema = z.object({
-	id: z.string().uuid(),
-	/** Omit to pull whichever version is currently served. */
-	version: z.number().int().positive().optional(),
-});
+export const pullPageSchema = pageRefFieldsSchema
+	.extend({ version: pageFields.version.optional() })
+	.refine(hasPageRef, PAGE_REF_MESSAGE);

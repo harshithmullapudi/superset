@@ -1,5 +1,3 @@
-// Page commenting, shared by the web viewer and the desktop app. Exported piecewise
-// because the surrounding chrome belongs to each host, not to the frame.
 export { CommentModeToggle } from "./components/CommentModeToggle";
 export { PageCommentsView } from "./components/PageCommentsView";
 export {

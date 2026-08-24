@@ -66,10 +66,8 @@ export function CommentPopover({
 
 	useEffect(() => {
 		const onKeyDown = (event: KeyboardEvent) => {
-			// A submit in flight owns the card; dismissing would discard unsent text.
 			if (event.key === "Escape" && !submitting) onDismiss();
 		};
-		// Clicking a bubble should switch threads, not dismiss and immediately reopen.
 		const onPointerDown = (event: PointerEvent) => {
 			if (submitting) return;
 			const target = event.target as HTMLElement | null;
@@ -85,7 +83,6 @@ export function CommentPopover({
 		};
 	}, [onDismiss, submitting]);
 
-	// Flips above the anchor when there is no room beneath it, and never hangs off either edge.
 	const below = rect.top + rect.height + GAP + 200 < container.height;
 	const top = below
 		? rect.top + rect.height + GAP
@@ -101,9 +98,7 @@ export function CommentPopover({
 		try {
 			await onSubmit(body);
 			setValue("");
-		} catch {
-			// Reported upstream; the text stays put so it can be sent again.
-		}
+		} catch {}
 	};
 
 	const commitEdit = async (comment: PageComment) => {
@@ -115,9 +110,7 @@ export function CommentPopover({
 		try {
 			await onEdit(comment.id, body);
 			setEditingId(null);
-		} catch {
-			// Reported upstream; the editor stays open with the text intact.
-		}
+		} catch {}
 	};
 
 	return (

@@ -394,7 +394,6 @@ export const pageCommentsRelations = relations(pageComments, ({ one }) => ({
 	}),
 }));
 
-// No `workspace` relation: `workspaceId` may name a cloud_workspaces row or a local host.db one.
 export const workspacePagesRelations = relations(workspacePages, ({ one }) => ({
 	page: one(pages, {
 		fields: [workspacePages.pageId],

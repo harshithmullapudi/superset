@@ -14,10 +14,8 @@ import { CommentPopover, initialsOf } from "./components/CommentPopover";
 import { PageFrame } from "./components/PageFrame";
 
 interface PageCommentsViewProps {
-	/** The published page's own HTML; the runtime is injected here so no caller can forget it. */
 	html: string;
 	title: string;
-	/** For hosts that must serve the page from a real scheme rather than srcdoc; must be referentially stable. */
 	serveHtml?: (injectedHtml: string) => Promise<string>;
 }
 
@@ -29,7 +27,6 @@ export function PageCommentsView({
 	const frameRef = useRef<HTMLIFrameElement>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [container, setContainer] = useState({ width: 0, height: 0 });
-	// Bumped by both the frame's announcement and the load event, so a missed handshake is not fatal.
 	const [frameEpoch, setFrameEpoch] = useState(0);
 
 	const {
@@ -55,7 +52,6 @@ export function PageCommentsView({
 
 	const injected = useMemo(() => injectCommentRuntime(html), [html]);
 
-	// Reset on every change so a stale URL is never framed alongside new bytes.
 	const [servedSrc, setServedSrc] = useState<string | null>(null);
 	useEffect(() => {
 		if (!serveHtml) return;
@@ -75,7 +71,6 @@ export function PageCommentsView({
 	}, [injected, serveHtml]);
 
 	const send = useCallback((message: HostMessageBody) => {
-		// targetOrigin "*" because the sandboxed frame has an opaque origin; only geometry travels this way.
 		frameRef.current?.contentWindow?.postMessage(
 			{ channel: HOST_CHANNEL, ...message },
 			"*",
@@ -97,7 +92,6 @@ export function PageCommentsView({
 
 	useEffect(() => {
 		const onMessage = (event: MessageEvent) => {
-			// The frame's origin is opaque, so identity comes from the window handle.
 			if (event.source !== frameRef.current?.contentWindow) return;
 			const data = event.data as FrameMessage | undefined;
 			if (!data || data.channel !== FRAME_CHANNEL) return;
@@ -129,7 +123,6 @@ export function PageCommentsView({
 		submitting,
 	]);
 
-	// A reloaded frame's runtime knows nothing, so the mode has to be sent again.
 	// biome-ignore lint/correctness/useExhaustiveDependencies: frameEpoch is a resend trigger, not a value read here
 	useEffect(() => {
 		send({ type: "set-mode", enabled });
@@ -146,7 +139,6 @@ export function PageCommentsView({
 		});
 	}, [frameEpoch, send, threads]);
 
-	// Threads on the same element share a rect, so stack them or every bubble but the first is unclickable.
 	const stackIndex = useMemo(() => {
 		const seen = new Map<string, number>();
 		const out: Record<string, number> = {};
@@ -172,8 +164,6 @@ export function PageCommentsView({
 				/>
 			) : null}
 
-			{/* Clipped to the frame so a bubble scrolled out of view disappears
-			    rather than floating over the page chrome. */}
 			<div className="pointer-events-none absolute inset-0 overflow-hidden">
 				{enabled && hoverRect ? (
 					<div
@@ -210,7 +200,6 @@ export function PageCommentsView({
 				})}
 			</div>
 
-			{/* Unclipped: a card near the frame's edge must not be cut in half. */}
 			<div className="pointer-events-none absolute inset-0">
 				{draft ? (
 					<CommentPopover

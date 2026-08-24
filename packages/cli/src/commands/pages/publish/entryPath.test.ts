@@ -24,8 +24,6 @@ describe("resolveEntryPath", () => {
 	});
 
 	test("resolves the same file to one key from two directories", () => {
-		// The ambiguity of a bare "./index.html" is removed before storage, which
-		// is the whole reason the key is canonicalised rather than taken verbatim.
 		const fromRoot = resolveEntryPath({
 			filePath: "./dist/index.html",
 			workspacePath,
@@ -51,7 +49,6 @@ describe("resolveEntryPath", () => {
 	});
 
 	test("returns null for a file outside the workspace", () => {
-		// Publishing it unlinked is honest; a workspace-scoped key would lie.
 		expect(
 			resolveEntryPath({
 				filePath: "../other/index.html",
@@ -96,13 +93,10 @@ describe("resolveEntryPath", () => {
 			cwd: root,
 		});
 
-		// Case-insensitive volumes fold the two into one directory, so it still re-bases there.
 		expect(resolved).toBe(caseSensitive ? null : "index.html");
 	});
 
 	test("re-bases a path that reaches the workspace through a symlink", () => {
-		// Until both sides were canonicalised this returned null, and every
-		// republish from a symlinked root minted a new page instead of a version.
 		const root = mkdtempSync(join(realpathSync(tmpdir()), "entry-path-"));
 		const real = join(root, "real");
 		const link = join(root, "link");

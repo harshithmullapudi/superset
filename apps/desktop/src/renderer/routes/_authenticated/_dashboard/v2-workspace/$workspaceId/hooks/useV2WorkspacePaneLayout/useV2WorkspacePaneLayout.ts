@@ -64,9 +64,6 @@ export function useV2WorkspacePaneLayout() {
 		);
 	const localWorkspaceState =
 		localWorkspaceRows.find((row) => row.workspaceId === workspaceId) ?? null;
-	// `undefined` means the flag has not resolved yet. Only a definite `false`
-	// drops panes: treating "still loading" as off would delete the page panes of
-	// everyone who has the flag, on every cold start.
 	const isPagesEnabled = useFeatureFlagEnabled(FEATURE_FLAGS.PAGES);
 	const unavailableKinds = useMemo(
 		() => (isPagesEnabled === false ? ["page"] : []),

@@ -39,15 +39,11 @@ const OPTIONS: VisibilityOption[] = [JUST_ME, TEAM];
 
 interface PageVisibilityMenuProps {
 	visibility: PageVisibility;
-	/** The page's creator; only they may change visibility, and anyone else gets a plain label. */
 	createdByUserId: string | null;
-	/** The signed-in user, from whichever session the host owns. */
 	currentUserId: string | undefined;
-	/** Performs the change and settles once the new value is readable; rejecting rolls the label back. */
 	onChange: (visibility: PageVisibility) => Promise<void>;
 }
 
-/** Shared by the web viewer and the desktop pane so they cannot drift on what the options mean. */
 export function PageVisibilityMenu({
 	visibility,
 	createdByUserId,
@@ -55,7 +51,6 @@ export function PageVisibilityMenu({
 	onChange,
 }: PageVisibilityMenuProps) {
 	const [open, setOpen] = useState(false);
-	// Optimistic label, cleared whenever a new server value arrives so the server always wins.
 	const [pending, setPending] = useState<PageVisibility | null>(null);
 	const [busy, setBusy] = useState(false);
 	const [lastSeen, setLastSeen] = useState(visibility);
@@ -68,10 +63,8 @@ export function PageVisibilityMenu({
 	const active = current === "just_me" ? JUST_ME : TEAM;
 	const ActiveIcon = active.icon;
 
-	// Radix only dismisses on a `pointerdown` in this document, which a press on the framed page never raises.
 	useFramePointerDown(useCallback(() => setOpen(false), []));
 
-	// One change at a time, so a late rejection cannot roll the label back onto a stale value.
 	const choose = async (next: PageVisibility) => {
 		if (next === current || busy) return;
 		setPending(next);

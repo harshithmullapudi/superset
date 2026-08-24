@@ -1,16 +1,5 @@
 import { afterAll, beforeAll, describe, expect, mock, test } from "bun:test";
 
-/**
- * Publish, end to end, against a real Postgres. Not named `*.test.ts` because it needs a
- * migrated database, so run it explicitly from the repo root (the leading `./` matters,
- * or bun treats the argument as a name filter and runs nothing):
- *
- *   BLAXEL_API_KEY=test BLAXEL_REGION=test BLAXEL_SANDBOX_IMAGE=test \
- *   BLAXEL_WORKSPACE=test OPENAI_API_KEY=test \
- *   bun test --env-file=.env ./packages/trpc/src/router/page/publish.integration.ts
- */
-
-// Vercel Blob is stubbed because the local token is a placeholder; everything below it hits real Postgres.
 const blobStore = new Map<string, Buffer>();
 let putCalls = 0;
 mock.module("@vercel/blob", () => ({
@@ -44,7 +33,6 @@ const { publishPage } = await import("./publish");
 const ORG = crypto.randomUUID();
 const USER = crypto.randomUUID();
 const OTHER_ORG = crypto.randomUUID();
-// A second member of the same organization, for the visibility tests.
 const OTHER_USER = crypto.randomUUID();
 const WORKSPACE = crypto.randomUUID();
 const suffix = Date.now();
@@ -120,9 +108,10 @@ describe("publish", () => {
 		expect(result.title).toBe("Q3 Launch Microsite");
 		expect(result.slug).toMatch(/^q3-launch-microsite-[a-z0-9]{6}$/);
 		expect(result.url).toBe(
-			`${process.env.NEXT_PUBLIC_WEB_URL}/p/${result.slug}`,
+			`${process.env.NEXT_PUBLIC_WEB_URL}/page/${result.slug}`,
 		);
-		expect(result.visibility).toBe("org");
+		// Narrowest audience by default; widening is always a deliberate act.
+		expect(result.visibility).toBe("just_me");
 	});
 
 	test("republishing the same entry_path adds v2 to the same page", async () => {
@@ -138,7 +127,7 @@ describe("publish", () => {
 		expect(first.version).toBe(1);
 		expect(second.version).toBe(2);
 		expect(second.id).toBe(first.id);
-		expect(second.slug).toBe(first.slug); // the URL never moves
+		expect(second.slug).toBe(first.slug);
 	});
 
 	test("a different entry_path in the same workspace is a different page", async () => {
@@ -206,7 +195,6 @@ describe("publish", () => {
 			.select({ updatedAt: pages.updatedAt })
 			.from(pages)
 			.where(eq(pages.id, first.id));
-		// No metadata flag was passed, which used to mean no write at all.
 		expect(after?.updatedAt.getTime()).toBeGreaterThan(
 			before?.updatedAt.getTime() ?? 0,
 		);
@@ -241,7 +229,6 @@ describe("publish", () => {
 			.where(eq(workspacePages.entryPath, "oneoff/index.html"));
 		expect(links).toHaveLength(0);
 
-		// The path is still free, so a plain publish mints its own page.
 		const plain = await publish({
 			entryPath: "oneoff/index.html",
 			workspaceId: WORKSPACE,
@@ -249,6 +236,38 @@ describe("publish", () => {
 		});
 		expect(plain.id).not.toBe(target.id);
 		expect(plain.version).toBe(1);
+	});
+
+	test("a colleague's entry path collides instead of minting an orphan", async () => {
+		const theirs = await publish({
+			entryPath: "shared/index.html",
+			workspaceId: WORKSPACE,
+			title: "Theirs",
+		});
+
+		// The republish lookup only matches the caller's own pages, so theirs is
+		// invisible here and a new page is minted before the link is attempted.
+		await expect(
+			publishPage({
+				input: {
+					content: html("<h1>mine</h1>"),
+					contentType: "text/html",
+					filename: "index.html",
+					entryPath: "shared/index.html",
+					workspaceId: WORKSPACE,
+				} as never,
+				organizationId: ORG,
+				userId: OTHER_USER,
+			}),
+		).rejects.toThrow(/already published/i);
+
+		// The whole publish rolls back: no second page, and the link still theirs.
+		const links = await db
+			.select()
+			.from(workspacePages)
+			.where(eq(workspacePages.entryPath, "shared/index.html"));
+		expect(links).toHaveLength(1);
+		expect(links[0]?.pageId).toBe(theirs.id);
 	});
 
 	test("publishing with no workspace creates an unlinked page", async () => {
@@ -283,7 +302,6 @@ describe("publish", () => {
 
 		expect(row?.sizeBytes).toBe(Buffer.byteLength(body));
 		expect(row?.sha256).toHaveLength(64);
-		// Keyed by content hash because page id and version are not known until after the upload.
 		expect(row?.blobPathname).toContain(`pages/${ORG}/`);
 		expect(row?.blobPathname).toContain(row?.sha256 ?? "no-hash");
 	});
@@ -296,7 +314,6 @@ describe("visibility", () => {
 			visibility: "just_me",
 		});
 
-		// Same organization, different member: the org check alone would let this through.
 		await expect(
 			publishPage({
 				input: {
@@ -326,24 +343,29 @@ describe("visibility", () => {
 		expect(again.id).toBe(mine.id);
 	});
 
-	test("any member can publish to an org page", async () => {
-		const shared = await publish({ title: "Shared Org Page" });
-		const bySomeoneElse = await publishPage({
-			input: {
-				content: html("<h1>from a colleague</h1>"),
-				contentType: "text/html",
-				filename: "index.html",
-				pageId: shared.id,
-			} as never,
-			organizationId: ORG,
-			userId: OTHER_USER,
+	// Readable to the org, still writable only by its creator: a colleague adding
+	// a version would silently rewrite what the author's link serves.
+	test("a colleague cannot publish a version onto an org page", async () => {
+		const shared = await publish({
+			title: "Shared Org Page",
+			visibility: "org",
 		});
-		expect(bySomeoneElse.version).toBe(2);
+		expect(
+			publishPage({
+				input: {
+					content: html("<h1>from a colleague</h1>"),
+					contentType: "text/html",
+					filename: "index.html",
+					pageId: shared.id,
+				} as never,
+				organizationId: ORG,
+				userId: OTHER_USER,
+			}),
+		).rejects.toThrow(/only the person who created/i);
 	});
 });
 
 describe("workspace access", () => {
-	// A cloud workspace is the case Neon can verify, so it is the one with a real boundary to test.
 	const makeCloudWorkspace = async (organizationId: string, tag: string) => {
 		const [project] = await db
 			.insert(v2Projects)

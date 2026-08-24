@@ -11,7 +11,6 @@ import {
 } from "react";
 import type { CommentAnchor, FrameRect } from "../../utils/commentRuntime";
 
-// Supplied by the host app: web reads it from better-auth, desktop from its own session.
 export interface PageCommentUser {
 	id: string;
 	name: string;
@@ -33,17 +32,14 @@ export interface CommentThread {
 	resolved: boolean;
 }
 
-// Held separately from threads so an abandoned composer leaves nothing behind.
 export interface CommentDraft {
 	anchor: CommentAnchor;
 	rect: FrameRect;
 }
 
-/** How threads are read and written; each host supplies its own so one component serves both. */
 export interface CommentStore {
 	threads: CommentThread[];
 	isLoading: boolean;
-	/** Resolves only once the thread list has been refetched; rejects on failure, which the store reports. */
 	createThread: (input: {
 		anchor: CommentAnchor;
 		anchorText: string;
@@ -61,11 +57,8 @@ export interface CommentStore {
 
 interface CommentContextValue extends CommentStore {
 	user: PageCommentUser;
-	/** A create or reply is in flight. */
 	submitting: boolean;
-	/** The thread whose resolve/delete is in flight, if any. */
 	busyThreadId: string | null;
-	/** Bumped on every press inside the frame, which raises no event in this document. */
 	framePointerDownAt: number;
 	notifyFramePointerDown: () => void;
 	enabled: boolean;
@@ -91,7 +84,6 @@ export function useComments(): CommentContextValue {
 	return value;
 }
 
-/** Owns viewing state only — comment mode, the open card, on-screen positions; thread data lives in the store. */
 export function CommentProvider({
 	user,
 	store,
@@ -109,12 +101,10 @@ export function CommentProvider({
 	const [submitting, setSubmitting] = useState(false);
 	const [busyThreadId, setBusyThreadId] = useState<string | null>(null);
 	const [framePointerDownAt, setFramePointerDownAt] = useState(0);
-	// A ref keeps `discardDraft` stable, so the frame's pointer-down handler is not rebound per keystroke.
 	const submittingRef = useRef(false);
 
 	const toggleEnabled = useCallback(() => {
 		setEnabled((previous) => {
-			// Leaving comment mode closes anything it opened.
 			if (previous) {
 				setDraft(null);
 				setActiveThreadId(null);
@@ -135,7 +125,6 @@ export function CommentProvider({
 	);
 
 	const discardDraft = useCallback(() => {
-		// A submit in flight owns the composer: no dismissal may discard unsent text.
 		if (submittingRef.current) return;
 		setDraft(null);
 	}, []);
@@ -147,7 +136,6 @@ export function CommentProvider({
 		[],
 	);
 
-	// Holds the card open until the refetch settles, so the reader never sees a stale overlay.
 	const runSubmit = useCallback(async (work: () => Promise<void>) => {
 		submittingRef.current = true;
 		setSubmitting(true);
@@ -155,7 +143,6 @@ export function CommentProvider({
 			await work();
 			return true;
 		} catch {
-			// The store reports the failure; the composer stays open with the text intact.
 			return false;
 		} finally {
 			submittingRef.current = false;
@@ -192,7 +179,6 @@ export function CommentProvider({
 				await work();
 				setActiveThreadId(null);
 			} catch {
-				// Reported by the store; the card stays open on the failed thread.
 			} finally {
 				setBusyThreadId(null);
 			}

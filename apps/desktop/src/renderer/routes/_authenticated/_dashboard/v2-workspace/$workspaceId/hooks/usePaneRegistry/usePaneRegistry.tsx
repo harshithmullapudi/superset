@@ -129,9 +129,7 @@ export function usePaneRegistry({
 	const { workspace } = useWorkspace();
 	const workspaceId = workspace.id;
 	const isChatV3Enabled = useFeatureFlagEnabled(FEATURE_FLAGS.CHAT_V3) ?? false;
-	// Gates restored layouts too, not just newly opened panes.
-	const isPagesEnabled =
-		useFeatureFlagEnabled(FEATURE_FLAGS.PAGES) ?? false;
+	const isPagesEnabled = useFeatureFlagEnabled(FEATURE_FLAGS.PAGES) ?? false;
 	const runAgent = workspaceTrpc.agents.run.useMutation();
 	const collections = useCollections();
 	const clearShortcut = useHotkeyDisplay("CLEAR_TERMINAL").text;

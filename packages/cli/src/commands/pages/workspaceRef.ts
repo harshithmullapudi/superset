@@ -4,8 +4,6 @@ import { listWorkspacesOnHost } from "../../lib/host-workspaces";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-// `ws list` prints names, so `--workspace` takes either. A uuid is answered
-// without the host round trip a name lookup needs.
 export async function resolveWorkspaceId({
 	value,
 	organizationId,

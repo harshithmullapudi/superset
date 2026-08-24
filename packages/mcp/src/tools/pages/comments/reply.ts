@@ -21,9 +21,8 @@ export function register(server: McpServer): void {
 			return caller.pageComment.reply({
 				threadId: input.threadId,
 				body: input.body,
-				// Stamps the reply as agent-authored. The MCP client is the session
-				// here, the way $SUPERSET_PANE_ID is for an agent in a terminal.
-				agentSessionId: `mcp:${ctx.clientLabel ?? "unknown"}`,
+				// Not sent: the server derives agent attribution from the MCP
+				// transport itself, which a body field could only weaken.
 			});
 		},
 	});

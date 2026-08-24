@@ -1,5 +1,6 @@
 import { CLIError, string } from "@superset/cli-framework";
 import { command } from "../../../../lib/command";
+import { agentSessionId } from "../agentSession";
 import { resolvePageId } from "../pageId";
 
 interface ThreadComment {
@@ -25,8 +26,12 @@ export default command({
 	},
 	run: async ({ ctx, options }) => {
 		const pageId = await resolvePageId(ctx, options.page);
+		// Inside a pane this is an agent, so show only what was handed off — the
+		// same threads it will be allowed to reply to. A human's shell has no
+		// pane id and still sees the whole page.
 		const threads = (await ctx.api.pageComment.list.query({
 			pageId,
+			...(agentSessionId() ? { activatedOnly: true } : {}),
 		})) as unknown as Thread[];
 
 		if (!options.threadId) return threads;
@@ -40,8 +45,6 @@ export default command({
 		}
 		return match;
 	},
-	// A transcript rather than a table: the bodies are the point, and they do not
-	// fit a column. `--json` still gives the full shape.
 	display: (data) => {
 		const threads = data as Thread[];
 		if (threads.length === 0) return "No comments on this page.";
@@ -70,7 +73,6 @@ export default command({
 	},
 });
 
-// Keeps a multi-line body inside its own thread block.
 function indent(text: string, prefix: string): string {
 	return text
 		.split("\n")

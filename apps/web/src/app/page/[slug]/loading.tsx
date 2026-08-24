@@ -1,4 +1,3 @@
-// Three sequential hops stand between a click and the first paint: record, download URL, content.
 export default function Loading() {
 	return (
 		<div className="flex h-dvh flex-col bg-background">

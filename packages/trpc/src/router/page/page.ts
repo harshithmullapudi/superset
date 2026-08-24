@@ -31,10 +31,6 @@ function visibilityFilter(userId: string) {
 	);
 }
 
-// A shared link opens against whatever organization happens to be active, so a
-// page in another of the reader's orgs 404s with nothing to act on. Naming it
-// costs nothing: the lookup is scoped to their own memberships and readable
-// pages, which is precisely what they would see after switching.
 async function pageNotFound(identity: SQL, userId: string): Promise<TRPCError> {
 	const [elsewhere] = await db
 		.select({ organizationName: organizations.name })
@@ -102,7 +98,6 @@ async function latestVersionNumber(pageId: string): Promise<number | null> {
 }
 
 export const pageRouter = {
-	// Every publish is a new version; there is no dedup.
 	publish: protectedProcedure
 		.input(publishPageSchema)
 		.mutation(async ({ ctx, input }) => {
@@ -120,7 +115,6 @@ export const pageRouter = {
 			const organizationId = await requireActiveOrgMembership(ctx);
 			const userId = ctx.session.user.id;
 
-			// Same gate as publish: a caller-supplied workspaceId must not probe another tenant.
 			if (input?.workspaceId) {
 				await assertWorkspaceAccess({
 					executor: db,
@@ -129,7 +123,6 @@ export const pageRouter = {
 				});
 			}
 
-			// A LATERAL runs once per in-scope page and stops at the first row; DISTINCT ON sorted every tenant's versions.
 			const latest = db
 				.select({
 					version: pageVersions.version,
@@ -200,7 +193,6 @@ export const pageRouter = {
 		};
 	}),
 
-	// Creator only, same as publishing: changing who sees a page can expose a colleague's work.
 	setVisibility: protectedProcedure
 		.input(setPageVisibilitySchema)
 		.mutation(async ({ ctx, input }) => {
@@ -247,13 +239,13 @@ export const pageRouter = {
 				.orderBy(desc(pageVersions.version));
 		}),
 
-	// The returned blob URL is unguessable but not itself gated.
 	pull: protectedProcedure
 		.input(pullPageSchema)
 		.query(async ({ ctx, input }) => {
 			const organizationId = await requireActiveOrgMembership(ctx);
 			const page = await loadPage({
 				id: input.id,
+				slug: input.slug,
 				organizationId,
 				userId: ctx.session.user.id,
 			});
@@ -307,7 +299,7 @@ export const pageRouter = {
 				slug: page.slug,
 				url: pageUrl(page.slug),
 				title: page.title,
-				// Projected from the row `loadPage` already fetched, to save a second `get` round trip.
+				description: page.description,
 				visibility: page.visibility,
 				createdByUserId: page.createdByUserId,
 				version: row.version,

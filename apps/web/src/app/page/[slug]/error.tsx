@@ -4,7 +4,6 @@ import { Button } from "@superset/ui/button";
 import { useEffect } from "react";
 import { MessageScreen } from "@/components/MessageScreen";
 
-// Reached when the record resolved but its content could not be read; `not-found` covers a missing page.
 export default function PageViewerError({
 	error,
 	reset,

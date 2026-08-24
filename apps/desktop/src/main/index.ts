@@ -341,8 +341,6 @@ protocol.registerSchemesAsPrivileged([
 		},
 	},
 	{
-		// No `bypassCSP`: the whole point of this scheme is that the page is
-		// governed by the policy its own response carries.
 		scheme: PAGE_SCHEME,
 		privileges: {
 			standard: true,
@@ -386,7 +384,6 @@ if (!gotTheLock) {
 			.fromPartition("persist:superset")
 			.protocol.handle("superset-icon", iconProtocolHandler);
 
-		// Serves published page HTML to the page pane's iframe under its own CSP.
 		protocol.handle(PAGE_SCHEME, pageProtocolHandler);
 		session
 			.fromPartition("persist:superset")

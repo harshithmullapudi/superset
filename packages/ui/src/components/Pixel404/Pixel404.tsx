@@ -41,8 +41,6 @@ const PIXELS = [...FOUR_LEFT, ...ZERO, ...FOUR_RIGHT];
 const SIZE = 14;
 const PITCH = 16;
 
-// Drawn on the same pixel grid as the wordmark. Inherits `currentColor` rather
-// than painting white, because marketing is dark-only and the page viewer is not.
 export function Pixel404({ className }: { className?: string }) {
 	return (
 		<svg

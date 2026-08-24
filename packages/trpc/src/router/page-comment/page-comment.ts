@@ -8,11 +8,12 @@ import {
 	users,
 } from "@superset/db/schema";
 import { TRPCError, type TRPCRouterRecord } from "@trpc/server";
-import { and, asc, eq, inArray, isNull } from "drizzle-orm";
-import { protectedProcedure } from "../../trpc";
+import { and, asc, eq, inArray, isNotNull, isNull } from "drizzle-orm";
+import { protectedProcedure, type TRPCContext } from "../../trpc";
 import { assertPageReadable } from "../page/access";
 import { requireActiveOrgMembership } from "../utils/active-org";
 import {
+	activateAgentThreadsSchema,
 	createPageCommentThreadSchema,
 	deletePageCommentThreadSchema,
 	editPageCommentSchema,
@@ -21,7 +22,6 @@ import {
 	resolvePageCommentThreadSchema,
 } from "./schema";
 
-/** Anyone who can read a page may comment on it; there is no separate grant. */
 async function loadReadablePage({
 	pageId,
 	organizationId,
@@ -44,7 +44,6 @@ async function loadReadablePage({
 	return page;
 }
 
-// Loads a thread with its page, so every mutation re-checks readability rather than trusting a thread id.
 async function loadThread({
 	threadId,
 	organizationId,
@@ -73,8 +72,52 @@ async function loadThread({
 	return row;
 }
 
+/**
+ * The session id to record for a write, or null if a human is writing.
+ *
+ * Two sources, and they are not equally trustworthy. An MCP call is
+ * authoritative — that transport carries nothing but agents, and `agentCaller`
+ * is set from it rather than from the body. A CLI agent self-reports via
+ * `agentSessionId`, and the server cannot check it: `superset` presents the
+ * user's own credential whether a human or an agent in a pane invoked it.
+ *
+ * So a comment marked `agent` is proof for MCP and a claim for the CLI. That
+ * is enough for attribution, which is what author_kind is for. It is NOT a
+ * security boundary: an org member who can reach this procedure can already
+ * reply as themselves, and can dress that reply up as an agent by sending an
+ * agentSessionId. Closing that would take giving agent sessions their own
+ * credential, which is a broader auth change than this router.
+ */
+export function agentSessionFor(
+	ctx: TRPCContext,
+	claimed?: string | undefined,
+): string | null {
+	if (ctx.agentCaller) {
+		return `mcp:${ctx.agentCaller.label ?? "unknown"}`;
+	}
+	return claimed ?? null;
+}
+
+/**
+ * Agents answer threads they were handed, not every thread they can see.
+ * A person activates a thread from the page UI; until then this refuses the
+ * write. Republishing clears activation, since a new version is not what
+ * anyone agreed to.
+ */
+export function assertActivatedForAgent(
+	thread: { agentActivatedAt: Date | null },
+	agentSession: string | null,
+): void {
+	if (!agentSession) return;
+	if (thread.agentActivatedAt !== null) return;
+	throw new TRPCError({
+		code: "FORBIDDEN",
+		message:
+			"This thread has not been handed to an agent. Someone has to hand it off from the page first.",
+	});
+}
+
 export const pageCommentRouter = {
-	// One round trip: the viewer needs every anchor at once, and no page carries enough to paginate.
 	list: protectedProcedure
 		.input(listPageCommentsSchema)
 		.query(async ({ ctx, input }) => {
@@ -82,13 +125,21 @@ export const pageCommentRouter = {
 			const userId = ctx.session.user.id;
 			await loadReadablePage({ pageId: input.pageId, organizationId, userId });
 
-			// An anchor only locates an element in the version it was recorded on.
+			// Forced on for MCP: an agent sees what it was handed, never the whole
+			// page. A human can opt in, which only ever narrows their own view.
+			const activatedOnly = ctx.agentCaller
+				? true
+				: (input.activatedOnly ?? false);
+
 			const threadRows = await db
 				.select()
 				.from(pageCommentThreads)
 				.where(
 					and(
 						eq(pageCommentThreads.pageId, input.pageId),
+						activatedOnly
+							? isNotNull(pageCommentThreads.agentActivatedAt)
+							: undefined,
 						input.version === undefined
 							? undefined
 							: inArray(
@@ -124,13 +175,11 @@ export const pageCommentRouter = {
 				.where(
 					and(
 						eq(pageCommentThreads.pageId, input.pageId),
-						// Soft-deleted comments stay for audit but never render.
 						isNull(pageComments.deletedAt),
 					),
 				)
 				.orderBy(asc(pageComments.createdAt));
 
-			// One pass rather than re-scanning per thread; insertion order is the query's `created_at` order.
 			const byThread = new Map<string, typeof commentRows>();
 			for (const row of commentRows) {
 				const existing = byThread.get(row.comment.threadId);
@@ -149,7 +198,6 @@ export const pageCommentRouter = {
 					id: row.comment.id,
 					body: row.comment.body,
 					authorKind: row.comment.authorKind,
-					// A deleted account leaves its comments behind.
 					authorName: row.authorName ?? "Unknown",
 					authorImage: row.authorImage ?? null,
 					createdAt: row.comment.createdAt,
@@ -164,7 +212,6 @@ export const pageCommentRouter = {
 			const userId = ctx.session.user.id;
 			await loadReadablePage({ pageId: input.pageId, organizationId, userId });
 
-			// Resolved here because the caller knows which version it rendered, not which row id that is.
 			const [version] = await db
 				.select({ id: pageVersions.id })
 				.from(pageVersions)
@@ -222,16 +269,22 @@ export const pageCommentRouter = {
 		.mutation(async ({ ctx, input }) => {
 			const organizationId = await requireActiveOrgMembership(ctx);
 			const userId = ctx.session.user.id;
-			await loadThread({ threadId: input.threadId, organizationId, userId });
+			const { thread } = await loadThread({
+				threadId: input.threadId,
+				organizationId,
+				userId,
+			});
+
+			const agentSession = agentSessionFor(ctx, input.agentSessionId);
+			assertActivatedForAgent(thread, agentSession);
 
 			const [comment] = await db
 				.insert(pageComments)
 				.values({
 					threadId: input.threadId,
-					authorKind: input.agentSessionId ? "agent" : "human",
-					// Recorded either way: an agent reply is still made on someone's behalf.
+					authorKind: agentSession ? "agent" : "human",
 					authorUserId: userId,
-					agentSessionId: input.agentSessionId ?? null,
+					agentSessionId: agentSession,
 					body: input.body,
 				})
 				.returning();
@@ -239,7 +292,6 @@ export const pageCommentRouter = {
 			return { id: comment?.id };
 		}),
 
-	// Author only: editing someone else's words in place would be indistinguishable from them writing it.
 	edit: protectedProcedure
 		.input(editPageCommentSchema)
 		.mutation(async ({ ctx, input }) => {
@@ -285,13 +337,58 @@ export const pageCommentRouter = {
 			return { id: input.commentId };
 		}),
 
-	// Anyone who can read the page may resolve: that is a statement about the page, not the comment.
+	/**
+	 * Hand threads to an agent. This is the only thing that lifts the gate in
+	 * `assertActivatedForAgent`, so it must stay a human action — an agent that
+	 * could activate its own threads would make the gate decorative.
+	 *
+	 * MCP callers are refused outright. That is the enforceable half: a CLI
+	 * agent shares its user's credential and so cannot be refused here, which is
+	 * why this is deliberately not exposed as a CLI command or an MCP tool. The
+	 * desktop hand-off menu is the intended and only caller.
+	 */
+	activate: protectedProcedure
+		.input(activateAgentThreadsSchema)
+		.mutation(async ({ ctx, input }) => {
+			if (ctx.agentCaller) {
+				throw new TRPCError({
+					code: "FORBIDDEN",
+					message: "Only a person can hand a thread to an agent",
+				});
+			}
+
+			const organizationId = await requireActiveOrgMembership(ctx);
+			const userId = ctx.session.user.id;
+
+			// Load every thread first so one unreadable id fails the whole call
+			// rather than activating a prefix of the list.
+			for (const threadId of input.threadIds) {
+				await loadThread({ threadId, organizationId, userId });
+			}
+
+			await db
+				.update(pageCommentThreads)
+				.set({
+					agentActivatedAt: new Date(),
+					agentActivatedByUserId: userId,
+				})
+				.where(inArray(pageCommentThreads.id, input.threadIds));
+
+			return { threadIds: input.threadIds };
+		}),
+
 	resolve: protectedProcedure
 		.input(resolvePageCommentThreadSchema)
 		.mutation(async ({ ctx, input }) => {
 			const organizationId = await requireActiveOrgMembership(ctx);
 			const userId = ctx.session.user.id;
-			await loadThread({ threadId: input.threadId, organizationId, userId });
+			const { thread } = await loadThread({
+				threadId: input.threadId,
+				organizationId,
+				userId,
+			});
+
+			assertActivatedForAgent(thread, agentSessionFor(ctx));
 
 			await db
 				.update(pageCommentThreads)
@@ -305,7 +402,6 @@ export const pageCommentRouter = {
 			return { id: input.threadId, resolved: input.resolved };
 		}),
 
-	// Thread starter or page owner, so a reader cannot erase a colleague's feedback.
 	delete: protectedProcedure
 		.input(deletePageCommentThreadSchema)
 		.mutation(async ({ ctx, input }) => {

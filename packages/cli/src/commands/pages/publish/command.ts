@@ -51,8 +51,6 @@ export default command({
 		const workspaceId = entryPath
 			? process.env.SUPERSET_WORKSPACE_ID
 			: undefined;
-		// One value behind both the payload and the warning below, so the two
-		// cannot disagree about whether this publish is linked.
 		const link =
 			entryPath && workspaceId ? { entryPath, workspaceId } : undefined;
 

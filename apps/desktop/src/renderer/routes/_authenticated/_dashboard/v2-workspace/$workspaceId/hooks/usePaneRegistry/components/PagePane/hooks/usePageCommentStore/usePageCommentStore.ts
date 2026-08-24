@@ -4,10 +4,8 @@ import { toast } from "@superset/ui/sonner";
 import { useCallback, useMemo } from "react";
 import { cloudTrpc } from "renderer/lib/cloud-trpc";
 
-/** Derived from the router, so a renamed or dropped field fails here instead of reading undefined. */
 type ServerThread = RouterOutputs["pageComment"]["list"][number];
 
-/** Page-anchored threads have no element to sit on, so the overlay skips them. */
 function toThreads(rows: ServerThread[]): CommentThread[] {
 	return rows.flatMap((row) =>
 		row.anchor
@@ -33,7 +31,6 @@ function toThreads(rows: ServerThread[]): CommentThread[] {
 	);
 }
 
-/** Desktop's half of the store seam, over the cloud client instead of the Next tRPC bindings. */
 export function usePageCommentStore({
 	pageId,
 	version,
@@ -42,7 +39,6 @@ export function usePageCommentStore({
 	version: number;
 }): CommentStore {
 	const utils = cloudTrpc.useUtils();
-	// 0 means `pull` has not resolved a version yet; an unscoped read would anchor against the wrong HTML.
 	const list = cloudTrpc.pageComment.list.useQuery(
 		{ pageId, version },
 		{ enabled: version > 0 },
@@ -73,7 +69,6 @@ export function usePageCommentStore({
 		() => ({
 			threads,
 			isLoading: list.isPending,
-			// Returning `invalidate`'s promise makes the caller's await cover the refetch, not just the mutation.
 			createThread: async ({ anchor, anchorText, body }) => {
 				await create.mutateAsync({
 					pageId,

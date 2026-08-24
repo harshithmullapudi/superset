@@ -10,9 +10,6 @@ interface PagesTabProps {
 	activePageId?: string;
 }
 
-// Same vocabulary as the visibility menu, so a page sits under the word that
-// published it. `just_me` rows here are always the viewer's own — the list
-// query never returns anyone else's.
 const GROUPS = [
 	{ visibility: "org", label: "Team", icon: Building2 },
 	{ visibility: "just_me", label: "Just me", icon: Lock },
@@ -75,9 +72,6 @@ export function PagesTab({
 										title: page.title,
 									})
 								}
-								// Chrome matches the file tree's rows (FILE_EXPLORER_ROW_HEIGHT,
-								// pl-3/pr-3, gap-1.5, size-3.5 icon) so the two sidebar tabs read as
-								// one list rather than two.
 								className={cn(
 									"flex h-7 w-full shrink-0 items-center gap-1.5 px-3 text-left text-xs transition-colors",
 									page.id === activePageId

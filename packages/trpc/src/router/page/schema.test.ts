@@ -24,8 +24,6 @@ describe("publishPageSchema", () => {
 		).toBe(true);
 	});
 
-	// Half a link publishes an unlinked page: absent from the workspace's Pages
-	// tab, and unreachable as a republish target for the next version.
 	test("rejects entryPath without workspaceId", () => {
 		const result = publishPageSchema.safeParse({
 			...base,

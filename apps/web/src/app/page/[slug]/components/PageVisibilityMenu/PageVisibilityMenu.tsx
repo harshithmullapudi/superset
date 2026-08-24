@@ -15,7 +15,6 @@ interface PageVisibilityMenuProps {
 	createdByUserId: string | null;
 }
 
-// Web wiring for the shared menu: better-auth session, Next tRPC bindings.
 export function PageVisibilityMenu({
 	pageId,
 	visibility,
@@ -33,7 +32,6 @@ export function PageVisibilityMenu({
 			currentUserId={session?.user?.id}
 			onChange={async (next) => {
 				await setVisibility.mutateAsync({ id: pageId, visibility: next });
-				// Returns void, so the optimistic label holds until the server component re-renders with the new prop.
 				router.refresh();
 			}}
 		/>

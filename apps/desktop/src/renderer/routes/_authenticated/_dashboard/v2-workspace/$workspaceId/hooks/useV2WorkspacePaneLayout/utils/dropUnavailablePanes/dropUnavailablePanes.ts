@@ -6,7 +6,6 @@ import {
 	type WorkspaceState,
 } from "@superset/panes";
 
-
 export function dropUnavailablePanes<TData>(
 	state: WorkspaceState<TData>,
 	unavailableKinds: readonly string[],
@@ -34,7 +33,6 @@ export function dropUnavailablePanes<TData>(
 			layout = layout ? removePaneFromLayout(layout, pane.id) : null;
 		}
 
-		// The tab held nothing else, so it goes with them.
 		if (!layout || Object.keys(panes).length === 0) continue;
 
 		tabs.push({
@@ -53,8 +51,6 @@ export function dropUnavailablePanes<TData>(
 	return { ...state, tabs, activeTabId: resolveActiveTabId(state, tabs) };
 }
 
-// Nearest survivor to the right, then to the left — the direction
-// `getActiveIdAfterRemoval` prefers when a single tab closes.
 function resolveActiveTabId<TData>(
 	state: WorkspaceState<TData>,
 	tabs: Tab<TData>[],

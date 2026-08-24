@@ -2,9 +2,6 @@ import Image from "next/image";
 import type { ReactNode } from "react";
 import { env } from "@/env";
 
-// The shell every dead end renders into — a missing route, a page that will not
-// load, the wrong organization. A shared link is often someone's first sight of
-// Superset, so a failure should still look like us.
 export function MessageScreen({
 	graphic,
 	title,

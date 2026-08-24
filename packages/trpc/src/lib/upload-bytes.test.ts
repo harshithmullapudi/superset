@@ -28,7 +28,6 @@ describe("validateUploadBytes", () => {
 			maxBytes,
 		});
 		expect(buffer.toString()).toBe("hello");
-		// sha256("hello")
 		expect(sha256).toBe(
 			"2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
 		);
@@ -68,8 +67,6 @@ describe("validateUploadBytes", () => {
 	});
 
 	test("rejects an oversized payload without decoding it", () => {
-		// Far beyond the cap: the encoded-length guard must reject this before a
-		// Buffer three quarters its size is allocated.
 		const huge = "A".repeat(maxBytes * 8);
 		expect(() =>
 			validateUploadBytes({
@@ -82,9 +79,6 @@ describe("validateUploadBytes", () => {
 	});
 
 	test("does not reject a payload that only looks large once encoded", () => {
-		// Base64 inflates by 4/3, so a payload at the cap encodes to more
-		// characters than the cap. The guard is an upper bound and must let it
-		// through to the exact check.
 		const atCap = Buffer.alloc(maxBytes, 0x61).toString("base64");
 		expect(atCap.length).toBeGreaterThan(maxBytes);
 		expect(
