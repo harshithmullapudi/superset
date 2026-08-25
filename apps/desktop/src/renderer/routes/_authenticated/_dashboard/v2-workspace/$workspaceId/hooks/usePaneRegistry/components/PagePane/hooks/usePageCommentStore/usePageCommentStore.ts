@@ -1,35 +1,8 @@
-import type { RouterOutputs } from "@superset/trpc";
-import type { CommentStore, CommentThread } from "@superset/ui/page-comments";
+import type { CommentStore } from "@superset/ui/page-comments";
 import { toast } from "@superset/ui/sonner";
 import { useCallback, useMemo } from "react";
 import { cloudTrpc } from "renderer/lib/cloud-trpc";
-
-type ServerThread = RouterOutputs["pageComment"]["list"][number];
-
-function toThreads(rows: ServerThread[]): CommentThread[] {
-	return rows.flatMap((row) =>
-		row.anchor
-			? [
-					{
-						id: row.id,
-						anchor: {
-							path: row.anchor.path,
-							tag: row.anchor.tag,
-							text: row.anchorText ?? "",
-						},
-						resolved: row.resolved,
-						comments: row.comments.map((comment) => ({
-							id: comment.id,
-							body: comment.body,
-							authorName: comment.authorName,
-							authorImage: comment.authorImage,
-							createdAt: comment.createdAt.getTime(),
-						})),
-					},
-				]
-			: [],
-	);
-}
+import { toThreads } from "../../utils/toThreads";
 
 export function usePageCommentStore({
 	pageId,
@@ -74,7 +47,12 @@ export function usePageCommentStore({
 					pageId,
 					version,
 					anchorKind: "element",
-					anchor: { path: anchor.path, tag: anchor.tag },
+					anchor: {
+						path: anchor.path,
+						tag: anchor.tag,
+						offsetX: anchor.offsetX,
+						offsetY: anchor.offsetY,
+					},
 					anchorText: anchorText.slice(0, 500) || null,
 					body,
 				});

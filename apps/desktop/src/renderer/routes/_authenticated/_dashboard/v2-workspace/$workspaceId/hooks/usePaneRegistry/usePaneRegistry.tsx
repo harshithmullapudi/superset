@@ -65,6 +65,8 @@ import { DiffPaneHeaderExtras } from "./components/DiffPane/components/DiffPaneH
 import { FilePane } from "./components/FilePane";
 import { FilePaneHeaderExtras } from "./components/FilePane/components/FilePaneHeaderExtras";
 import { PagePane } from "./components/PagePane";
+import { PagePaneHeaderExtras } from "./components/PagePane/components/PagePaneHeaderExtras";
+import { PagePaneTitle } from "./components/PagePane/components/PagePaneTitle";
 import { TerminalPane } from "./components/TerminalPane";
 import { TerminalPaneHeaderExtras } from "./components/TerminalPane/components/TerminalPaneHeaderExtras";
 import { TerminalPaneIcon } from "./components/TerminalPane/components/TerminalPaneIcon";
@@ -591,9 +593,24 @@ export function usePaneRegistry({
 								const data = pane.data as PagePaneData;
 								return data.title ?? data.slug;
 							},
+							renderTitle: (ctx: RendererContext<PaneViewerData>) => (
+								<PagePaneTitle
+									data={ctx.pane.data as PagePaneData}
+									paneId={ctx.pane.id}
+									onClose={() => ctx.actions.close()}
+								/>
+							),
+							renderHeaderExtras: (ctx: RendererContext<PaneViewerData>) => (
+								<PagePaneHeaderExtras
+									data={ctx.pane.data as PagePaneData}
+									paneId={ctx.pane.id}
+									workspaceId={workspaceId}
+								/>
+							),
 							renderPane: (ctx: RendererContext<PaneViewerData>) => (
 								<PagePane
 									data={ctx.pane.data as PagePaneData}
+									paneId={ctx.pane.id}
 									onDataChange={(data) =>
 										ctx.actions.updateData(data as PaneViewerData)
 									}

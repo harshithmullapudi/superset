@@ -1,29 +1,23 @@
 import { authClient } from "@superset/auth/client";
-import {
-	CommentModeToggle,
-	CommentProvider,
-	PageCommentsView,
-} from "@superset/ui/page-comments";
+import { CommentProvider, PageCommentsView } from "@superset/ui/page-comments";
 import { Spinner } from "@superset/ui/spinner";
 import { useQuery } from "@tanstack/react-query";
 import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useRef } from "react";
 import { cloudTrpc } from "renderer/lib/cloud-trpc";
 import { electronTrpcClient } from "renderer/lib/trpc-client";
-import { useWorkspace } from "renderer/routes/_authenticated/_dashboard/v2-workspace/providers/WorkspaceProvider";
 import type { PagePaneData } from "../../../../types";
-import { PageHandoffMenu } from "./components/PageHandoffMenu";
 import { PagePaneMessage } from "./components/PagePaneMessage";
-import { PageVisibilityMenu } from "./components/PageVisibilityMenu";
 import { usePageCommentStore } from "./hooks/usePageCommentStore";
+import { usePagePaneUi } from "./hooks/usePagePaneUi";
 
 interface PagePaneProps {
 	data: PagePaneData;
+	paneId: string;
 	onDataChange: (data: PagePaneData) => void;
 }
 
-export function PagePane({ data, onDataChange }: PagePaneProps) {
-	const { workspace } = useWorkspace();
+export function PagePane({ data, paneId, onDataChange }: PagePaneProps) {
 	const { data: session } = authClient.useSession();
 	const pull = cloudTrpc.page.pull.useQuery(
 		data.pageId ? { id: data.pageId } : { slug: data.slug },
@@ -35,6 +29,8 @@ export function PagePane({ data, onDataChange }: PagePaneProps) {
 		pageId: pageId ?? "",
 		version: pull.data?.version ?? 0,
 	});
+
+	const { commentsEnabled, setCommentsEnabled } = usePagePaneUi(paneId);
 
 	const onDataChangeRef = useRef(onDataChange);
 	onDataChangeRef.current = onDataChange;
@@ -120,6 +116,8 @@ export function PagePane({ data, onDataChange }: PagePaneProps) {
 	return (
 		<CommentProvider
 			store={store}
+			enabled={commentsEnabled}
+			onEnabledChange={setCommentsEnabled}
 			user={{
 				id: session?.user.id ?? "",
 				name: session?.user.name ?? "You",
@@ -127,23 +125,6 @@ export function PagePane({ data, onDataChange }: PagePaneProps) {
 			}}
 		>
 			<div className="flex h-full w-full flex-col">
-				<div className="flex h-9 shrink-0 items-center justify-end gap-1 border-b px-2">
-					{pull.data && pageId ? (
-						<PageVisibilityMenu
-							pageId={pageId}
-							visibility={
-								pull.data.visibility === "just_me" ? "just_me" : "org"
-							}
-							createdByUserId={pull.data.createdByUserId}
-						/>
-					) : null}
-					<PageHandoffMenu
-						workspaceId={workspace.id}
-						pageTitle={title}
-						pageSlug={data.slug}
-					/>
-					<CommentModeToggle />
-				</div>
 				<div className="min-h-0 min-w-0 flex-1">
 					<PageCommentsView
 						html={content.data}

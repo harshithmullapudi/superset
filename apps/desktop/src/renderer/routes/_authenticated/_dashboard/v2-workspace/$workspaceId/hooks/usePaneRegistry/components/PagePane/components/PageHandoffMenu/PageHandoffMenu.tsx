@@ -7,11 +7,14 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@superset/ui/dropdown-menu";
-import { useComments, useFramePointerDown } from "@superset/ui/page-comments";
+import {
+	type CommentThread,
+	useFramePointerDown,
+} from "@superset/ui/page-comments";
 import { toast } from "@superset/ui/sonner";
 import { workspaceTrpc } from "@superset/workspace-client";
 import { formatDistanceToNowStrict } from "date-fns";
-import { Bot, ChevronDown } from "lucide-react";
+import { Bot } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useTerminalAgentBindings } from "renderer/hooks/host-service/useTerminalAgentBindings";
 import { cloudTrpc } from "renderer/lib/cloud-trpc";
@@ -21,14 +24,15 @@ interface PageHandoffMenuProps {
 	workspaceId: string;
 	pageTitle: string;
 	pageSlug: string;
+	threads: CommentThread[];
 }
 
 export function PageHandoffMenu({
 	workspaceId,
 	pageTitle,
 	pageSlug,
+	threads,
 }: PageHandoffMenuProps) {
-	const { threads } = useComments();
 	const bindings = useTerminalAgentBindings(workspaceId);
 	const send = workspaceTrpc.terminal.send.useMutation();
 	const activate = cloudTrpc.pageComment.activate.useMutation();
@@ -79,13 +83,14 @@ export function PageHandoffMenu({
 		<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
 			<DropdownMenuTrigger asChild>
 				<Button
-					size="xs"
 					variant="ghost"
+					size="icon"
+					className="size-6 p-0 text-muted-foreground/60 hover:text-muted-foreground"
+					aria-label="Hand off to an agent"
+					title="Hand off to an agent"
 					disabled={send.isPending || activate.isPending}
 				>
-					<Bot className="size-3.5" />
-					Hand off
-					<ChevronDown className="size-3" />
+					<Bot className="size-4" />
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-64">
