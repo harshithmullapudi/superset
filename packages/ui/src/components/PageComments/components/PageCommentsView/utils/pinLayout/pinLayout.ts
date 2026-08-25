@@ -1,4 +1,7 @@
-import type { CommentAnchor, FrameRect } from "../commentRuntime";
+import type {
+	CommentAnchor,
+	FrameRect,
+} from "../../../../utils/commentRuntime";
 
 /** Diameter of a pin, and the gap between two pins stacked on one spot. */
 export const PIN_SIZE = 24;

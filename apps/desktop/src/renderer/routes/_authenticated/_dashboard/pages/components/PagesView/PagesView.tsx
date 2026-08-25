@@ -2,7 +2,6 @@ import { Input } from "@superset/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@superset/ui/tabs";
 import { useMemo } from "react";
 import { LuSearch } from "react-icons/lu";
-import { usePageFavorites } from "renderer/hooks/usePageFavorites";
 import { cloudTrpc } from "renderer/lib/cloud-trpc";
 import {
 	isPaneModifier,
@@ -15,6 +14,7 @@ import {
 	sortPinnedFirst,
 } from "../../utils/filterPages";
 import { PagesGrid } from "../PagesGrid";
+import { usePageFavorites } from "./hooks/usePageFavorites";
 
 const TABS: Array<{ value: PageScope; label: string }> = [
 	{ value: "all", label: "All" },

@@ -1,10 +1,6 @@
 "use client";
 
-import {
-	PIN_SIZE,
-	type PinPoint,
-	STACK_OFFSET,
-} from "../../../../utils/pinLayout";
+import { PIN_SIZE, type PinPoint, STACK_OFFSET } from "../../utils/pinLayout";
 import { pinClassName } from "./pinClassName";
 
 interface CommentBubbleProps {

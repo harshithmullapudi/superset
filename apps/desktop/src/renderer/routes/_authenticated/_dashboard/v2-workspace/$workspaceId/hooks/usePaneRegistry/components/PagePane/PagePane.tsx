@@ -1,7 +1,7 @@
 import { useCallback, useRef } from "react";
 import { PageViewer } from "renderer/routes/_authenticated/_dashboard/components/PageViewer";
 import type { PagePaneData } from "../../../../types";
-import { usePagePaneUi } from "./hooks/usePagePaneUi";
+import { usePagePaneUi } from "../../hooks/usePagePaneUi";
 
 interface PagePaneProps {
 	data: PagePaneData;

@@ -9,4 +9,3 @@ export type {
 	PageHeaderVersion,
 	PageVisibility,
 } from "./types";
-export { nextSharedVersion, servedVersion } from "./utils/sharedVersion";

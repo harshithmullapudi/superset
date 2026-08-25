@@ -95,6 +95,7 @@ export default async function PublishedPage({ params }: PageProps) {
 						updatedAt: page.updatedAt,
 						sharedVersion: page.sharedVersion,
 						latestVersion: page.latestVersion,
+						servedVersion: page.servedVersion,
 					}}
 					versions={versions}
 					currentUserId={session?.user.id}

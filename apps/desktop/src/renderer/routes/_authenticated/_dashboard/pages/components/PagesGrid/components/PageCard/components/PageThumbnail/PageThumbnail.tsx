@@ -4,14 +4,14 @@ import { FileText } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { cloudTrpc } from "renderer/lib/cloud-trpc";
 import {
+	FRAME_HEIGHT,
+	FRAME_WIDTH,
+	THUMBNAIL_ASPECT_RATIO,
+} from "../../../../constants";
+import {
 	loadThumbnailUrl,
 	thumbnailCacheKey,
-} from "../../utils/pageThumbnailCache";
-
-const FRAME_WIDTH = 1280;
-const FRAME_HEIGHT = 880;
-
-export const THUMBNAIL_ASPECT_RATIO = `${FRAME_WIDTH} / ${FRAME_HEIGHT}`;
+} from "./utils/pageThumbnailCache";
 
 interface PageThumbnailProps {
 	slug: string;
@@ -55,9 +55,11 @@ export function PageThumbnail({ slug, pageId }: PageThumbnailProps) {
 	const downloadUrl = pull.data?.downloadUrl;
 	const version = pull.data?.version ?? 0;
 
+	const thumbnailEnabled = Boolean(downloadUrl) && version > 0;
+
 	const thumbnail = useQuery({
 		queryKey: ["page-thumbnail", pageId, version],
-		enabled: Boolean(downloadUrl) && version > 0,
+		enabled: thumbnailEnabled,
 		staleTime: Number.POSITIVE_INFINITY,
 		queryFn: () =>
 			loadThumbnailUrl(thumbnailCacheKey(pageId, version), async () => {
@@ -71,7 +73,8 @@ export function PageThumbnail({ slug, pageId }: PageThumbnailProps) {
 			}),
 	});
 
-	const isLoading = isVisible && (pull.isPending || thumbnail.isPending);
+	const isLoading =
+		isVisible && (pull.isPending || (thumbnailEnabled && thumbnail.isPending));
 
 	return (
 		<div

@@ -1,5 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import type { CommentAnchor, FrameRect } from "../commentRuntime";
+import type {
+	CommentAnchor,
+	FrameRect,
+} from "../../../../utils/commentRuntime";
 import { pinPointOf, stackPins } from "./pinLayout";
 
 const rect: FrameRect = { top: 100, left: 200, width: 400, height: 80 };

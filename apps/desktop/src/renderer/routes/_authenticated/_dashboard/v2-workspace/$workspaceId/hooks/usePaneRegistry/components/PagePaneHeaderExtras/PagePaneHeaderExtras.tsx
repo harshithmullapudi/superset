@@ -5,9 +5,10 @@ import {
 } from "@superset/ui/page-comments";
 import { Share2 } from "lucide-react";
 import { usePageHeaderData } from "renderer/routes/_authenticated/_dashboard/hooks/usePageHeaderData";
-import type { PagePaneData } from "../../../../../../types";
+import type { PagePaneData } from "../../../../types";
 import { usePagePaneUi } from "../../hooks/usePagePaneUi";
-import { PageHandoffMenu } from "../PageHandoffMenu";
+import { pagePaneLabel } from "../../utils/pagePaneLabel";
+import { PageHandoffMenu } from "./components/PageHandoffMenu";
 
 interface PagePaneHeaderExtrasProps {
 	data: PagePaneData;
@@ -35,7 +36,7 @@ export function PagePaneHeaderExtras({
 		<>
 			<PageHandoffMenu
 				workspaceId={workspaceId}
-				pageTitle={page?.title ?? data.title ?? data.slug}
+				pageTitle={page?.title?.trim() || pagePaneLabel(data)}
 				pageSlug={data.slug}
 				threads={threads}
 			/>

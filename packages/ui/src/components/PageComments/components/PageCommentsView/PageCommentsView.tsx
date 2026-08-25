@@ -9,15 +9,15 @@ import {
 	type HostMessageBody,
 	injectCommentRuntime,
 } from "../../utils/commentRuntime";
+import { CommentBubble, pinClassName } from "./components/CommentBubble";
+import { CommentPopover, initialsOf } from "./components/CommentPopover";
+import { PageFrame } from "./components/PageFrame";
 import {
 	PIN_SIZE,
 	type PinPoint,
 	pinPointOf,
 	stackPins,
-} from "../../utils/pinLayout";
-import { CommentBubble, pinClassName } from "./components/CommentBubble";
-import { CommentPopover, initialsOf } from "./components/CommentPopover";
-import { PageFrame } from "./components/PageFrame";
+} from "./utils/pinLayout";
 
 interface PageCommentsViewProps {
 	html: string;

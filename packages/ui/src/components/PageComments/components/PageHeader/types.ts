@@ -23,6 +23,7 @@ export interface PageHeaderPage {
 	updatedAt: Date | string;
 	sharedVersion: number | null;
 	latestVersion: number | null;
+	servedVersion: number | null;
 }
 
 export interface PageHeaderActions {

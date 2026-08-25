@@ -23,9 +23,8 @@ import {
 	DropdownMenuTrigger,
 } from "../../../../../ui/dropdown-menu";
 import { useFramePointerDown } from "../../../../hooks/useFramePointerDown";
+import { relativeTime } from "../../../../utils/relativeTime";
 import type { PageHeaderPage, PageHeaderVersion } from "../../types";
-import { relativeTime } from "../../utils/relativeTime";
-import { servedVersion } from "../../utils/sharedVersion";
 
 interface PageTitleMenuProps {
 	page: PageHeaderPage;
@@ -54,7 +53,7 @@ export function PageTitleMenu({
 }: PageTitleMenuProps) {
 	useFramePointerDown(useCallback(() => onOpenChange(false), [onOpenChange]));
 
-	const served = servedVersion(page.sharedVersion, page.latestVersion);
+	const served = page.servedVersion;
 	const itemClass = compact ? "text-xs" : undefined;
 	const iconClass = compact ? "size-3.5" : undefined;
 

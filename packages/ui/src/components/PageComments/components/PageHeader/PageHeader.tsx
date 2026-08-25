@@ -13,7 +13,6 @@ import type {
 	PageHeaderPage,
 	PageHeaderVersion,
 } from "./types";
-import { nextSharedVersion } from "./utils/sharedVersion";
 
 interface PageHeaderProps extends PageHeaderActions {
 	page: PageHeaderPage;
@@ -43,10 +42,9 @@ export function PageHeader({
 		currentUserId !== undefined && currentUserId === page.createdByUserId;
 
 	const pickVersion = async (version: number) => {
-		const next = nextSharedVersion(version, page.latestVersion);
-		if (next === page.sharedVersion) return;
+		if (page.sharedVersion !== null && version === page.sharedVersion) return;
 		try {
-			await onSetSharedVersion(next);
+			await onSetSharedVersion(version);
 		} catch (error) {
 			toast.error(
 				error instanceof Error

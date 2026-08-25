@@ -2,7 +2,7 @@ import type { CommentStore } from "@superset/ui/page-comments";
 import { toast } from "@superset/ui/sonner";
 import { useCallback, useMemo } from "react";
 import { cloudTrpc } from "renderer/lib/cloud-trpc";
-import { toThreads } from "../../utils/toThreads";
+import { toThreads } from "renderer/routes/_authenticated/_dashboard/utils/toThreads";
 
 export function usePageCommentStore({
 	pageId,

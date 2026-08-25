@@ -1,7 +1,5 @@
 "use client";
 
-import { formatDistanceToNowStrict } from "date-fns";
-
 import {
 	Check,
 	Loader2,
@@ -26,11 +24,10 @@ import {
 	type PageComment,
 	useComments,
 } from "../../../../providers/CommentProvider";
-import { PIN_SIZE, type PinPoint } from "../../../../utils/pinLayout";
+import { relativeTime } from "../../../../utils/relativeTime";
+import type { PinPoint } from "../../utils/pinLayout";
+import { popoverPlacement } from "./utils/popoverLayout";
 
-const WIDTH = 350;
-const GAP = 10;
-const EDGE = 12;
 /** Stand-in until the card has rendered and can be measured. */
 const ESTIMATED_HEIGHT = 200;
 
@@ -110,15 +107,7 @@ export function CommentPopover({
 		};
 	}, [onDismiss, submitting]);
 
-	const belowTop = point.y + PIN_SIZE / 2 + GAP;
-	const top =
-		belowTop + height + EDGE <= container.height
-			? belowTop
-			: Math.max(EDGE, point.y - PIN_SIZE / 2 - GAP - height);
-	const left = Math.min(
-		Math.max(EDGE, point.x - PIN_SIZE / 2),
-		Math.max(EDGE, container.width - WIDTH - EDGE),
-	);
+	const { left, top, width } = popoverPlacement({ point, container, height });
 
 	const submit = async () => {
 		const body = value.trim();
@@ -145,7 +134,7 @@ export function CommentPopover({
 		<div
 			ref={cardRef}
 			data-comment-ui=""
-			style={{ transform: `translate(${left}px, ${top}px)`, width: WIDTH }}
+			style={{ transform: `translate(${left}px, ${top}px)`, width }}
 			className="pointer-events-auto absolute top-0 left-0 overflow-hidden rounded-lg border bg-popover text-popover-foreground shadow-lg"
 		>
 			{thread ? (
@@ -169,9 +158,7 @@ export function CommentPopover({
 										{comment.authorName}
 									</span>
 									<span className="truncate text-muted-foreground text-xs">
-										{formatDistanceToNowStrict(comment.createdAt, {
-											addSuffix: true,
-										})}
+										{relativeTime(comment.createdAt)}
 									</span>
 								</div>
 								{/* Actions stay out of the way until the comment is hovered

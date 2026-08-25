@@ -6,7 +6,7 @@ import type {
 } from "@superset/ui/page-comments";
 import { useCallback } from "react";
 import { cloudTrpc } from "renderer/lib/cloud-trpc";
-import { toThreads } from "renderer/routes/_authenticated/_dashboard/components/PageViewer/utils/toThreads";
+import { toThreads } from "renderer/routes/_authenticated/_dashboard/utils/toThreads";
 
 export interface PageHeaderTarget {
 	slug: string;
@@ -64,6 +64,7 @@ export function usePageHeaderData(data: PageHeaderTarget): PageHeaderData {
 					updatedAt: resolved.updatedAt,
 					sharedVersion: resolved.sharedVersion,
 					latestVersion: resolved.latestVersion,
+					servedVersion: resolved.servedVersion,
 				}
 			: null;
 

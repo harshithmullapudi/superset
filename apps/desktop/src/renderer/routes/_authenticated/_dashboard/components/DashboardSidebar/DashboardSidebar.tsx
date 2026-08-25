@@ -26,7 +26,6 @@ import { DashboardSidebarBulkActions } from "./components/DashboardSidebarBulkAc
 import { DashboardSidebarCloudSection } from "./components/DashboardSidebarCloudSection";
 import { DashboardSidebarHeader } from "./components/DashboardSidebarHeader";
 import { DashboardSidebarHoverCardOverlay } from "./components/DashboardSidebarHoverCardOverlay";
-import { DashboardSidebarPagesSection } from "./components/DashboardSidebarPagesSection";
 import { DashboardSidebarPinnedSection } from "./components/DashboardSidebarPinnedSection";
 import { DashboardSidebarProjectSection } from "./components/DashboardSidebarProjectSection";
 import { DashboardSidebarSectionRenameProvider } from "./components/DashboardSidebarSectionRenameContext";
@@ -296,7 +295,6 @@ export function DashboardSidebar({
 											isCollapsed={isCollapsed}
 											onWorkspaceHover={refreshWorkspacePullRequest}
 										/>
-										<DashboardSidebarPagesSection isCollapsed={isCollapsed} />
 										<DashboardSidebarSessionsSection
 											sessionWorkspaces={sessionWorkspaces}
 											isCollapsed={isCollapsed}

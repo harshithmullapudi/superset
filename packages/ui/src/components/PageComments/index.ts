@@ -5,7 +5,6 @@ export {
 export { PageCommentsView } from "./components/PageCommentsView";
 export {
 	DeletePageDialog,
-	nextSharedVersion,
 	PageHeader,
 	type PageHeaderActions,
 	type PageHeaderOwner,
@@ -14,7 +13,6 @@ export {
 	PageSharePopover,
 	PageTitleMenu,
 	type PageVisibility,
-	servedVersion,
 } from "./components/PageHeader";
 export { useFramePointerDown } from "./hooks/useFramePointerDown";
 export {

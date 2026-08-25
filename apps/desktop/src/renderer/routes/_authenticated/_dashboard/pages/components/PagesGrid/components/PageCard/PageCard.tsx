@@ -10,7 +10,7 @@ import { cn } from "@superset/ui/utils";
 import { formatDistanceToNowStrict } from "date-fns";
 import { Globe, Link2, Lock, MoreVertical, Pin, PinOff } from "lucide-react";
 import type { MouseEvent } from "react";
-import { PageThumbnail } from "../PageThumbnail";
+import { PageThumbnail } from "./components/PageThumbnail";
 
 export interface PageCardItem {
 	id: string;

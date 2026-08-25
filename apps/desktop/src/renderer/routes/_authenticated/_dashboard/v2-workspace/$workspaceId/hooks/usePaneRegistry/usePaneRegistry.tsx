@@ -65,12 +65,13 @@ import { DiffPaneHeaderExtras } from "./components/DiffPane/components/DiffPaneH
 import { FilePane } from "./components/FilePane";
 import { FilePaneHeaderExtras } from "./components/FilePane/components/FilePaneHeaderExtras";
 import { PagePane } from "./components/PagePane";
-import { PagePaneHeaderExtras } from "./components/PagePane/components/PagePaneHeaderExtras";
-import { PagePaneTitle } from "./components/PagePane/components/PagePaneTitle";
+import { PagePaneHeaderExtras } from "./components/PagePaneHeaderExtras";
+import { PagePaneTitle } from "./components/PagePaneTitle";
 import { TerminalPane } from "./components/TerminalPane";
 import { TerminalPaneHeaderExtras } from "./components/TerminalPane/components/TerminalPaneHeaderExtras";
 import { TerminalPaneIcon } from "./components/TerminalPane/components/TerminalPaneIcon";
 import { TerminalSessionDropdown } from "./components/TerminalPane/components/TerminalSessionDropdown";
+import { pagePaneLabel } from "./utils/pagePaneLabel";
 
 function getFileName(filePath: string): string {
 	return getBaseName(filePath);
@@ -589,10 +590,7 @@ export function usePaneRegistry({
 				? {
 						page: {
 							getIcon: () => <FileText className="size-3.5" />,
-							getTitle: (pane) => {
-								const data = pane.data as PagePaneData;
-								return data.title ?? data.slug;
-							},
+							getTitle: (pane) => pagePaneLabel(pane.data as PagePaneData),
 							renderTitle: (ctx: RendererContext<PaneViewerData>) => (
 								<PagePaneTitle
 									data={ctx.pane.data as PagePaneData}

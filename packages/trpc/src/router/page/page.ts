@@ -25,6 +25,7 @@ import {
 	setPageVisibilitySchema,
 	setSharedVersionSchema,
 } from "./schema";
+import { resolveSharedVersion, servedVersion } from "./shared-version";
 import { assertWorkspaceAccess } from "./workspace-access";
 
 function visibilityFilter(userId: string) {
@@ -207,7 +208,7 @@ export const pageRouter = {
 			...page,
 			url: pageUrl(page.slug),
 			latestVersion,
-			servedVersion: page.sharedVersion ?? latestVersion,
+			servedVersion: servedVersion(page.sharedVersion, latestVersion),
 		};
 	}),
 
@@ -272,9 +273,14 @@ export const pageRouter = {
 				}
 			}
 
+			const resolved = resolveSharedVersion(
+				input.version,
+				await latestVersionNumber(page.id),
+			);
+
 			const [updated] = await db
 				.update(pages)
-				.set({ sharedVersion: input.version })
+				.set({ sharedVersion: resolved })
 				.where(eq(pages.id, page.id))
 				.returning();
 
@@ -353,7 +359,8 @@ export const pageRouter = {
 			});
 
 			const latestVersion = await latestVersionNumber(page.id);
-			const version = input.version ?? page.sharedVersion ?? latestVersion;
+			const version =
+				input.version ?? servedVersion(page.sharedVersion, latestVersion);
 			if (version === null) {
 				throw new TRPCError({
 					code: "NOT_FOUND",
@@ -405,6 +412,7 @@ export const pageRouter = {
 				updatedAt: page.updatedAt,
 				sharedVersion: page.sharedVersion,
 				latestVersion,
+				servedVersion: servedVersion(page.sharedVersion, latestVersion),
 				version: row.version,
 				label: row.label,
 				contentType: row.contentType,

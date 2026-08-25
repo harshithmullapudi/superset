@@ -1,13 +1,10 @@
-import {
-	DeletePageDialog,
-	nextSharedVersion,
-	PageTitleMenu,
-} from "@superset/ui/page-comments";
+import { DeletePageDialog, PageTitleMenu } from "@superset/ui/page-comments";
 import { FileText } from "lucide-react";
 import { useState } from "react";
 import { usePageHeaderData } from "renderer/routes/_authenticated/_dashboard/hooks/usePageHeaderData";
-import type { PagePaneData } from "../../../../../../types";
+import type { PagePaneData } from "../../../../types";
 import { usePagePaneUi } from "../../hooks/usePagePaneUi";
+import { pagePaneLabel } from "../../utils/pagePaneLabel";
 
 interface PagePaneTitleProps {
 	data: PagePaneData;
@@ -26,7 +23,7 @@ export function PagePaneTitle({ data, paneId, onClose }: PagePaneTitleProps) {
 		return (
 			<span className="flex min-w-0 items-center gap-2">
 				<FileText className="size-3.5 shrink-0 text-muted-foreground" />
-				<span className="truncate text-xs">{data.title ?? data.slug}</span>
+				<span className="truncate text-xs">{pagePaneLabel(data)}</span>
 			</span>
 		);
 	}
@@ -59,9 +56,7 @@ export function PagePaneTitle({ data, paneId, onClose }: PagePaneTitleProps) {
 				compact
 				onPickVersion={(version) => {
 					setMenuOpen(false);
-					void onSetSharedVersion(
-						nextSharedVersion(version, page.latestVersion),
-					);
+					void onSetSharedVersion(version);
 				}}
 			/>
 			<DeletePageDialog

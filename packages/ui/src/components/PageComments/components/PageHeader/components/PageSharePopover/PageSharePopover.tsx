@@ -20,13 +20,13 @@ import {
 import { Separator } from "../../../../../ui/separator";
 import { toast } from "../../../../../ui/sonner";
 import { useFramePointerDown } from "../../../../hooks/useFramePointerDown";
+import { relativeTime } from "../../../../utils/relativeTime";
 import type {
 	PageHeaderActions,
 	PageHeaderPage,
 	PageHeaderVersion,
 	PageVisibility,
 } from "../../types";
-import { relativeTime } from "../../utils/relativeTime";
 
 const LATEST = "latest";
 
