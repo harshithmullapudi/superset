@@ -111,7 +111,7 @@ to the workspace root as the page's entry path, and that path is the key:
 publish the same path again and it becomes **version 2 of the same page** rather
 than a second page.
 
-Write the `.html` **inside the workspace** — not in `/tmp` or an agent
+Write the `.html` **inside the workspace**, not in `/tmp` or an agent
 scratchpad. A file outside the workspace has no relative path, so it falls back
 to being keyed by filename alone (`/external/report.html`), which means two
 unrelated files with the same name will version each other. Keeping it in the
