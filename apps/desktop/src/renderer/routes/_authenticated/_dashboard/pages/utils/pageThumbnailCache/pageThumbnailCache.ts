@@ -6,6 +6,15 @@ const urls = new Map<string, string>();
 const tokens = new Map<string, string>();
 const inflight = new Map<string, Promise<string>>();
 
+let generation = 0;
+
+export class ThumbnailCacheClearedError extends Error {
+	constructor() {
+		super("Page preview cache was cleared while the preview was loading");
+		this.name = "ThumbnailCacheClearedError";
+	}
+}
+
 export function thumbnailCacheKey(pageId: string, version: number): string {
 	return `${pageId}:${version}`;
 }
@@ -18,6 +27,10 @@ export function getCachedThumbnailUrl(key: string): string | undefined {
 	return url;
 }
 
+function releaseToken(token: string): void {
+	void electronTrpcClient.pageContent.release.mutate({ token });
+}
+
 function evictOverflow(): void {
 	while (urls.size > MAX_CACHED_THUMBNAILS) {
 		const oldest = urls.keys().next().value;
@@ -25,9 +38,7 @@ function evictOverflow(): void {
 		urls.delete(oldest);
 		const token = tokens.get(oldest);
 		tokens.delete(oldest);
-		if (token) {
-			void electronTrpcClient.pageContent.release.mutate({ token });
-		}
+		if (token) releaseToken(token);
 	}
 }
 
@@ -41,17 +52,23 @@ export function loadThumbnailUrl(
 	const existing = inflight.get(key);
 	if (existing) return existing;
 
-	const pending = (async () => {
+	const startedAt = generation;
+
+	const pending: Promise<string> = (async () => {
 		const html = await fetchHtml();
 		const { token, url } = await electronTrpcClient.pageContent.register.mutate(
 			{ html },
 		);
+		if (startedAt !== generation) {
+			releaseToken(token);
+			throw new ThumbnailCacheClearedError();
+		}
 		urls.set(key, url);
 		tokens.set(key, token);
 		evictOverflow();
 		return url;
 	})().finally(() => {
-		inflight.delete(key);
+		if (inflight.get(key) === pending) inflight.delete(key);
 	});
 
 	inflight.set(key, pending);
@@ -59,9 +76,9 @@ export function loadThumbnailUrl(
 }
 
 export function clearThumbnailCache(): void {
-	for (const token of tokens.values()) {
-		void electronTrpcClient.pageContent.release.mutate({ token });
-	}
+	generation += 1;
+	for (const token of tokens.values()) releaseToken(token);
 	urls.clear();
 	tokens.clear();
+	inflight.clear();
 }

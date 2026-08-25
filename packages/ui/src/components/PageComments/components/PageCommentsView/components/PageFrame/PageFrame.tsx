@@ -1,4 +1,4 @@
-import { type Ref, useEffect, useState } from "react";
+import { type Ref, useState } from "react";
 import { cn } from "../../../../../../lib/utils";
 import { Spinner } from "../../../../../ui/spinner";
 
@@ -11,19 +11,16 @@ interface PageFrameProps {
 }
 
 export function PageFrame({ html, src, title, ref, onLoad }: PageFrameProps) {
-	const [loaded, setLoaded] = useState(false);
-
-	// biome-ignore lint/correctness/useExhaustiveDependencies: src/html are reset triggers — a new document repaints from white, so cover it again until it lands
-	useEffect(() => {
-		setLoaded(false);
-	}, [src, html]);
+	const documentKey = src ?? html ?? "";
+	const [loadedKey, setLoadedKey] = useState<string | null>(null);
+	const loaded = loadedKey === documentKey;
 
 	return (
 		<div className="relative h-full w-full bg-background">
 			<iframe
 				ref={ref}
 				onLoad={() => {
-					setLoaded(true);
+					setLoadedKey(documentKey);
 					onLoad?.();
 				}}
 				title={title}

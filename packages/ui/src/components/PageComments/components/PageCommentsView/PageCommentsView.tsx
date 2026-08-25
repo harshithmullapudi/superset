@@ -105,7 +105,7 @@ export function PageCommentsView({
 
 	useEffect(() => {
 		const onKeyDown = (event: KeyboardEvent) => {
-			if (event.key === "Escape") dismiss();
+			if (event.key === "Escape" && !event.defaultPrevented) dismiss();
 		};
 		window.addEventListener("keydown", onKeyDown);
 		return () => window.removeEventListener("keydown", onKeyDown);

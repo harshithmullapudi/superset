@@ -1,6 +1,8 @@
+import { FEATURE_FLAGS } from "@superset/shared/constants";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@superset/ui/tooltip";
 import { cn } from "@superset/ui/utils";
 import { FileText } from "lucide-react";
+import { useFeatureFlagEnabled } from "posthog-js/react";
 import { useMemo } from "react";
 import { usePageFavorites } from "renderer/hooks/usePageFavorites";
 import { cloudTrpc } from "renderer/lib/cloud-trpc";
@@ -19,7 +21,8 @@ interface DashboardSidebarPagesSectionProps {
 export function DashboardSidebarPagesSection({
 	isCollapsed = false,
 }: DashboardSidebarPagesSectionProps) {
-	const pages = cloudTrpc.page.list.useQuery({});
+	const isPagesEnabled = useFeatureFlagEnabled(FEATURE_FLAGS.PAGES) ?? false;
+	const pages = cloudTrpc.page.list.useQuery({}, { enabled: isPagesEnabled });
 	const { favoritePageIdSet } = usePageFavorites();
 	const openPage = useOpenPage();
 	const activeSlug = useActivePageSlug();
@@ -32,6 +35,7 @@ export function DashboardSidebarPagesSection({
 		[pages.data, favoritePageIdSet],
 	);
 
+	if (!isPagesEnabled) return null;
 	if (favorites.length === 0) return null;
 
 	if (isCollapsed) {
@@ -92,7 +96,9 @@ export function DashboardSidebarPagesSection({
 								<span className="mr-2 flex size-4 shrink-0 items-center justify-center">
 									<FileText className="size-3.5" />
 								</span>
-								<span className="min-w-0 flex-1 truncate text-left">{page.title}</span>
+								<span className="min-w-0 flex-1 truncate text-left">
+									{page.title}
+								</span>
 							</button>
 						</div>
 					);
