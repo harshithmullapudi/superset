@@ -19,6 +19,7 @@ interface PageHeaderProps extends PageHeaderActions {
 	page: PageHeaderPage;
 	versions: PageHeaderVersion[];
 	currentUserId: string | undefined;
+	leading?: ReactNode;
 	trailing?: ReactNode;
 	className?: string;
 }
@@ -27,6 +28,7 @@ export function PageHeader({
 	page,
 	versions,
 	currentUserId,
+	leading,
 	trailing,
 	className,
 	onSetVisibility,
@@ -61,28 +63,31 @@ export function PageHeader({
 				className,
 			)}
 		>
-			<PageTitleMenu
-				page={page}
-				versions={versions}
-				editable={isOwner}
-				isOwner={isOwner}
-				open={menuOpen}
-				onOpenChange={setMenuOpen}
-				onShare={() => {
-					setMenuOpen(false);
-					setShareOpen(true);
-				}}
-				onDelete={() => {
-					setMenuOpen(false);
-					setDeleteOpen(true);
-				}}
-				onPickVersion={(version) => {
-					setMenuOpen(false);
-					void pickVersion(version);
-				}}
-			/>
+			{leading}
+			<div className="no-drag flex min-w-0 items-center">
+				<PageTitleMenu
+					page={page}
+					versions={versions}
+					editable={isOwner}
+					isOwner={isOwner}
+					open={menuOpen}
+					onOpenChange={setMenuOpen}
+					onShare={() => {
+						setMenuOpen(false);
+						setShareOpen(true);
+					}}
+					onDelete={() => {
+						setMenuOpen(false);
+						setDeleteOpen(true);
+					}}
+					onPickVersion={(version) => {
+						setMenuOpen(false);
+						void pickVersion(version);
+					}}
+				/>
+			</div>
 
-			<div className="ml-auto flex shrink-0 items-center gap-1">
+			<div className="no-drag ml-auto flex shrink-0 items-center gap-1">
 				{trailing}
 				<PageSharePopover
 					page={page}

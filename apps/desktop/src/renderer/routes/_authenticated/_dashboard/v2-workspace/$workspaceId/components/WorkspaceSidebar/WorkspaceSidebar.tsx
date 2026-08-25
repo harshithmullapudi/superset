@@ -1,17 +1,18 @@
-import { FEATURE_FLAGS } from "@superset/shared/constants";
 import { workspaceTrpc } from "@superset/workspace-client";
 import { eq } from "@tanstack/db";
 import { useLiveQuery } from "@tanstack/react-db";
-import { useFeatureFlagEnabled } from "posthog-js/react";
 import { useEffect, useRef, useState } from "react";
-import { LuFile, LuFileText, LuGitCompareArrows } from "react-icons/lu";
+import { LuFile, LuGitCompareArrows } from "react-icons/lu";
 import { getChangesetFileKey } from "renderer/routes/_authenticated/_dashboard/v2-workspace/$workspaceId/hooks/useChangeset";
 import { useWorkspaceGitStatus } from "renderer/routes/_authenticated/_dashboard/v2-workspace/$workspaceId/providers/WorkspaceGitStatusProvider";
 import { useCollections } from "renderer/routes/_authenticated/providers/CollectionsProvider";
+import {
+	WORKSPACE_SIDEBAR_TABS,
+	type WorkspaceSidebarTab,
+} from "renderer/routes/_authenticated/providers/CollectionsProvider/dashboardSidebarLocal/schema";
 import { useSettings } from "renderer/stores/settings";
-import type { CommentPaneData, DiffFocusSide, PagePaneData } from "../../types";
+import type { CommentPaneData, DiffFocusSide } from "../../types";
 import { FilesTab } from "./components/FilesTab";
-import { PagesTab } from "./components/PagesTab";
 import { PRActionHeader } from "./components/PRActionHeader";
 import { SidebarHeader } from "./components/SidebarHeader";
 import { useChangesTab } from "./hooks/useChangesTab";
@@ -26,17 +27,10 @@ import type { SidebarTabDefinition } from "./types";
 const LABELLED_TAB_WIDTH = 88;
 const LABEL_HYSTERESIS = 20;
 
-type SidebarTabId = "changes" | "files" | "review" | "pages";
-
-const VALID_TAB_IDS: readonly SidebarTabId[] = [
-	"changes",
-	"files",
-	"review",
-	"pages",
-];
+type SidebarTabId = WorkspaceSidebarTab;
 
 function isSidebarTabId(tab: string): tab is SidebarTabId {
-	return (VALID_TAB_IDS as readonly string[]).includes(tab);
+	return (WORKSPACE_SIDEBAR_TABS as readonly string[]).includes(tab);
 }
 
 export interface PendingReveal {
@@ -54,7 +48,6 @@ interface WorkspaceSidebarProps {
 		changeKey?: string,
 	) => void;
 	onOpenComment?: (comment: CommentPaneData) => void;
-	onOpenPage?: (page: PagePaneData) => void;
 	onSearch?: () => void;
 	selectedFilePath?: string;
 	pendingReveal?: PendingReveal | null;
@@ -65,7 +58,6 @@ export function WorkspaceSidebar({
 	onSelectFile,
 	onSelectDiffFile,
 	onOpenComment,
-	onOpenPage,
 	onSearch,
 	selectedFilePath,
 	pendingReveal,
@@ -166,31 +158,7 @@ export function WorkspaceSidebar({
 		),
 	};
 
-	const isPagesEnabled = useFeatureFlagEnabled(FEATURE_FLAGS.PAGES) ?? false;
-	const pagesTab: SidebarTabDefinition = {
-		id: "pages",
-		label: "Pages",
-		icon: LuFileText,
-		content: (
-			<PagesTab
-				workspaceId={workspaceId}
-				onOpenPage={(page) =>
-					onOpenPage?.({
-						pageId: page.id,
-						slug: page.slug,
-						title: page.title,
-					})
-				}
-			/>
-		),
-	};
-
-	const tabs: SidebarTabDefinition[] = [
-		filesTab,
-		changesTab,
-		reviewTab,
-		...(isPagesEnabled ? [pagesTab] : []),
-	];
+	const tabs: SidebarTabDefinition[] = [filesTab, changesTab, reviewTab];
 	const activeTabDef = tabs.find((t) => t.id === activeTab) ?? tabs[0];
 
 	const tabCount = tabs.length;

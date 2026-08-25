@@ -22,24 +22,9 @@ export const getPagesAccess = cache(async () => {
 			session.user.id,
 			{ personProperties: { email: session.user.email } },
 		);
-		// TEMP DEBUG — remove with the override below.
-		console.log("[pages] flag check", {
-			flag,
-			type: typeof flag,
-			userId: session.user.id,
-			key: FEATURE_FLAGS.PAGES,
-		});
 		hasPagesAccess = Boolean(flag);
 	} catch (error) {
 		console.error("[pages] Failed to load the pages feature flag", error);
-	}
-
-	// TEMP OVERRIDE — forces the page viewer open regardless of the PostHog
-	// flag, to confirm the flag is the only thing 404ing published pages.
-	// REVERT BEFORE MERGING: delete this block and the TEMP DEBUG log above.
-	if (!hasPagesAccess) {
-		console.warn("[pages] TEMP OVERRIDE: granting access despite flag=false");
-		hasPagesAccess = true;
 	}
 
 	return { hasPagesAccess, session };

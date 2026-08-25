@@ -6,8 +6,13 @@ import type {
 } from "@superset/ui/page-comments";
 import { useCallback } from "react";
 import { cloudTrpc } from "renderer/lib/cloud-trpc";
-import type { PagePaneData } from "../../../../../../types";
-import { toThreads } from "../../utils/toThreads";
+import { toThreads } from "renderer/routes/_authenticated/_dashboard/components/PageViewer/utils/toThreads";
+
+export interface PageHeaderTarget {
+	slug: string;
+	pageId?: string;
+	title?: string;
+}
 
 interface PageHeaderData {
 	page: PageHeaderPage | null;
@@ -19,7 +24,7 @@ interface PageHeaderData {
 	onDelete: () => Promise<void>;
 }
 
-export function usePageHeaderData(data: PagePaneData): PageHeaderData {
+export function usePageHeaderData(data: PageHeaderTarget): PageHeaderData {
 	const { data: session } = authClient.useSession();
 	const ref = data.pageId ? { id: data.pageId } : { slug: data.slug };
 

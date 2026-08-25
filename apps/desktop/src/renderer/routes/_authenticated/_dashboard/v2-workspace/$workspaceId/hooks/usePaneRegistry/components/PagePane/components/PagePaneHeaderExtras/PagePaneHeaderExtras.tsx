@@ -4,8 +4,8 @@ import {
 	PageSharePopover,
 } from "@superset/ui/page-comments";
 import { Share2 } from "lucide-react";
+import { usePageHeaderData } from "renderer/routes/_authenticated/_dashboard/hooks/usePageHeaderData";
 import type { PagePaneData } from "../../../../../../types";
-import { usePageHeaderData } from "../../hooks/usePageHeaderData";
 import { usePagePaneUi } from "../../hooks/usePagePaneUi";
 import { PageHandoffMenu } from "../PageHandoffMenu";
 

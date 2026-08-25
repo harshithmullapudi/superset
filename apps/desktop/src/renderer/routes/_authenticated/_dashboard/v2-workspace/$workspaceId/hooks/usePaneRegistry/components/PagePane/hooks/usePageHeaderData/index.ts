@@ -1,1 +1,0 @@
-export { usePageHeaderData } from "./usePageHeaderData";

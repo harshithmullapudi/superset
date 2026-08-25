@@ -1,0 +1,1 @@
+export { useActivePageSlug } from "./useActivePageSlug";
