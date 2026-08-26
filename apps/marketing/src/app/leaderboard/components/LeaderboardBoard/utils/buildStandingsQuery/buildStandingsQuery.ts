@@ -1,5 +1,5 @@
-import type { StandingsQuery } from "../../../../utils/fetchLeaderboard";
-import type { RangeSelection } from "../../../RangeTabs";
+import type { StandingsQuery } from "@/app/utils/fetchLeaderboard";
+import type { RangeSelection } from "../../components/RangeTabs";
 
 function toDayKey(date: Date): string {
 	return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;

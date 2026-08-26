@@ -1,10 +1,10 @@
 import Link from "next/link";
+import { TierBadge } from "@/app/components/TierBadge";
 import type {
 	LeaderboardMetric,
 	StandingRow,
-} from "../../utils/fetchLeaderboard";
-import { formatCount, formatTokens, formatUsd } from "../../utils/formatUsage";
-import { TierBadge } from "../TierBadge";
+} from "@/app/utils/fetchLeaderboard";
+import { formatCount, formatTokens, formatUsd } from "@/app/utils/formatUsage";
 import { DeveloperAvatar } from "./components/DeveloperAvatar";
 
 interface LeaderboardTableProps {

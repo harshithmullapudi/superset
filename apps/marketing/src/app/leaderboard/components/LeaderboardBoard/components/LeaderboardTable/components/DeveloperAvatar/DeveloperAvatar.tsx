@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { avatarUrl } from "../../../../utils/avatarUrl";
+import { avatarUrl } from "@/app/utils/avatarUrl";
 
 const SIZE = 32;
 

@@ -2,8 +2,8 @@ import { COMPANY } from "@superset/shared/constants";
 import type { Metadata } from "next";
 import { Silkscreen } from "next/font/google";
 import Link from "next/link";
-import { fetchStats } from "@/app/leaderboard/utils/fetchLeaderboard";
-import { formatDayRange } from "@/app/leaderboard/utils/formatUsage";
+import { fetchStats } from "@/app/utils/fetchLeaderboard";
+import { formatDayRange } from "@/app/utils/formatUsage";
 import { StatsBody } from "./components/StatsBody";
 import { Unavailable } from "./components/Unavailable";
 

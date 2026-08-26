@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { buildPayload, publishPayload } from "renderer/lib/leaderboard";
+import { useLeaderboardOptIn } from "renderer/routes/_authenticated/hooks/useLeaderboardOptIn";
 import { useLocalHostService } from "renderer/routes/_authenticated/providers/LocalHostServiceProvider";
-import { useLeaderboardOptIn } from "../useLeaderboardOptIn";
 import {
 	CHECK_INTERVAL_MS,
 	hashPayload,

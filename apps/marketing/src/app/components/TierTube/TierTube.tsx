@@ -1,4 +1,4 @@
-import { TIER_NAMES } from "../TierBadge";
+import { TIER_NAMES } from "@/app/components/TierBadge";
 
 const ZONES = [
 	{ tier: 1, rgb: "138,144,153" },

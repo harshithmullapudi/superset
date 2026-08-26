@@ -4,15 +4,11 @@ import {
 	toSpendRows,
 	toTokenRows,
 	toUserRows,
-} from "@/app/leaderboard/components/ModelBars";
-import { StatStrip } from "@/app/leaderboard/components/StatStrip";
-import { TokenSplitBar } from "@/app/leaderboard/components/TokenSplitBar";
-import type { LeaderboardStats } from "@/app/leaderboard/utils/fetchLeaderboard";
-import {
-	formatCount,
-	formatTokens,
-	formatUsd,
-} from "@/app/leaderboard/utils/formatUsage";
+} from "@/app/components/ModelBars";
+import { StatStrip } from "@/app/components/StatStrip";
+import { TokenSplitBar } from "@/app/components/TokenSplitBar";
+import type { LeaderboardStats } from "@/app/utils/fetchLeaderboard";
+import { formatCount, formatTokens, formatUsd } from "@/app/utils/formatUsage";
 import { Panel } from "./components/Panel";
 
 export function StatsBody({

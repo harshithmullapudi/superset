@@ -143,7 +143,7 @@ export const PERSISTED_KEY_REGISTRY: ReadonlyArray<
 		["active_organization_id"],
 	],
 	[
-		"src/renderer/hooks/useLeaderboardAutoPublish/autoPublishState.ts",
+		"src/renderer/routes/_authenticated/components/LeaderboardAutoPublish/hooks/useLeaderboardAutoPublish/autoPublishState.ts",
 		["leaderboard-auto-publish-v1"],
 	],
 	["src/renderer/lib/leaderboard/askedState.ts", ["leaderboard-asked-v1"]],

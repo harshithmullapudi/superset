@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { LeaderboardJoinDialog } from "renderer/components/LeaderboardJoinDialog";
-import { useLeaderboardJoinPreview } from "renderer/hooks/useLeaderboardJoinPreview";
-import { useLeaderboardOptIn } from "renderer/hooks/useLeaderboardOptIn";
 import { authClient } from "renderer/lib/auth-client";
 import {
 	markLeaderboardAsked,
 	readLeaderboardAsked,
 } from "renderer/lib/leaderboard";
+import { useLeaderboardJoinPreview } from "renderer/routes/_authenticated/hooks/useLeaderboardJoinPreview";
+import { useLeaderboardOptIn } from "renderer/routes/_authenticated/hooks/useLeaderboardOptIn";
 import { useLocalHostService } from "renderer/routes/_authenticated/providers/LocalHostServiceProvider";
 
 export function LeaderboardFirstRunDialog() {

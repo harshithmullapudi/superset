@@ -2,8 +2,8 @@ import { Button } from "@superset/ui/button";
 import { TrophyIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { LeaderboardJoinDialog } from "renderer/components/LeaderboardJoinDialog";
-import { useLeaderboardJoinPreview } from "renderer/hooks/useLeaderboardJoinPreview";
-import { useLeaderboardOptIn } from "renderer/hooks/useLeaderboardOptIn";
+import { useLeaderboardJoinPreview } from "renderer/routes/_authenticated/hooks/useLeaderboardJoinPreview";
+import { useLeaderboardOptIn } from "renderer/routes/_authenticated/hooks/useLeaderboardOptIn";
 
 export function LeaderboardPrompt({ hostUrl }: { hostUrl: string | null }) {
 	const { isLoading, optedIn, join, joining } = useLeaderboardOptIn();

@@ -1,22 +1,22 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { StatStrip } from "@/app/components/StatStrip";
+import { TierTube } from "@/app/components/TierTube";
 import type {
 	LeaderboardMetric,
 	LeaderboardStats,
 	Standings,
-} from "../../utils/fetchLeaderboard";
-import { fetchStandings, fetchStats } from "../../utils/fetchLeaderboard";
+} from "@/app/utils/fetchLeaderboard";
+import { fetchStandings, fetchStats } from "@/app/utils/fetchLeaderboard";
 import {
 	formatDayRange,
 	formatTokens,
 	formatUsd,
-} from "../../utils/formatUsage";
-import { LeaderboardTable } from "../LeaderboardTable";
-import { MetricTabs } from "../MetricTabs";
-import { type RangeSelection, RangeTabs } from "../RangeTabs";
-import { StatStrip } from "../StatStrip";
-import { TierTube } from "../TierTube";
+} from "@/app/utils/formatUsage";
+import { LeaderboardTable } from "./components/LeaderboardTable";
+import { MetricTabs } from "./components/MetricTabs";
+import { type RangeSelection, RangeTabs } from "./components/RangeTabs";
 import { buildStandingsQuery } from "./utils/buildStandingsQuery";
 
 interface LeaderboardBoardProps {

@@ -1,7 +1,7 @@
 import { COMPANY } from "@superset/shared/constants";
 import { ImageResponse } from "next/og";
-import { fetchParticipant } from "@/app/leaderboard/utils/fetchLeaderboard";
-import { formatTokens, formatUsd } from "@/app/leaderboard/utils/formatUsage";
+import { fetchParticipant } from "@/app/utils/fetchLeaderboard";
+import { formatTokens, formatUsd } from "@/app/utils/formatUsage";
 import { OgStat } from "./components/OgStat";
 import { OG_BG, OG_BRAND, OG_DIM } from "./constants";
 import { getInterBold } from "./utils/getInterBold";

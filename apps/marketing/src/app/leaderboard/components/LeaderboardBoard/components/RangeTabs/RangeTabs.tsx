@@ -5,8 +5,9 @@ import { Calendar } from "@superset/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@superset/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import type { DateRange } from "react-day-picker";
+import type { LeaderboardPeriod } from "@/app/utils/fetchLeaderboard";
 import { formatRangeLabel } from "@/app/utils/formatRangeLabel";
-import type { LeaderboardPeriod } from "../../utils/fetchLeaderboard";
+import { PillTabs } from "../PillTabs";
 
 const PRESETS: Array<{ id: LeaderboardPeriod; label: string }> = [
 	{ id: "all", label: "All" },
@@ -35,32 +36,21 @@ export function RangeTabs({
 	const customActive = Boolean(value.custom?.from && value.custom?.to);
 
 	return (
-		<div className="flex flex-wrap items-center gap-2">
-			{PRESETS.map((preset) => {
-				const active = !customActive && value.period === preset.id;
-				return (
-					<button
-						key={preset.id}
-						type="button"
-						onClick={() => onChange({ period: preset.id })}
-						className={`px-4 py-1.5 text-xs font-mono uppercase tracking-wider border rounded-[2px] transition-colors ${
-							active
-								? "border-brand text-brand bg-brand/5"
-								: "border-border text-muted-foreground hover:text-foreground"
-						}`}
-					>
-						{preset.label}
-					</button>
-				);
-			})}
-
+		<PillTabs
+			label="Date range"
+			value={customActive ? null : value.period}
+			options={PRESETS}
+			onChange={(period) => onChange({ period })}
+		>
 			<Popover>
 				<PopoverTrigger asChild>
 					<Button
 						variant="outline"
 						size="sm"
+						role="tab"
+						aria-selected={customActive}
 						className={`gap-2 font-mono text-xs uppercase tracking-wider rounded-[2px] ${
-							customActive ? "border-brand text-brand" : ""
+							customActive ? "border-brand text-brand bg-brand/5" : ""
 						}`}
 					>
 						<CalendarIcon className="size-3.5" />
@@ -86,6 +76,6 @@ export function RangeTabs({
 					/>
 				</PopoverContent>
 			</Popover>
-		</div>
+		</PillTabs>
 	);
 }

@@ -8,19 +8,19 @@ import {
 	buildModelColors,
 	ModelBars,
 	toTokenRows,
-} from "@/app/leaderboard/components/ModelBars";
-import { StatStrip } from "@/app/leaderboard/components/StatStrip";
-import { TierTube } from "@/app/leaderboard/components/TierTube";
-import { TokenSplitBar } from "@/app/leaderboard/components/TokenSplitBar";
-import { avatarUrl } from "@/app/leaderboard/utils/avatarUrl";
-import { fetchParticipant } from "@/app/leaderboard/utils/fetchLeaderboard";
+} from "@/app/components/ModelBars";
+import { StatStrip } from "@/app/components/StatStrip";
+import { TierTube } from "@/app/components/TierTube";
+import { TokenSplitBar } from "@/app/components/TokenSplitBar";
+import { avatarUrl } from "@/app/utils/avatarUrl";
+import { fetchParticipant } from "@/app/utils/fetchLeaderboard";
 import {
 	dayCount,
 	formatCount,
 	formatDayRange,
 	formatTokens,
 	formatUsd,
-} from "@/app/leaderboard/utils/formatUsage";
+} from "@/app/utils/formatUsage";
 import { ShareButtons } from "./components/ShareButtons";
 
 const pixel = Silkscreen({

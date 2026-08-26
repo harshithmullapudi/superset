@@ -1,4 +1,4 @@
-import { useLeaderboardAutoPublish } from "renderer/hooks/useLeaderboardAutoPublish";
+import { useLeaderboardAutoPublish } from "./hooks/useLeaderboardAutoPublish";
 
 export function LeaderboardAutoPublish() {
 	useLeaderboardAutoPublish();

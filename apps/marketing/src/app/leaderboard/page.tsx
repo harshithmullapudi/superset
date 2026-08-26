@@ -2,8 +2,8 @@ import { COMPANY } from "@superset/shared/constants";
 import type { Metadata } from "next";
 import { Silkscreen } from "next/font/google";
 import Link from "next/link";
+import { fetchStandings, fetchStats } from "@/app/utils/fetchLeaderboard";
 import { LeaderboardBoard } from "./components/LeaderboardBoard";
-import { fetchStandings, fetchStats } from "./utils/fetchLeaderboard";
 
 const pixel = Silkscreen({
 	weight: ["400", "700"],
