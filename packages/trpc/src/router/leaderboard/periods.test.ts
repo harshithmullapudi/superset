@@ -137,4 +137,22 @@ describe("resolveWindow", () => {
 			}),
 		).toBeNull();
 	});
+
+	test("caps an oversized explicit range at MAX_WINDOW_DAYS", () => {
+		expect(
+			resolveWindow({ period: "all", from: "1900-01-01", to: "2026-08-25" }),
+		).toEqual({ from: "2025-08-25", to: "2026-08-25" });
+	});
+
+	test("leaves a range inside the cap untouched", () => {
+		expect(
+			resolveWindow({ period: "all", from: "2026-08-01", to: "2026-08-25" }),
+		).toEqual({ from: "2026-08-01", to: "2026-08-25" });
+	});
+
+	test("caps a reversed oversized range after ordering it", () => {
+		expect(
+			resolveWindow({ period: "all", from: "2026-08-25", to: "1900-01-01" }),
+		).toEqual({ from: "2025-08-25", to: "2026-08-25" });
+	});
 });

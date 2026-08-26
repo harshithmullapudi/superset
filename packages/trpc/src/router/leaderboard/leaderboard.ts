@@ -13,6 +13,7 @@ import { and, eq, gte, lte, sql } from "drizzle-orm";
 import { env } from "../../env";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import { requireActiveOrgMembership } from "../utils/active-org";
+import { isUniqueViolation } from "../utils/unique-violation";
 import { type LeaderboardPeriod, resolveDayRange } from "./periods";
 import { getStandings } from "./queries";
 import {
@@ -75,6 +76,8 @@ function slugHandle(raw: string): string | null {
 		.replace(/-+$/g, "");
 	return slug.length >= 2 ? slug : null;
 }
+
+const HANDLE_CONSTRAINT = "leaderboard_participants_handle_unique";
 
 async function requireParticipant(userId: string) {
 	const [row] = await db
@@ -279,27 +282,37 @@ export const leaderboardRouter = createTRPCRouter({
 
 			const organizationId = await requireActiveOrgMembership(ctx);
 
-			const [row] = await db
-				.insert(leaderboardParticipants)
-				.values({
-					userId,
-					handle: input.handle,
-					visibility: input.visibility,
-					organizationId,
-				})
-				.onConflictDoUpdate({
-					target: leaderboardParticipants.userId,
-					set: {
+			try {
+				const [row] = await db
+					.insert(leaderboardParticipants)
+					.values({
+						userId,
 						handle: input.handle,
 						visibility: input.visibility,
 						organizationId,
-						revokedAt: null,
-						optedInAt: new Date(),
-					},
-				})
-				.returning();
+					})
+					.onConflictDoUpdate({
+						target: leaderboardParticipants.userId,
+						set: {
+							handle: input.handle,
+							visibility: input.visibility,
+							organizationId,
+							revokedAt: null,
+							optedInAt: new Date(),
+						},
+					})
+					.returning();
 
-			return row;
+				return row;
+			} catch (error) {
+				if (isUniqueViolation(error, HANDLE_CONSTRAINT)) {
+					throw new TRPCError({
+						code: "CONFLICT",
+						message: "That handle is taken.",
+					});
+				}
+				throw error;
+			}
 		}),
 
 	suggestedHandle: protectedProcedure.query(async ({ ctx }) => {

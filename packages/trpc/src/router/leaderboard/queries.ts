@@ -140,11 +140,13 @@ export async function getStandings(
 			leaderboardParticipants,
 			eq(leaderboardParticipants.userId, leaderboardDaily.userId),
 		)
+		.innerJoin(users, eq(users.id, leaderboardParticipants.userId))
 		.where(
 			and(
 				gte(leaderboardDaily.day, range.from),
 				lte(leaderboardDaily.day, range.to),
 				onTheBoard,
+				isNull(users.deletedAt),
 			),
 		);
 	const participantCount = Number(counted?.participants ?? 0);
@@ -211,13 +213,14 @@ export async function getStats(opts: WindowOpts): Promise<LeaderboardStats> {
 	const range = resolveWindow(opts);
 	const tiers = await getTierDistribution();
 
+	const active = and(onTheBoard, isNull(users.deletedAt));
 	const window = range
 		? and(
 				gte(leaderboardDaily.day, range.from),
 				lte(leaderboardDaily.day, range.to),
-				onTheBoard,
+				active,
 			)
-		: onTheBoard;
+		: active;
 
 	const [totalsRow] = await db
 		.select({
@@ -238,6 +241,7 @@ export async function getStats(opts: WindowOpts): Promise<LeaderboardStats> {
 			leaderboardParticipants,
 			eq(leaderboardParticipants.userId, leaderboardDaily.userId),
 		)
+		.innerJoin(users, eq(users.id, leaderboardParticipants.userId))
 		.where(window);
 
 	const modelUsers = await db
@@ -251,6 +255,7 @@ export async function getStats(opts: WindowOpts): Promise<LeaderboardStats> {
 			leaderboardParticipants,
 			eq(leaderboardParticipants.userId, leaderboardDaily.userId),
 		)
+		.innerJoin(users, eq(users.id, leaderboardParticipants.userId))
 		.where(window)
 		.groupBy(leaderboardDaily.provider, leaderboardDaily.model)
 		.orderBy(desc(sql`count(distinct ${leaderboardDaily.userId})`))
@@ -268,6 +273,7 @@ export async function getStats(opts: WindowOpts): Promise<LeaderboardStats> {
 			leaderboardParticipants,
 			eq(leaderboardParticipants.userId, leaderboardDaily.userId),
 		)
+		.innerJoin(users, eq(users.id, leaderboardParticipants.userId))
 		.where(window)
 		.groupBy(leaderboardDaily.provider, leaderboardDaily.model)
 		.orderBy(desc(sql`sum(${leaderboardDaily.usdEstimate})`))

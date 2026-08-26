@@ -8,6 +8,8 @@ export const LEADERBOARD_PERIODS = [
 ] as const;
 export type LeaderboardPeriod = (typeof LEADERBOARD_PERIODS)[number];
 
+export const MAX_WINDOW_DAYS = 366;
+
 export interface DayRange {
 	from: string;
 
@@ -74,6 +76,13 @@ export function resolveDayRange(
 	return { from: toDayKey(start), to: toDayKey(end) };
 }
 
+function clampSpan(range: DayRange): DayRange {
+	const earliest = toDayKey(
+		addDays(parseDayKey(range.to), -(MAX_WINDOW_DAYS - 1)),
+	);
+	return range.from < earliest ? { from: earliest, to: range.to } : range;
+}
+
 export function resolveWindow(opts: {
 	period: LeaderboardPeriod;
 	periodStart?: string;
@@ -82,9 +91,11 @@ export function resolveWindow(opts: {
 	now?: Date;
 }): DayRange | null {
 	if (opts.from && opts.to) {
-		return opts.from <= opts.to
-			? { from: opts.from, to: opts.to }
-			: { from: opts.to, to: opts.from };
+		const ordered =
+			opts.from <= opts.to
+				? { from: opts.from, to: opts.to }
+				: { from: opts.to, to: opts.from };
+		return clampSpan(ordered);
 	}
 	return resolveDayRange(opts.period, opts.periodStart, opts.now ?? new Date());
 }
