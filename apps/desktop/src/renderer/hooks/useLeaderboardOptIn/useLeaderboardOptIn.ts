@@ -22,30 +22,40 @@ export function useLeaderboardOptIn() {
 		async (handle: string) => {
 			setJoining(true);
 			try {
-				await apiTrpcClient.leaderboard.join.mutate({
-					handle,
-					visibility: "public",
-				});
+				try {
+					await apiTrpcClient.leaderboard.join.mutate({
+						handle,
+						visibility: "public",
+					});
+				} catch (error) {
+					toast.error(error instanceof Error ? error.message : "Couldn't join");
+					return false;
+				}
 
+				let published: number | null = 0;
 				if (activeHostUrl && machineId) {
-					const { days } = await publishUsage(
-						activeHostUrl,
-						machineId,
-						BACKFILL_DAYS,
-					);
+					try {
+						published = (
+							await publishUsage(activeHostUrl, machineId, BACKFILL_DAYS)
+						).days;
+					} catch {
+						published = null;
+					}
+				}
+
+				await membership.refetch();
+
+				if (published === null) {
+					toast.success(`Joined as ${handle}`);
+					toast.error("Couldn't publish your usage yet — it'll retry shortly");
+				} else {
 					toast.success(
-						days > 0
-							? `Joined as ${handle} — published ${days} ${days === 1 ? "day" : "days"}`
+						published > 0
+							? `Joined as ${handle} — published ${published} ${published === 1 ? "day" : "days"}`
 							: `Joined as ${handle}`,
 					);
-				} else {
-					toast.success(`Joined as ${handle}`);
 				}
-				await membership.refetch();
 				return true;
-			} catch (error) {
-				toast.error(error instanceof Error ? error.message : "Couldn't join");
-				return false;
 			} finally {
 				setJoining(false);
 			}

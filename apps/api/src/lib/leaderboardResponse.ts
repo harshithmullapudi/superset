@@ -16,6 +16,24 @@ export function publicJson(body: unknown, maxAgeSeconds: number): Response {
 	});
 }
 
+export function publicError(status: number, message: string): Response {
+	return Response.json(
+		{ error: message },
+		{ status, headers: { "Access-Control-Allow-Origin": "*" } },
+	);
+}
+
+export async function publicRoute(
+	handler: () => Promise<Response>,
+): Promise<Response> {
+	try {
+		return await handler();
+	} catch (error) {
+		console.error("[api/leaderboard]", error);
+		return publicError(500, "Internal server error");
+	}
+}
+
 const redis =
 	env.KV_REST_API_URL && env.KV_REST_API_TOKEN
 		? new Redis({ url: env.KV_REST_API_URL, token: env.KV_REST_API_TOKEN })
@@ -41,10 +59,7 @@ export async function rateLimited(request: Request): Promise<Response | null> {
 	if (!limiter) return null;
 	const { success } = await limiter.limit(clientKey(request));
 	if (success) return null;
-	return Response.json(
-		{ error: "Rate limit exceeded" },
-		{ status: 429, headers: { "Access-Control-Allow-Origin": "*" } },
-	);
+	return publicError(429, "Rate limit exceeded");
 }
 
 export function parsePeriod(
@@ -63,7 +78,10 @@ export function parseMetric(value: string | null): "tokens" | "cost" {
 const DAY_KEY = /^\d{4}-\d{2}-\d{2}$/;
 
 export function parseDayKey(value: string | null): string | undefined {
-	return value && DAY_KEY.test(value) ? value : undefined;
+	if (!value || !DAY_KEY.test(value)) return undefined;
+	const parsed = new Date(`${value}T00:00:00.000Z`);
+	if (Number.isNaN(parsed.getTime())) return undefined;
+	return parsed.toISOString().slice(0, 10) === value ? value : undefined;
 }
 
 export function parseBoundedInt(

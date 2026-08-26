@@ -120,15 +120,15 @@ export async function fetchParticipant(
 		to: options.to,
 	});
 
-	try {
-		const response = await fetch(
-			`${env.NEXT_PUBLIC_API_URL}/api/leaderboard/u/${encodeURIComponent(handle)}?${query}`,
-			{ next: { revalidate: REVALIDATE_SECONDS } },
+	const response = await fetch(
+		`${env.NEXT_PUBLIC_API_URL}/api/leaderboard/u/${encodeURIComponent(handle)}?${query}`,
+		{ next: { revalidate: REVALIDATE_SECONDS } },
+	);
+	if (response.status === 404) return null;
+	if (!response.ok) {
+		throw new Error(
+			`[marketing/leaderboard] profile ${handle} failed: ${response.status}`,
 		);
-		if (!response.ok) return null;
-		return (await response.json()) as ParticipantProfile;
-	} catch (error) {
-		console.error("[marketing/leaderboard] profile error:", error);
-		return null;
 	}
+	return (await response.json()) as ParticipantProfile;
 }

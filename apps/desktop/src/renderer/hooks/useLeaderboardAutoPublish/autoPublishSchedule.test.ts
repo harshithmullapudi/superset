@@ -32,7 +32,7 @@ describe("isPublishDue", () => {
 
 	it("fires when a clock change puts the last publish in the future", () => {
 		const state = { lastPublishedAt: NOW + 10 * DAY, lastPayloadHash: "a" };
-		expect(isPublishDue(state, NOW)).toBe(false);
+		expect(isPublishDue(state, NOW)).toBe(true);
 	});
 });
 

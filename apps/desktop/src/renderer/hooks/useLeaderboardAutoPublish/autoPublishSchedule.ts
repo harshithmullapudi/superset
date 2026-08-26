@@ -16,6 +16,7 @@ export const INITIAL_AUTO_PUBLISH_STATE: AutoPublishState = {
 };
 
 export function isPublishDue(state: AutoPublishState, now: number): boolean {
+	if (state.lastPublishedAt > now) return true;
 	return now - state.lastPublishedAt >= PUBLISH_INTERVAL_MS;
 }
 

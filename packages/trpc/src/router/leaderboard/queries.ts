@@ -63,6 +63,7 @@ export async function getStandings(
 				desc(
 					byCost ? leaderboardParticipants.usd : leaderboardParticipants.tokens,
 				),
+				leaderboardParticipants.userId,
 			)
 			.limit(opts.limit)
 			.offset(opts.offset);
@@ -127,7 +128,7 @@ export async function getStandings(
 			leaderboardParticipants.tier,
 			users.name,
 		)
-		.orderBy(desc(byCost ? spend : total))
+		.orderBy(desc(byCost ? spend : total), leaderboardDaily.userId)
 		.limit(opts.limit)
 		.offset(opts.offset);
 
@@ -431,7 +432,8 @@ export async function getParticipant(
 			sessions: Number(windowTotals?.sessions ?? 0),
 		},
 		rank: Number(ranked?.ahead ?? 0) + 1,
-		total: Number(ranked?.total ?? 0),
+		total:
+			Number(ranked?.total ?? 0) + (Number(participant.tokens) > 0 ? 0 : 1),
 		factory: {
 			tier: Number(participant.tier),
 			progress: tierProgress(

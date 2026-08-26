@@ -220,6 +220,7 @@ async function rankFor(
 	const exclude = excludeUserId
 		? sql`and p.user_id <> ${excludeUserId}`
 		: sql``;
+	const eligible = sql`p.visibility = 'public' and p.revoked_at is null and u.deleted_at is null ${exclude}`;
 
 	if (!range) {
 		const rows = await db.execute<{ ahead: number; total: number }>(sql`
@@ -227,8 +228,8 @@ async function rankFor(
 				count(*) filter (where p.tokens > ${tokens})::int as ahead,
 				count(*)::int as total
 			from leaderboard_participants p
-			where p.visibility = 'public' and p.revoked_at is null
-				and p.tokens > 0 ${exclude}
+			join auth.users u on u.id = p.user_id
+			where ${eligible} and p.tokens > 0
 		`);
 		const row = rows.rows[0];
 		return {
@@ -242,8 +243,8 @@ async function rankFor(
 			select d.user_id, sum(d.tokens) as tokens
 			from leaderboard_daily d
 			join leaderboard_participants p on p.user_id = d.user_id
-			where d.day between ${range.from} and ${range.to}
-				and p.visibility = 'public' and p.revoked_at is null ${exclude}
+			join auth.users u on u.id = p.user_id
+			where d.day between ${range.from} and ${range.to} and ${eligible}
 			group by d.user_id
 		)
 		select
@@ -417,31 +418,33 @@ export const leaderboardRouter = createTRPCRouter({
 				sessions: day.sessions,
 			}));
 
-			await db
-				.insert(leaderboardDaily)
-				.values(rows)
-				.onConflictDoUpdate({
-					target: [
-						leaderboardDaily.userId,
-						leaderboardDaily.day,
-						leaderboardDaily.provider,
-						leaderboardDaily.model,
-						leaderboardDaily.hostId,
-					],
-					set: {
-						uncachedInput: sql`excluded.uncached_input`,
-						cachedInput: sql`excluded.cached_input`,
-						cacheWrite5m: sql`excluded.cache_write_5m`,
-						cacheWrite1h: sql`excluded.cache_write_1h`,
-						output: sql`excluded.output`,
-						reasoningOutput: sql`excluded.reasoning_output`,
-						tokens: sql`excluded.tokens`,
-						usdEstimate: sql`excluded.usd_estimate`,
-						approximate: sql`excluded.approximate`,
-						sessions: sql`excluded.sessions`,
-						updatedAt: new Date(),
-					},
-				});
+			if (rows.length > 0) {
+				await db
+					.insert(leaderboardDaily)
+					.values(rows)
+					.onConflictDoUpdate({
+						target: [
+							leaderboardDaily.userId,
+							leaderboardDaily.day,
+							leaderboardDaily.provider,
+							leaderboardDaily.model,
+							leaderboardDaily.hostId,
+						],
+						set: {
+							uncachedInput: sql`excluded.uncached_input`,
+							cachedInput: sql`excluded.cached_input`,
+							cacheWrite5m: sql`excluded.cache_write_5m`,
+							cacheWrite1h: sql`excluded.cache_write_1h`,
+							output: sql`excluded.output`,
+							reasoningOutput: sql`excluded.reasoning_output`,
+							tokens: sql`excluded.tokens`,
+							usdEstimate: sql`excluded.usd_estimate`,
+							approximate: sql`excluded.approximate`,
+							sessions: sql`excluded.sessions`,
+							updatedAt: new Date(),
+						},
+					});
+			}
 
 			if (input.factoryDays.length > 0) {
 				await db

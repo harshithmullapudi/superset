@@ -65,8 +65,8 @@ export function LeaderboardBoard({
 			).then((response) => (response.ok ? response.json() : null)),
 		])
 			.then(([nextStandings, nextStats]) => {
-				setStandings(nextStandings);
-				setStats(nextStats);
+				if (nextStandings) setStandings(nextStandings);
+				if (nextStats) setStats(nextStats);
 			})
 			.catch(() => {})
 			.finally(() => setLoading(false));

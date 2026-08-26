@@ -34,7 +34,7 @@ export function useLeaderboardJoinPreview(hostUrl: string | null) {
 			);
 			const providers = [...new Set(payload.days.map((day) => day.provider))];
 			const rank = await apiTrpcClient.leaderboard.previewRank.query({
-				period: "month",
+				period: "30d",
 				tokens,
 			});
 
