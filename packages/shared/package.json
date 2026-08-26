@@ -16,6 +16,10 @@
 			"types": "./src/constants.ts",
 			"default": "./src/constants.ts"
 		},
+		"./format-scaled": {
+			"types": "./src/format-scaled.ts",
+			"default": "./src/format-scaled.ts"
+		},
 		"./format-tokens": {
 			"types": "./src/format-tokens.ts",
 			"default": "./src/format-tokens.ts"

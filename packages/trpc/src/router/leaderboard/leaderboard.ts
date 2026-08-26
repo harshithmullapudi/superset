@@ -9,7 +9,7 @@ import {
 import { TRPCError } from "@trpc/server";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
-import { and, eq, gte, lte, ne, sql } from "drizzle-orm";
+import { and, eq, gte, lte, sql } from "drizzle-orm";
 import { env } from "../../env";
 import {
 	createTRPCRouter,
@@ -92,23 +92,33 @@ async function enforce(
 	}
 }
 
+type Tx = Parameters<Parameters<typeof dbWs.transaction>[0]>[0];
+
+/**
+ * Both daily tables carry hostId, so counting one lets a factory-only payload
+ * mint hosts freely. The participant row is locked first so concurrent
+ * publishes cannot each observe a count below the cap and all write.
+ */
 async function enforceHostBudget(
+	tx: Tx,
 	userId: string,
 	hostId: string,
 ): Promise<void> {
-	const [seen] = await db
-		.select({
-			hosts: sql<number>`count(distinct ${leaderboardDaily.hostId})::int`,
-		})
-		.from(leaderboardDaily)
-		.where(
-			and(
-				eq(leaderboardDaily.userId, userId),
-				ne(leaderboardDaily.hostId, hostId),
-			),
-		);
+	await tx.execute(
+		sql`select 1 from leaderboard_participants where user_id = ${userId} for update`,
+	);
 
-	if (Number(seen?.hosts ?? 0) >= MAX_HOSTS_PER_USER) {
+	const seen = await tx.execute<{ hosts: number }>(sql`
+		select count(*)::int as hosts from (
+			select host_id from leaderboard_daily
+			where user_id = ${userId} and host_id <> ${hostId}
+			union
+			select host_id from leaderboard_daily_factory
+			where user_id = ${userId} and host_id <> ${hostId}
+		) hosts
+	`);
+
+	if (Number(seen.rows[0]?.hosts ?? 0) >= MAX_HOSTS_PER_USER) {
 		throw new TRPCError({
 			code: "BAD_REQUEST",
 			message: "Too many machines publishing for this account.",
@@ -197,45 +207,46 @@ async function requireParticipant(userId: string) {
 	return row;
 }
 
+/**
+ * Assigns straight from the aggregate in SQL. Round-tripping the bigint sums
+ * through a JS number silently loses precision past 2^53, which would corrupt
+ * all-time standings rather than fail loudly.
+ */
 async function recomputeTotals(userId: string): Promise<void> {
-	const [agg] = await db
-		.select({
-			tokens: sql<number>`coalesce(sum(${leaderboardDaily.tokens}), 0)::bigint`,
-			usd: sql<string>`coalesce(sum(${leaderboardDaily.usdEstimate}), 0)`,
-			sessions: sql<number>`coalesce(sum(${leaderboardDaily.sessions}), 0)::int`,
-			uncachedInput: sql<number>`coalesce(sum(${leaderboardDaily.uncachedInput}), 0)::bigint`,
-			cachedInput: sql<number>`coalesce(sum(${leaderboardDaily.cachedInput}), 0)::bigint`,
-			cacheWrite5m: sql<number>`coalesce(sum(${leaderboardDaily.cacheWrite5m}), 0)::bigint`,
-			cacheWrite1h: sql<number>`coalesce(sum(${leaderboardDaily.cacheWrite1h}), 0)::bigint`,
-			output: sql<number>`coalesce(sum(${leaderboardDaily.output}), 0)::bigint`,
-			reasoningOutput: sql<number>`coalesce(sum(${leaderboardDaily.reasoningOutput}), 0)::bigint`,
-			approximate: sql<boolean>`coalesce(bool_or(${leaderboardDaily.approximate}), false)`,
-			dayRangeStart: sql<string | null>`min(${leaderboardDaily.day})`,
-			dayRangeEnd: sql<string | null>`max(${leaderboardDaily.day})`,
-		})
-		.from(leaderboardDaily)
-		.where(eq(leaderboardDaily.userId, userId));
-
-	if (!agg) return;
-
-	await db
-		.update(leaderboardParticipants)
-		.set({
-			tokens: Number(agg.tokens),
-			usd: String(agg.usd),
-			sessions: Number(agg.sessions),
-			uncachedInput: Number(agg.uncachedInput),
-			cachedInput: Number(agg.cachedInput),
-			cacheWrite5m: Number(agg.cacheWrite5m),
-			cacheWrite1h: Number(agg.cacheWrite1h),
-			output: Number(agg.output),
-			reasoningOutput: Number(agg.reasoningOutput),
-			approximate: agg.approximate,
-			dayRangeStart: agg.dayRangeStart,
-			dayRangeEnd: agg.dayRangeEnd,
-			lastPublishedAt: new Date(),
-		})
-		.where(eq(leaderboardParticipants.userId, userId));
+	await db.execute(sql`
+		update leaderboard_participants p set
+			tokens = t.tokens,
+			usd = t.usd,
+			sessions = t.sessions,
+			uncached_input = t.uncached_input,
+			cached_input = t.cached_input,
+			cache_write_5m = t.cache_write_5m,
+			cache_write_1h = t.cache_write_1h,
+			output = t.output,
+			reasoning_output = t.reasoning_output,
+			approximate = t.approximate,
+			day_range_start = t.day_range_start,
+			day_range_end = t.day_range_end,
+			last_published_at = now()
+		from (
+			select
+				coalesce(sum(d.tokens), 0)::bigint as tokens,
+				coalesce(sum(d.usd_estimate), 0) as usd,
+				coalesce(sum(d.sessions), 0)::int as sessions,
+				coalesce(sum(d.uncached_input), 0)::bigint as uncached_input,
+				coalesce(sum(d.cached_input), 0)::bigint as cached_input,
+				coalesce(sum(d.cache_write_5m), 0)::bigint as cache_write_5m,
+				coalesce(sum(d.cache_write_1h), 0)::bigint as cache_write_1h,
+				coalesce(sum(d.output), 0)::bigint as output,
+				coalesce(sum(d.reasoning_output), 0)::bigint as reasoning_output,
+				coalesce(bool_or(d.approximate), false) as approximate,
+				min(d.day) as day_range_start,
+				max(d.day) as day_range_end
+			from leaderboard_daily d
+			where d.user_id = ${userId}
+		) t
+		where p.user_id = ${userId}
+	`);
 }
 
 const TIER_WINDOW_DAYS = 30;
@@ -502,8 +513,6 @@ export const leaderboardRouter = createTRPCRouter({
 
 			assertDaysInWindow(input.days);
 			assertDaysInWindow(input.factoryDays);
-			await enforceHostBudget(userId, input.hostId);
-
 			const rows = input.days.map((day) => ({
 				userId,
 				day: day.day,
@@ -528,61 +537,65 @@ export const leaderboardRouter = createTRPCRouter({
 				sessions: day.sessions,
 			}));
 
-			if (rows.length > 0) {
-				await db
-					.insert(leaderboardDaily)
-					.values(rows)
-					.onConflictDoUpdate({
-						target: [
-							leaderboardDaily.userId,
-							leaderboardDaily.day,
-							leaderboardDaily.provider,
-							leaderboardDaily.model,
-							leaderboardDaily.hostId,
-						],
-						set: {
-							uncachedInput: sql`excluded.uncached_input`,
-							cachedInput: sql`excluded.cached_input`,
-							cacheWrite5m: sql`excluded.cache_write_5m`,
-							cacheWrite1h: sql`excluded.cache_write_1h`,
-							output: sql`excluded.output`,
-							reasoningOutput: sql`excluded.reasoning_output`,
-							tokens: sql`excluded.tokens`,
-							usdEstimate: sql`excluded.usd_estimate`,
-							approximate: sql`excluded.approximate`,
-							sessions: sql`excluded.sessions`,
-							updatedAt: new Date(),
-						},
-					});
-			}
+			await dbWs.transaction(async (tx) => {
+				await enforceHostBudget(tx, userId, input.hostId);
 
-			if (input.factoryDays.length > 0) {
-				await db
-					.insert(leaderboardDailyFactory)
-					.values(
-						input.factoryDays.map((day) => ({
-							userId,
-							day: day.day,
-							hostId: input.hostId,
-							sessions: day.sessions,
-							parallelSessions: day.parallelSessions.toFixed(2),
-							agentPrsMerged: day.agentPrsMerged,
-						})),
-					)
-					.onConflictDoUpdate({
-						target: [
-							leaderboardDailyFactory.userId,
-							leaderboardDailyFactory.day,
-							leaderboardDailyFactory.hostId,
-						],
-						set: {
-							sessions: sql`excluded.sessions`,
-							parallelSessions: sql`excluded.parallel_sessions`,
-							agentPrsMerged: sql`excluded.agent_prs_merged`,
-							updatedAt: new Date(),
-						},
-					});
-			}
+				if (rows.length > 0) {
+					await tx
+						.insert(leaderboardDaily)
+						.values(rows)
+						.onConflictDoUpdate({
+							target: [
+								leaderboardDaily.userId,
+								leaderboardDaily.day,
+								leaderboardDaily.provider,
+								leaderboardDaily.model,
+								leaderboardDaily.hostId,
+							],
+							set: {
+								uncachedInput: sql`excluded.uncached_input`,
+								cachedInput: sql`excluded.cached_input`,
+								cacheWrite5m: sql`excluded.cache_write_5m`,
+								cacheWrite1h: sql`excluded.cache_write_1h`,
+								output: sql`excluded.output`,
+								reasoningOutput: sql`excluded.reasoning_output`,
+								tokens: sql`excluded.tokens`,
+								usdEstimate: sql`excluded.usd_estimate`,
+								approximate: sql`excluded.approximate`,
+								sessions: sql`excluded.sessions`,
+								updatedAt: new Date(),
+							},
+						});
+				}
+
+				if (input.factoryDays.length > 0) {
+					await tx
+						.insert(leaderboardDailyFactory)
+						.values(
+							input.factoryDays.map((day) => ({
+								userId,
+								day: day.day,
+								hostId: input.hostId,
+								sessions: day.sessions,
+								parallelSessions: day.parallelSessions.toFixed(2),
+								agentPrsMerged: day.agentPrsMerged,
+							})),
+						)
+						.onConflictDoUpdate({
+							target: [
+								leaderboardDailyFactory.userId,
+								leaderboardDailyFactory.day,
+								leaderboardDailyFactory.hostId,
+							],
+							set: {
+								sessions: sql`excluded.sessions`,
+								parallelSessions: sql`excluded.parallel_sessions`,
+								agentPrsMerged: sql`excluded.agent_prs_merged`,
+								updatedAt: new Date(),
+							},
+						});
+				}
+			});
 
 			await recomputeTotals(userId);
 			await recomputeTier(userId);
