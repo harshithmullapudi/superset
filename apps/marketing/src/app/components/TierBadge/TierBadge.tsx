@@ -16,11 +16,9 @@ export const TIER_RGB = [
 
 const LOCKED_RGB = "255,255,255";
 
-/** Tier colour as an `r,g,b` triple, for interpolating into rgba(). */
 export const tierRgb = (tier: number): string =>
 	TIER_RGB[tier - 1] ?? TIER_RGB[1];
 
-/** Display name for a tier, falling back to "Unranked" outside 1-4. */
 export const tierLabel = (tier: number): string =>
 	tier >= 1 && tier <= 4 ? (TIER_NAMES[tier - 1] ?? "Unranked") : "Unranked";
 
@@ -31,12 +29,6 @@ interface TierBadgeProps {
 	className?: string;
 }
 
-/**
- * A developer's tier as an inline chip, or as the hero block on a profile.
- *
- * Colour comes from the tier palette rather than utility classes because the tiers
- * are tuned to a fixed luminance that Tailwind's scale does not have a step for.
- */
 export function TierBadge({
 	tier,
 	size = "sm",
