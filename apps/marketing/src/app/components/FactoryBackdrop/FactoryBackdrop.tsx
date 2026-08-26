@@ -5,9 +5,14 @@ const FLOOR_FADE = "linear-gradient(to bottom, black, transparent 62%)";
 
 const BRAND_RGB = "210,86,17";
 
+/**
+ * The pair of hairlines marking the content column's edges. Takes the container's
+ * half-width because the pages that use this are not all the same measure.
+ */
 const guideLines = (halfWidth: number) =>
 	`linear-gradient(to right, transparent calc(50% - ${halfWidth}px), rgba(255,255,255,0.07) calc(50% - ${halfWidth}px), rgba(255,255,255,0.07) calc(50% - ${halfWidth - 1}px), transparent calc(50% - ${halfWidth - 1}px), transparent calc(50% + ${halfWidth - 1}px), rgba(255,255,255,0.07) calc(50% + ${halfWidth - 1}px), rgba(255,255,255,0.07) calc(50% + ${halfWidth}px), transparent calc(50% + ${halfWidth}px))`;
 
+/** Warm cast at the top of the page, tinted to whatever the page is about. */
 const furnaceGlow = (rgb: string) =>
 	`radial-gradient(ellipse 62% 100% at 50% 0%, rgba(${rgb},0.14), rgba(${rgb},0.035) 45%, transparent 72%)`;
 
@@ -16,6 +21,13 @@ interface FactoryBackdropProps {
 	halfWidth?: number;
 }
 
+/**
+ * Factory-floor grid, furnace glow and column guides behind a page.
+ *
+ * `tint` colours the glow and hairline: the leaderboard and stats pass nothing and
+ * get the brand orange, while a profile passes that developer's tier colour.
+ * `halfWidth` must match the content container or the guides miss its edges.
+ */
 export function FactoryBackdrop({
 	tint = BRAND_RGB,
 	halfWidth = 448,
