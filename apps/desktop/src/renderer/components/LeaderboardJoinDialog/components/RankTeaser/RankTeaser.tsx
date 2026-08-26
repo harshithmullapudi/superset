@@ -1,5 +1,5 @@
+import { formatTokens } from "@superset/shared/format-tokens";
 import type { LeaderboardPreview } from "../../types";
-import { formatTokens } from "../../utils/formatTokens";
 
 const MIN_PARTICIPANTS_FOR_RANK = 50;
 

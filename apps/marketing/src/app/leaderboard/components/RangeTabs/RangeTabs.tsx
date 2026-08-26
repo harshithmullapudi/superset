@@ -5,8 +5,8 @@ import { Calendar } from "@superset/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@superset/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import type { DateRange } from "react-day-picker";
+import { formatRangeLabel } from "@/app/utils/formatRangeLabel";
 import type { LeaderboardPeriod } from "../../utils/fetchLeaderboard";
-import { formatRangeLabel } from "./utils/formatRangeLabel";
 
 const PRESETS: Array<{ id: LeaderboardPeriod; label: string }> = [
 	{ id: "all", label: "All" },
@@ -64,7 +64,7 @@ export function RangeTabs({
 						}`}
 					>
 						<CalendarIcon className="size-3.5" />
-						{formatRangeLabel(value.custom)}
+						{formatRangeLabel(value.custom, "Custom")}
 					</Button>
 				</PopoverTrigger>
 				<PopoverContent className="w-auto p-3" align="start">

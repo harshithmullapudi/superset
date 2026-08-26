@@ -1,3 +1,5 @@
+import type { RouterInputs } from "@superset/trpc";
+import { PUBLISH_PAYLOAD_VERSION } from "@superset/trpc/leaderboard-schema";
 import { apiTrpcClient } from "renderer/lib/api-trpc-client";
 import { getHostServiceClientByUrl } from "renderer/lib/host-service-client";
 
@@ -5,27 +7,12 @@ export const BACKFILL_DAYS = 30;
 
 export const PREVIEW_DAYS = 30;
 
-export interface LeaderboardFactoryDay {
-	day: string;
-	sessions: number;
-	parallelSessions: number;
-	agentPrsMerged: number;
-}
+type PublishInput = RouterInputs["leaderboard"]["publish"];
 
-export interface LeaderboardPayloadDay {
-	day: string;
-	provider: string;
-	model: string;
-	uncachedInput: number;
-	cachedInput: number;
-	cacheWrite5m: number;
-	cacheWrite1h: number;
-	output: number;
-	reasoningOutput: number;
-	usdEstimate: number;
-	approximate: boolean;
-	sessions: number;
-}
+export type LeaderboardPayloadDay = PublishInput["days"][number];
+export type LeaderboardFactoryDay = NonNullable<
+	PublishInput["factoryDays"]
+>[number];
 
 export interface LeaderboardPayload {
 	days: LeaderboardPayloadDay[];
@@ -50,7 +37,7 @@ export async function publishPayload(
 	}
 
 	return await apiTrpcClient.leaderboard.publish.mutate({
-		payloadVersion: 2,
+		payloadVersion: PUBLISH_PAYLOAD_VERSION,
 		hostId: machineId,
 		days: payload.days,
 		factoryDays: payload.factoryDays,

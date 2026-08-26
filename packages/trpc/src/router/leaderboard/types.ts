@@ -56,6 +56,12 @@ export interface LeaderboardStats {
 			usd: string;
 			tokens: number;
 		}>;
+		byTokens: Array<{
+			provider: string;
+			model: string;
+			usd: string;
+			tokens: number;
+		}>;
 	};
 	tiers: TierDistribution;
 }

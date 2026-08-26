@@ -280,6 +280,24 @@ export async function getStats(opts: WindowOpts): Promise<LeaderboardStats> {
 		.orderBy(desc(sql`sum(${leaderboardDaily.usdEstimate})`))
 		.limit(TOP_MODELS);
 
+	const modelTokens = await db
+		.select({
+			provider: leaderboardDaily.provider,
+			model: leaderboardDaily.model,
+			usd: sql<string>`sum(${leaderboardDaily.usdEstimate})`,
+			tokens: sql<number>`sum(${leaderboardDaily.tokens})::bigint`,
+		})
+		.from(leaderboardDaily)
+		.innerJoin(
+			leaderboardParticipants,
+			eq(leaderboardParticipants.userId, leaderboardDaily.userId),
+		)
+		.innerJoin(users, eq(users.id, leaderboardParticipants.userId))
+		.where(window)
+		.groupBy(leaderboardDaily.provider, leaderboardDaily.model)
+		.orderBy(desc(sql`sum(${leaderboardDaily.tokens})`))
+		.limit(TOP_MODELS);
+
 	return {
 		period: opts.period,
 		range,
@@ -300,6 +318,10 @@ export async function getStats(opts: WindowOpts): Promise<LeaderboardStats> {
 		models: {
 			byUsers: modelUsers.map((row) => ({ ...row, users: Number(row.users) })),
 			bySpend: modelSpend.map((row) => ({
+				...row,
+				tokens: Number(row.tokens),
+			})),
+			byTokens: modelTokens.map((row) => ({
 				...row,
 				tokens: Number(row.tokens),
 			})),

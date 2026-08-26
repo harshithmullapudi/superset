@@ -1,4 +1,4 @@
-import type { LeaderboardMetric } from "../../../../utils/fetchLeaderboard";
+import type { StandingsQuery } from "../../../../utils/fetchLeaderboard";
 import type { RangeSelection } from "../../../RangeTabs";
 
 function toDayKey(date: Date): string {
@@ -7,16 +7,12 @@ function toDayKey(date: Date): string {
 
 export function buildStandingsQuery(
 	selection: RangeSelection,
-	metric?: LeaderboardMetric,
-): string {
-	const params = new URLSearchParams();
+	metric?: StandingsQuery["metric"],
+): StandingsQuery {
 	const custom = selection.custom;
-	if (custom?.from && custom?.to) {
-		params.set("from", toDayKey(custom.from));
-		params.set("to", toDayKey(custom.to));
-	} else {
-		params.set("period", selection.period);
-	}
-	if (metric) params.set("metric", metric);
-	return params.toString();
+	const range: StandingsQuery =
+		custom?.from && custom?.to
+			? { from: toDayKey(custom.from), to: toDayKey(custom.to) }
+			: { period: selection.period };
+	return metric ? { ...range, metric } : range;
 }

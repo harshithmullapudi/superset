@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { apiTrpcClient } from "renderer/lib/api-trpc-client";
 import { BACKFILL_DAYS, publishUsage } from "renderer/lib/leaderboard";
 import { useLocalHostService } from "renderer/routes/_authenticated/providers/LocalHostServiceProvider";
+import { writeAutoPublishState } from "../useLeaderboardAutoPublish/autoPublishState";
 
 export function useLeaderboardOptIn() {
 	const { activeHostUrl, machineId } = useLocalHostService();
@@ -38,6 +39,11 @@ export function useLeaderboardOptIn() {
 						published = (
 							await publishUsage(activeHostUrl, machineId, BACKFILL_DAYS)
 						).days;
+						writeAutoPublishState({
+							handle,
+							lastPublishedAt: Date.now(),
+							lastPayloadHash: null,
+						});
 					} catch {
 						published = null;
 					}

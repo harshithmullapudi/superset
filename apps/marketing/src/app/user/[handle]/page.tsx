@@ -21,7 +21,6 @@ import {
 	formatTokens,
 	formatUsd,
 } from "@/app/leaderboard/utils/formatUsage";
-import { env } from "@/env";
 import { ShareButtons } from "./components/ShareButtons";
 
 const pixel = Silkscreen({
@@ -82,7 +81,7 @@ export default async function UserProfilePage({ params }: PageProps) {
 	if (!profile) notFound();
 
 	const colors = buildModelColors([profile.models]);
-	const shareUrl = `${env.NEXT_PUBLIC_WEB_URL.replace(/\/$/, "")}/user/${profile.handle}`;
+	const shareUrl = `${COMPANY.MARKETING_URL.replace(/\/$/, "")}/user/${profile.handle}`;
 	const shareText = `I'm #${profile.rank} on the ${COMPANY.NAME} leaderboard with ${formatTokens(
 		profile.allTime.tokens,
 	)} tokens of agent usage.`;

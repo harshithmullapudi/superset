@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type {
 	LeaderboardMetric,
 	LeaderboardStats,
 	Standings,
 } from "../../utils/fetchLeaderboard";
+import { fetchStandings, fetchStats } from "../../utils/fetchLeaderboard";
 import {
 	formatDayRange,
 	formatTokens,
@@ -19,7 +20,6 @@ import { TierTube } from "../TierTube";
 import { buildStandingsQuery } from "./utils/buildStandingsQuery";
 
 interface LeaderboardBoardProps {
-	apiUrl: string;
 	initialStandings: Standings | null;
 	initialStats: LeaderboardStats | null;
 	earliest: string;
@@ -30,7 +30,6 @@ interface LeaderboardBoardProps {
 const PAGE_SIZE = 50;
 
 export function LeaderboardBoard({
-	apiUrl,
 	initialStandings,
 	initialStats,
 	earliest,
@@ -43,6 +42,7 @@ export function LeaderboardBoard({
 	const [loading, setLoading] = useState(false);
 	const [touched, setTouched] = useState(false);
 	const [loadingMore, setLoadingMore] = useState(false);
+	const queryGeneration = useRef(0);
 
 	useEffect(() => {
 		if (!touched) return;
@@ -51,18 +51,11 @@ export function LeaderboardBoard({
 		setLoading(true);
 
 		Promise.all([
-			fetch(
-				`${apiUrl}/api/leaderboard?${buildStandingsQuery(selection, metric)}&limit=50`,
-				{
-					signal: controller.signal,
-				},
-			).then((response) => (response.ok ? response.json() : null)),
-			fetch(
-				`${apiUrl}/api/leaderboard/stats?${buildStandingsQuery(selection)}`,
-				{
-					signal: controller.signal,
-				},
-			).then((response) => (response.ok ? response.json() : null)),
+			fetchStandings(
+				{ ...buildStandingsQuery(selection, metric), limit: PAGE_SIZE },
+				controller.signal,
+			),
+			fetchStats(buildStandingsQuery(selection), controller.signal),
 		])
 			.then(([nextStandings, nextStats]) => {
 				if (nextStandings) setStandings(nextStandings);
@@ -72,22 +65,23 @@ export function LeaderboardBoard({
 			.finally(() => setLoading(false));
 
 		return () => controller.abort();
-	}, [apiUrl, metric, selection, touched]);
+	}, [metric, selection, touched]);
 
 	const loadMore = async () => {
 		if (!standings || loadingMore) return;
+		const generation = queryGeneration.current;
 		setLoadingMore(true);
 		try {
-			const response = await fetch(
-				`${apiUrl}/api/leaderboard?${buildStandingsQuery(selection, metric)}&limit=${PAGE_SIZE}&offset=${standings.rows.length}`,
-			);
-			if (!response.ok) return;
-			const next: Standings = await response.json();
+			const next = await fetchStandings({
+				...buildStandingsQuery(selection, metric),
+				limit: PAGE_SIZE,
+				offset: standings.rows.length,
+			});
+			if (!next || generation !== queryGeneration.current) return;
 			setStandings({
 				...next,
 				rows: [...standings.rows, ...next.rows],
 			});
-		} catch {
 		} finally {
 			setLoadingMore(false);
 		}
@@ -96,6 +90,7 @@ export function LeaderboardBoard({
 	const update = (
 		next: Partial<{ metric: LeaderboardMetric; selection: RangeSelection }>,
 	) => {
+		queryGeneration.current += 1;
 		setTouched(true);
 		if (next.metric) setMetric(next.metric);
 		if (next.selection) setSelection(next.selection);

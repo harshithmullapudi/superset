@@ -3,12 +3,14 @@ import { INITIAL_AUTO_PUBLISH_STATE } from "./autoPublishSchedule";
 
 const STORAGE_KEY = "leaderboard-auto-publish-v1";
 
-export function readAutoPublishState(): AutoPublishState {
+export function readAutoPublishState(handle: string): AutoPublishState {
 	try {
 		const raw = localStorage.getItem(STORAGE_KEY);
 		if (!raw) return INITIAL_AUTO_PUBLISH_STATE;
 		const parsed = JSON.parse(raw) as Partial<AutoPublishState>;
+		if (parsed.handle !== handle) return INITIAL_AUTO_PUBLISH_STATE;
 		return {
+			handle,
 			lastPublishedAt:
 				typeof parsed.lastPublishedAt === "number" &&
 				Number.isFinite(parsed.lastPublishedAt)

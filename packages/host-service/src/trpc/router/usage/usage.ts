@@ -319,10 +319,18 @@ export const usageRouter = router({
 		.query(
 			offLoop({
 				task: leaderboardPayloadTask,
-				prepare: ({ ctx, input }) => ({
-					days: input.days,
-					agentPrsByDay: countAgentPrsByDay(ctx.db, input.days),
-				}),
+				prepare: ({ ctx, input }) => {
+					const nowMs = Date.now();
+					return {
+						days: input.days,
+						nowMs,
+						agentPrsByDay: countAgentPrsByDay(
+							ctx.db,
+							input.days,
+							new Date(nowMs),
+						),
+					};
+				},
 				options: ({ input }) => ({
 					dedupeKey: `usage-leaderboard-payload:${input.days}`,
 					timeoutMs: 110_000,

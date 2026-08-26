@@ -11,17 +11,24 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { and, eq, gte, lte, sql } from "drizzle-orm";
 import { env } from "../../env";
-import { createTRPCRouter, protectedProcedure } from "../../trpc";
+import {
+	createTRPCRouter,
+	protectedProcedure,
+	publicProcedure,
+} from "../../trpc";
 import { requireActiveOrgMembership } from "../utils/active-org";
 import { isUniqueViolation } from "../utils/unique-violation";
 import { type LeaderboardPeriod, resolveDayRange } from "./periods";
-import { getStandings } from "./queries";
+import { getParticipant, getStandings, getStats } from "./queries";
 import {
 	joinSchema,
 	meSchema,
+	PUBLISH_WINDOW_DAYS,
+	participantSchema,
 	previewRankSchema,
 	publishSchema,
 	standingsSchema,
+	windowSchema,
 } from "./schema";
 import { computeTier, type FactoryDayRow, type Tier } from "./tier";
 
@@ -35,6 +42,14 @@ const publishRateLimit = redis
 			redis,
 			limiter: Ratelimit.slidingWindow(30, "1 h"),
 			prefix: "ratelimit:leaderboard:publish",
+		})
+	: null;
+
+const publicReadRateLimit = redis
+	? new Ratelimit({
+			redis,
+			limiter: Ratelimit.slidingWindow(60, "1 m"),
+			prefix: "ratelimit:leaderboard:public",
 		})
 	: null;
 
@@ -54,15 +69,77 @@ const previewRateLimit = redis
 		})
 	: null;
 
+/**
+ * Write path: fail closed. A limiter outage becomes a clean retryable signal
+ * rather than an unhandled 500. Anonymous reads use `enforceOpen` instead.
+ */
 async function enforce(
 	limiter: Ratelimit | null,
 	key: string,
 	message: string,
 ): Promise<void> {
 	if (!limiter) return;
-	const { success } = await limiter.limit(key);
+	let success: boolean;
+	try {
+		({ success } = await limiter.limit(key));
+	} catch (error) {
+		console.error("[leaderboard] rate limiter unavailable:", error);
+		throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message });
+	}
 	if (!success) {
 		throw new TRPCError({ code: "TOO_MANY_REQUESTS", message });
+	}
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function utcDayKey(ms: number): string {
+	return new Date(ms).toISOString().slice(0, 10);
+}
+
+/**
+ * Day keys are client-asserted, so an unbounded value would pollute
+ * dayRangeStart/End and all-time totals — and a future-dated row would
+ * pre-load tomorrow's board. One day of forward slack absorbs host/server
+ * clock skew across a UTC midnight.
+ */
+function assertDaysInWindow(days: readonly { day: string }[]): void {
+	if (days.length === 0) return;
+	const now = Date.now();
+	const oldest = utcDayKey(now - PUBLISH_WINDOW_DAYS * DAY_MS);
+	const newest = utcDayKey(now + DAY_MS);
+
+	for (const { day } of days) {
+		if (day < oldest || day > newest) {
+			throw new TRPCError({
+				code: "BAD_REQUEST",
+				message: `Day ${day} is outside the publishable window.`,
+			});
+		}
+	}
+}
+
+async function enforcePublicRead(headers: Headers): Promise<void> {
+	if (!publicReadRateLimit) return;
+	const ip =
+		headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+		headers.get("x-real-ip") ||
+		"unknown";
+
+	let success: boolean;
+	try {
+		({ success } = await publicReadRateLimit.limit(ip));
+	} catch (error) {
+		// Fail open: these are CDN-cached anonymous reads, and a Redis blip
+		// should not blank the public board.
+		console.error("[leaderboard] public rate limiter unavailable:", error);
+		return;
+	}
+	if (!success) {
+		throw new TRPCError({
+			code: "TOO_MANY_REQUESTS",
+			message: "Rate limit exceeded.",
+		});
 	}
 }
 
@@ -374,6 +451,9 @@ export const leaderboardRouter = createTRPCRouter({
 			.delete(leaderboardDaily)
 			.where(eq(leaderboardDaily.userId, userId));
 		await db
+			.delete(leaderboardDailyFactory)
+			.where(eq(leaderboardDailyFactory.userId, userId));
+		await db
 			.delete(leaderboardParticipants)
 			.where(eq(leaderboardParticipants.userId, userId));
 		return { success: true };
@@ -393,6 +473,9 @@ export const leaderboardRouter = createTRPCRouter({
 			if (input.days.length === 0 && input.factoryDays.length === 0) {
 				return { written: 0, days: 0 };
 			}
+
+			assertDaysInWindow(input.days);
+			assertDaysInWindow(input.factoryDays);
 
 			const rows = input.days.map((day) => ({
 				userId,
@@ -486,6 +569,31 @@ export const leaderboardRouter = createTRPCRouter({
 	standings: protectedProcedure
 		.input(standingsSchema)
 		.query(async ({ input }) => await getStandings(input)),
+
+	public: createTRPCRouter({
+		standings: publicProcedure
+			.input(standingsSchema)
+			.query(async ({ ctx, input }) => {
+				await enforcePublicRead(ctx.headers);
+				return await getStandings(input);
+			}),
+
+		stats: publicProcedure.input(windowSchema).query(async ({ ctx, input }) => {
+			await enforcePublicRead(ctx.headers);
+			return await getStats(input);
+		}),
+
+		participant: publicProcedure
+			.input(participantSchema)
+			.query(async ({ ctx, input }) => {
+				await enforcePublicRead(ctx.headers);
+				const profile = await getParticipant(input.handle, input);
+				if (!profile) {
+					throw new TRPCError({ code: "NOT_FOUND", message: "Not found" });
+				}
+				return profile;
+			}),
+	}),
 
 	previewRank: protectedProcedure
 		.input(previewRankSchema)

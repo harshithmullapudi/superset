@@ -23,7 +23,11 @@ export function StatsBody({
 	pixelClassName: string;
 }) {
 	const { totals, tokenSplit, models } = stats;
-	const colors = buildModelColors([models.byUsers, models.bySpend]);
+	const colors = buildModelColors([
+		models.byUsers,
+		models.bySpend,
+		models.byTokens,
+	]);
 	const cacheShare =
 		totals.tokens > 0
 			? Math.round((tokenSplit.cachedInput / totals.tokens) * 100)
@@ -65,7 +69,7 @@ export function StatsBody({
 					<ModelBars rows={toSpendRows(models.bySpend)} colors={colors} />
 				</Panel>
 				<Panel title="Model volume" meta="by tokens" className="md:col-span-2">
-					<ModelBars rows={toTokenRows(models.bySpend)} colors={colors} />
+					<ModelBars rows={toTokenRows(models.byTokens)} colors={colors} />
 				</Panel>
 			</div>
 		</div>

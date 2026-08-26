@@ -1,40 +1,17 @@
+import type { RouterOutputs } from "@superset/trpc";
 import type { LeaderboardPeriod } from "@superset/trpc/leaderboard-periods";
-import type {
-	LeaderboardMetric,
-	LeaderboardStats as LeaderboardStatsPayload,
-	ParticipantProfile as ParticipantProfilePayload,
-	StandingsResult,
-} from "@superset/trpc/leaderboard-types";
-import { env } from "@/env";
-
-const REVALIDATE_SECONDS = 300;
-
-type Jsonified<T> = T extends Date
-	? string
-	: T extends Array<infer U>
-		? Array<Jsonified<U>>
-		: T extends object
-			? { [K in keyof T]: Jsonified<T[K]> }
-			: T;
+import type { LeaderboardMetric } from "@superset/trpc/leaderboard-types";
+import { TRPCClientError } from "@trpc/client";
+import { leaderboardClient } from "../leaderboardClient";
 
 export type { LeaderboardMetric, LeaderboardPeriod };
 
-export type StandingRow = Jsonified<StandingsResult["rows"][number]>;
-export type Standings = Jsonified<StandingsResult>;
+type PublicLeaderboard = RouterOutputs["leaderboard"]["public"];
 
-export type LeaderboardStats = Omit<
-	Jsonified<LeaderboardStatsPayload>,
-	"tiers"
-> & {
-	tiers?: Jsonified<LeaderboardStatsPayload>["tiers"];
-};
-
-export type ParticipantProfile = Omit<
-	Jsonified<ParticipantProfilePayload>,
-	"factory"
-> & {
-	factory?: Jsonified<ParticipantProfilePayload>["factory"];
-};
+export type Standings = PublicLeaderboard["standings"];
+export type StandingRow = Standings["rows"][number];
+export type LeaderboardStats = PublicLeaderboard["stats"];
+export type ParticipantProfile = PublicLeaderboard["participant"];
 
 export interface RangeQuery {
 	period?: LeaderboardPeriod;
@@ -42,43 +19,20 @@ export interface RangeQuery {
 	to?: string;
 }
 
-function buildQuery(params: Record<string, string | undefined>): string {
-	const search = new URLSearchParams();
-	for (const [key, value] of Object.entries(params)) {
-		if (value) search.set(key, value);
-	}
-	return search.toString();
+export interface StandingsQuery extends RangeQuery {
+	metric?: LeaderboardMetric;
+	limit?: number;
+	offset?: number;
 }
 
 export async function fetchStandings(
-	options: RangeQuery & {
-		metric?: LeaderboardMetric;
-		limit?: number;
-		offset?: number;
-	} = {},
+	options: StandingsQuery = {},
+	signal?: AbortSignal,
 ): Promise<Standings | null> {
-	const query = buildQuery({
-		period: options.period,
-		from: options.from,
-		to: options.to,
-		metric: options.metric,
-		limit: options.limit ? String(options.limit) : undefined,
-		offset: options.offset ? String(options.offset) : undefined,
-	});
-
 	try {
-		const response = await fetch(
-			`${env.NEXT_PUBLIC_API_URL}/api/leaderboard?${query}`,
-			{ next: { revalidate: REVALIDATE_SECONDS } },
-		);
-		if (!response.ok) {
-			console.error(
-				"[marketing/leaderboard] standings failed:",
-				response.status,
-			);
-			return null;
-		}
-		return (await response.json()) as Standings;
+		return await leaderboardClient.leaderboard.public.standings.query(options, {
+			signal,
+		});
 	} catch (error) {
 		console.error("[marketing/leaderboard] standings error:", error);
 		return null;
@@ -87,48 +41,35 @@ export async function fetchStandings(
 
 export async function fetchStats(
 	options: RangeQuery = {},
+	signal?: AbortSignal,
 ): Promise<LeaderboardStats | null> {
-	const query = buildQuery({
-		period: options.period,
-		from: options.from,
-		to: options.to,
-	});
-
 	try {
-		const response = await fetch(
-			`${env.NEXT_PUBLIC_API_URL}/api/leaderboard/stats?${query}`,
-			{ next: { revalidate: REVALIDATE_SECONDS } },
-		);
-		if (!response.ok) {
-			console.error("[marketing/leaderboard] stats failed:", response.status);
-			return null;
-		}
-		return (await response.json()) as LeaderboardStats;
+		return await leaderboardClient.leaderboard.public.stats.query(options, {
+			signal,
+		});
 	} catch (error) {
 		console.error("[marketing/leaderboard] stats error:", error);
 		return null;
 	}
 }
 
+/**
+ * Only a real NOT_FOUND means the profile is missing. Transient failures throw
+ * so ISR keeps serving the stale page instead of caching a 404 for a live one.
+ */
 export async function fetchParticipant(
 	handle: string,
 	options: RangeQuery = {},
 ): Promise<ParticipantProfile | null> {
-	const query = buildQuery({
-		period: options.period,
-		from: options.from,
-		to: options.to,
-	});
-
-	const response = await fetch(
-		`${env.NEXT_PUBLIC_API_URL}/api/leaderboard/u/${encodeURIComponent(handle)}?${query}`,
-		{ next: { revalidate: REVALIDATE_SECONDS } },
-	);
-	if (response.status === 404) return null;
-	if (!response.ok) {
-		throw new Error(
-			`[marketing/leaderboard] profile ${handle} failed: ${response.status}`,
-		);
+	try {
+		return await leaderboardClient.leaderboard.public.participant.query({
+			handle,
+			...options,
+		});
+	} catch (error) {
+		if (error instanceof TRPCClientError && error.data?.code === "NOT_FOUND") {
+			return null;
+		}
+		throw error;
 	}
-	return (await response.json()) as ParticipantProfile;
 }

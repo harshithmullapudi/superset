@@ -16,6 +16,10 @@
 			"types": "./src/router/leaderboard/queries.ts",
 			"default": "./src/router/leaderboard/queries.ts"
 		},
+		"./leaderboard-schema": {
+			"types": "./src/router/leaderboard/schema.ts",
+			"default": "./src/router/leaderboard/schema.ts"
+		},
 		"./leaderboard-periods": {
 			"types": "./src/router/leaderboard/periods.ts",
 			"default": "./src/router/leaderboard/periods.ts"

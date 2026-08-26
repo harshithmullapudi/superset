@@ -6,6 +6,7 @@ export type {
 	RangeQuery,
 	StandingRow,
 	Standings,
+	StandingsQuery,
 } from "./fetchLeaderboard";
 export {
 	fetchParticipant,

@@ -1,16 +1,7 @@
 import { z } from "zod";
-import { LEADERBOARD_PERIODS } from "./periods";
+import { isDayKey, LEADERBOARD_PERIODS } from "./periods";
 
-const dayKey = z
-	.string()
-	.regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD")
-	.refine((value) => {
-		const parsed = new Date(`${value}T00:00:00.000Z`);
-		return (
-			!Number.isNaN(parsed.getTime()) &&
-			parsed.toISOString().slice(0, 10) === value
-		);
-	}, "Not a real calendar date");
+const dayKey = z.string().refine(isDayKey, "Expected a real YYYY-MM-DD date");
 
 const tokenCount = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
 
@@ -61,7 +52,15 @@ export const publishFactoryDaySchema = z.object({
 
 export type PublishFactoryDay = z.infer<typeof publishFactoryDaySchema>;
 
-export const PUBLISH_MAX_DAYS = 5_000;
+// Rows, not days: 36 days x ~55 provider/model combos. Also keeps the insert
+// under Postgres's 65,535 bind parameters at 15 columns per row.
+export const PUBLISH_MAX_DAYS = 2_000;
+
+// The widest a client legitimately reaches back is the 30-day join backfill;
+// the extra days absorb host/server clock skew around a UTC midnight.
+export const PUBLISH_WINDOW_DAYS = 35;
+
+export const PUBLISH_PAYLOAD_VERSION = 2;
 
 export const publishSchema = z.object({
 	payloadVersion: z.union([z.literal(1), z.literal(2)]),
@@ -75,14 +74,24 @@ export const publishSchema = z.object({
 
 export const metricSchema = z.enum(["tokens", "cost"]);
 
-export const standingsSchema = z.object({
+export const windowSchema = z.object({
 	period: periodSchema.default("30d"),
 	periodStart: dayKey.optional(),
 	from: dayKey.optional(),
 	to: dayKey.optional(),
+});
+
+export const standingsSchema = windowSchema.extend({
 	metric: metricSchema.default("tokens"),
 	limit: z.number().int().min(1).max(100).default(50),
-	offset: z.number().int().min(0).max(100_000).default(0),
+	// OFFSET is O(n) over a grouped aggregate on an anonymous endpoint; the board
+	// only pages sequentially, so deep scans are abuse rather than use.
+	offset: z.number().int().min(0).max(1_000).default(0),
+});
+
+export const participantSchema = windowSchema.extend({
+	handle: handleSchema,
+	period: periodSchema.default("all"),
 });
 
 export const previewRankSchema = z.object({

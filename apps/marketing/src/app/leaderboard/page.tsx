@@ -2,7 +2,6 @@ import { COMPANY } from "@superset/shared/constants";
 import type { Metadata } from "next";
 import { Silkscreen } from "next/font/google";
 import Link from "next/link";
-import { env } from "@/env";
 import { LeaderboardBoard } from "./components/LeaderboardBoard";
 import { fetchStandings, fetchStats } from "./utils/fetchLeaderboard";
 
@@ -66,7 +65,6 @@ export default async function LeaderboardPage() {
 
 				<div className="mt-10 md:mt-12">
 					<LeaderboardBoard
-						apiUrl={env.NEXT_PUBLIC_API_URL}
 						initialStandings={standings}
 						initialStats={stats}
 						earliest="2025-01-01"

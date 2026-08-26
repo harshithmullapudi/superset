@@ -6,11 +6,13 @@ const MIN_WINDOW_DAYS = 2;
 const MAX_WINDOW_DAYS = 30;
 
 export interface AutoPublishState {
+	handle: string | null;
 	lastPublishedAt: number;
 	lastPayloadHash: string | null;
 }
 
 export const INITIAL_AUTO_PUBLISH_STATE: AutoPublishState = {
+	handle: null,
 	lastPublishedAt: 0,
 	lastPayloadHash: null,
 };

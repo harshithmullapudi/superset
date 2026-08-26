@@ -12,12 +12,17 @@ const NOW = 1_800_000_000_000;
 
 describe("isPublishDue", () => {
 	it("holds off until the two-hour deadline passes", () => {
-		const state = { lastPublishedAt: NOW - HOUR, lastPayloadHash: "a" };
+		const state = {
+			handle: "me",
+			lastPublishedAt: NOW - HOUR,
+			lastPayloadHash: "a",
+		};
 		expect(isPublishDue(state, NOW)).toBe(false);
 	});
 
 	it("fires once the deadline is reached", () => {
 		const state = {
+			handle: "me",
 			lastPublishedAt: NOW - PUBLISH_INTERVAL_MS,
 			lastPayloadHash: "a",
 		};
@@ -26,12 +31,19 @@ describe("isPublishDue", () => {
 
 	it("fires on a machine that has never published", () => {
 		expect(
-			isPublishDue({ lastPublishedAt: 0, lastPayloadHash: null }, NOW),
+			isPublishDue(
+				{ handle: "me", lastPublishedAt: 0, lastPayloadHash: null },
+				NOW,
+			),
 		).toBe(true);
 	});
 
 	it("fires when a clock change puts the last publish in the future", () => {
-		const state = { lastPublishedAt: NOW + 10 * DAY, lastPayloadHash: "a" };
+		const state = {
+			handle: "me",
+			lastPublishedAt: NOW + 10 * DAY,
+			lastPayloadHash: "a",
+		};
 		expect(isPublishDue(state, NOW)).toBe(true);
 	});
 });
@@ -39,12 +51,16 @@ describe("isPublishDue", () => {
 describe("publishWindowDays", () => {
 	it("backfills the full window on a first publish", () => {
 		expect(
-			publishWindowDays({ lastPublishedAt: 0, lastPayloadHash: null }, NOW),
+			publishWindowDays(
+				{ handle: "me", lastPublishedAt: 0, lastPayloadHash: null },
+				NOW,
+			),
 		).toBe(30);
 	});
 
 	it("uses the two-day floor in steady state", () => {
 		const state = {
+			handle: "me",
 			lastPublishedAt: NOW - PUBLISH_INTERVAL_MS,
 			lastPayloadHash: "a",
 		};
@@ -52,17 +68,29 @@ describe("publishWindowDays", () => {
 	});
 
 	it("widens to cover a gap the app was closed for", () => {
-		const state = { lastPublishedAt: NOW - 6 * DAY, lastPayloadHash: "a" };
+		const state = {
+			handle: "me",
+			lastPublishedAt: NOW - 6 * DAY,
+			lastPayloadHash: "a",
+		};
 		expect(publishWindowDays(state, NOW)).toBe(7);
 	});
 
 	it("clamps a very long absence to the backfill ceiling", () => {
-		const state = { lastPublishedAt: NOW - 400 * DAY, lastPayloadHash: "a" };
+		const state = {
+			handle: "me",
+			lastPublishedAt: NOW - 400 * DAY,
+			lastPayloadHash: "a",
+		};
 		expect(publishWindowDays(state, NOW)).toBe(30);
 	});
 
 	it("never returns less than the floor when the clock moved backwards", () => {
-		const state = { lastPublishedAt: NOW + 5 * DAY, lastPayloadHash: "a" };
+		const state = {
+			handle: "me",
+			lastPublishedAt: NOW + 5 * DAY,
+			lastPayloadHash: "a",
+		};
 		expect(publishWindowDays(state, NOW)).toBe(2);
 	});
 });

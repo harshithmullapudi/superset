@@ -20,12 +20,12 @@ export const usageHistoryTask = defineWorkerTask<
 });
 
 export const leaderboardPayloadTask = defineWorkerTask<
-	{ days: number; agentPrsByDay: Record<string, number> },
+	{ days: number; nowMs: number; agentPrsByDay: Record<string, number> },
 	LeaderboardPayload
 >({
 	type: "usage/leaderboard-payload",
-	handler: ({ days, agentPrsByDay }) =>
-		computeLeaderboardPayload(days, agentPrsByDay),
+	handler: ({ days, nowMs, agentPrsByDay }) =>
+		computeLeaderboardPayload(days, agentPrsByDay, new Date(nowMs)),
 });
 
 export const usageTasks = [usageHistoryTask, leaderboardPayloadTask];

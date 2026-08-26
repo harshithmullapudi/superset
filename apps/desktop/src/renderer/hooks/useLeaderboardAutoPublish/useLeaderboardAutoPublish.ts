@@ -15,14 +15,14 @@ import {
 
 export function useLeaderboardAutoPublish(): void {
 	const { activeHostUrl, machineId } = useLocalHostService();
-	const { optedIn } = useLeaderboardOptIn();
+	const { handle } = useLeaderboardOptIn();
 	const inFlight = useRef(false);
 
 	const maybePublish = useCallback(async () => {
-		if (!optedIn || !activeHostUrl || !machineId) return;
+		if (!handle || !activeHostUrl || !machineId) return;
 		if (inFlight.current) return;
 
-		const state = readAutoPublishState();
+		const state = readAutoPublishState(handle);
 		const now = Date.now();
 		if (!isPublishDue(state, now)) return;
 
@@ -37,6 +37,7 @@ export function useLeaderboardAutoPublish(): void {
 				await publishPayload(machineId, payload);
 			}
 			writeAutoPublishState({
+				handle,
 				lastPublishedAt: Date.now(),
 				lastPayloadHash: hash,
 			});
@@ -45,10 +46,10 @@ export function useLeaderboardAutoPublish(): void {
 		} finally {
 			inFlight.current = false;
 		}
-	}, [optedIn, activeHostUrl, machineId]);
+	}, [handle, activeHostUrl, machineId]);
 
 	useEffect(() => {
-		if (!optedIn || !activeHostUrl || !machineId) return;
+		if (!handle || !activeHostUrl || !machineId) return;
 
 		void maybePublish();
 		const timer = setInterval(() => void maybePublish(), CHECK_INTERVAL_MS);
@@ -63,5 +64,5 @@ export function useLeaderboardAutoPublish(): void {
 			document.removeEventListener("visibilitychange", onVisibility);
 			window.removeEventListener("focus", onVisibility);
 		};
-	}, [optedIn, activeHostUrl, machineId, maybePublish]);
+	}, [handle, activeHostUrl, machineId, maybePublish]);
 }
