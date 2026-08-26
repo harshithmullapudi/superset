@@ -3,7 +3,12 @@ import { isDayKey, LEADERBOARD_PERIODS } from "./periods";
 
 const dayKey = z.string().refine(isDayKey, "Expected a real YYYY-MM-DD date");
 
-const tokenCount = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
+// Per field, per (day, provider, model, host) row. Generous next to real usage,
+// but low enough that a full payload cannot overflow the bigint rollup on
+// leaderboard_participants.
+export const MAX_TOKENS_PER_ROW_FIELD = 50_000_000_000;
+
+const tokenCount = z.number().int().min(0).max(MAX_TOKENS_PER_ROW_FIELD);
 
 export const handleSchema = z
 	.string()
@@ -25,6 +30,9 @@ export const joinSchema = z.object({
 	visibility: visibilitySchema.default("public"),
 });
 
+// Same reasoning as the token cap, against the numeric(14,6) usd rollup.
+export const MAX_USD_PER_ROW = 10_000;
+
 export const publishDaySchema = z.object({
 	day: dayKey,
 	provider: z.string().min(1).max(64),
@@ -35,7 +43,7 @@ export const publishDaySchema = z.object({
 	cacheWrite1h: tokenCount,
 	output: tokenCount,
 	reasoningOutput: tokenCount,
-	usdEstimate: z.number().min(0).max(1_000_000),
+	usdEstimate: z.number().min(0).max(MAX_USD_PER_ROW),
 	approximate: z.boolean(),
 	sessions: z.number().int().min(0).max(100_000),
 });
@@ -59,6 +67,10 @@ export const PUBLISH_MAX_DAYS = 2_000;
 // The widest a client legitimately reaches back is the 30-day join backfill;
 // the extra days absorb host/server clock skew around a UTC midnight.
 export const PUBLISH_WINDOW_DAYS = 35;
+
+// hostId is a free-form client string and part of the upsert key, so without a
+// bound the per-row caps above can be multiplied by inventing hosts.
+export const MAX_HOSTS_PER_USER = 10;
 
 export const PUBLISH_PAYLOAD_VERSION = 2;
 

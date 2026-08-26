@@ -1,5 +1,5 @@
 {
-  "id": "e61d5f2e-7d2a-4f92-b2e5-447d1523cca4",
+  "id": "9ab0331c-1eb1-4aa9-a850-dd3a7ffba157",
   "prevId": "53cafbab-ae82-4391-98df-66ebc6a43d8b",
   "version": "7",
   "dialect": "postgresql",
@@ -2761,7 +2761,7 @@
         },
         "usd_estimate": {
           "name": "usd_estimate",
-          "type": "numeric(12, 6)",
+          "type": "numeric(14, 6)",
           "primaryKey": false,
           "notNull": true,
           "default": "'0'"
@@ -3064,6 +3064,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "flagged_at": {
+          "name": "flagged_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "last_published_at": {
           "name": "last_published_at",
           "type": "timestamp with time zone",
@@ -3086,7 +3092,7 @@
         },
         "usd": {
           "name": "usd",
-          "type": "numeric(14, 6)",
+          "type": "numeric(20, 6)",
           "primaryKey": false,
           "notNull": true,
           "default": "'0'"

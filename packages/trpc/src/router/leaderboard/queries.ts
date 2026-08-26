@@ -26,6 +26,7 @@ export interface WindowOpts {
 export const onTheBoard = and(
 	eq(leaderboardParticipants.visibility, "public"),
 	isNull(leaderboardParticipants.revokedAt),
+	isNull(leaderboardParticipants.flaggedAt),
 );
 
 export async function getStandings(

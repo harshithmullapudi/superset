@@ -9,7 +9,7 @@ import {
 import { TRPCError } from "@trpc/server";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
-import { and, eq, gte, lte, sql } from "drizzle-orm";
+import { and, eq, gte, lte, ne, sql } from "drizzle-orm";
 import { env } from "../../env";
 import {
 	createTRPCRouter,
@@ -22,6 +22,7 @@ import { type LeaderboardPeriod, resolveDayRange } from "./periods";
 import { getParticipant, getStandings, getStats } from "./queries";
 import {
 	joinSchema,
+	MAX_HOSTS_PER_USER,
 	meSchema,
 	PUBLISH_WINDOW_DAYS,
 	participantSchema,
@@ -88,6 +89,30 @@ async function enforce(
 	}
 	if (!success) {
 		throw new TRPCError({ code: "TOO_MANY_REQUESTS", message });
+	}
+}
+
+async function enforceHostBudget(
+	userId: string,
+	hostId: string,
+): Promise<void> {
+	const [seen] = await db
+		.select({
+			hosts: sql<number>`count(distinct ${leaderboardDaily.hostId})::int`,
+		})
+		.from(leaderboardDaily)
+		.where(
+			and(
+				eq(leaderboardDaily.userId, userId),
+				ne(leaderboardDaily.hostId, hostId),
+			),
+		);
+
+	if (Number(seen?.hosts ?? 0) >= MAX_HOSTS_PER_USER) {
+		throw new TRPCError({
+			code: "BAD_REQUEST",
+			message: "Too many machines publishing for this account.",
+		});
 	}
 }
 
@@ -297,7 +322,7 @@ async function rankFor(
 	const exclude = excludeUserId
 		? sql`and p.user_id <> ${excludeUserId}`
 		: sql``;
-	const eligible = sql`p.visibility = 'public' and p.revoked_at is null and u.deleted_at is null ${exclude}`;
+	const eligible = sql`p.visibility = 'public' and p.revoked_at is null and p.flagged_at is null and u.deleted_at is null ${exclude}`;
 
 	if (!range) {
 		const rows = await db.execute<{ ahead: number; total: number }>(sql`
@@ -375,7 +400,6 @@ export const leaderboardRouter = createTRPCRouter({
 							handle: input.handle,
 							visibility: input.visibility,
 							organizationId,
-							revokedAt: null,
 							optedInAt: new Date(),
 						},
 					})
@@ -478,6 +502,7 @@ export const leaderboardRouter = createTRPCRouter({
 
 			assertDaysInWindow(input.days);
 			assertDaysInWindow(input.factoryDays);
+			await enforceHostBudget(userId, input.hostId);
 
 			const rows = input.days.map((day) => ({
 				userId,

@@ -38,12 +38,15 @@ export const leaderboardParticipants = pgTable(
 			.notNull()
 			.defaultNow(),
 		revokedAt: timestamp("revoked_at", { withTimezone: true }),
+		// Shadow lever: publish still succeeds, but the board queries exclude the
+		// participant. Distinct from revokedAt, which rejects the publish outright.
+		flaggedAt: timestamp("flagged_at", { withTimezone: true }),
 		lastPublishedAt: timestamp("last_published_at", { withTimezone: true }),
 
 		payloadVersion: integer("payload_version").notNull().default(1),
 
 		tokens: bigint({ mode: "number" }).notNull().default(0),
-		usd: numeric({ precision: 14, scale: 6 }).notNull().default("0"),
+		usd: numeric({ precision: 20, scale: 6 }).notNull().default("0"),
 		sessions: integer().notNull().default(0),
 
 		uncachedInput: bigint("uncached_input", { mode: "number" })
@@ -134,7 +137,7 @@ export const leaderboardDaily = pgTable(
 			.default(0),
 		tokens: bigint({ mode: "number" }).notNull().default(0),
 
-		usdEstimate: numeric("usd_estimate", { precision: 12, scale: 6 })
+		usdEstimate: numeric("usd_estimate", { precision: 14, scale: 6 })
 			.notNull()
 			.default("0"),
 		approximate: boolean().notNull().default(false),
