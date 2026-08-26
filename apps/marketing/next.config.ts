@@ -27,6 +27,10 @@ const config: NextConfig = {
 				protocol: "https",
 				hostname: "unavatar.io",
 			},
+			{
+				protocol: "https",
+				hostname: "api.dicebear.com",
+			},
 		],
 	},
 

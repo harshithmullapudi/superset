@@ -426,6 +426,7 @@
         "@superset/auth": "workspace:*",
         "@superset/email": "workspace:*",
         "@superset/shared": "workspace:*",
+        "@superset/trpc": "workspace:*",
         "@superset/ui": "workspace:*",
         "@t3-oss/env-nextjs": "0.13.11",
         "@upstash/ratelimit": "2.0.8",
