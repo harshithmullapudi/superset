@@ -3,7 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { apiTrpcClient } from "renderer/lib/api-trpc-client";
 import { BACKFILL_DAYS, publishUsage } from "renderer/lib/leaderboard";
-import { writeAutoPublishState } from "renderer/routes/_authenticated/components/LeaderboardAutoPublish/hooks/useLeaderboardAutoPublish/autoPublishState";
+import {
+	clearAutoPublishState,
+	writeAutoPublishState,
+} from "renderer/routes/_authenticated/components/LeaderboardAutoPublish/hooks/useLeaderboardAutoPublish/autoPublishState";
 import { useLocalHostService } from "renderer/routes/_authenticated/providers/LocalHostServiceProvider";
 
 export function useLeaderboardOptIn() {
@@ -73,6 +76,7 @@ export function useLeaderboardOptIn() {
 		setLeaving(true);
 		try {
 			await apiTrpcClient.leaderboard.leave.mutate();
+			clearAutoPublishState();
 			await membership.refetch();
 			toast.success("Left the leaderboard and deleted your published usage");
 			return true;

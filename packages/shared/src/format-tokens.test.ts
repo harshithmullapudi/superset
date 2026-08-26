@@ -14,4 +14,17 @@ describe("formatTokens", () => {
 		expect(formatTokens(0)).toBe("0");
 		expect(formatTokens(999)).toBe("999");
 	});
+
+	it("promotes values that round up into the next unit", () => {
+		expect(formatTokens(999_999)).toBe("1.0M");
+		expect(formatTokens(999_999_999)).toBe("1.0B");
+		expect(formatTokens(999_999_999_999)).toBe("1.00T");
+	});
+
+	it("keeps values that stay inside their unit", () => {
+		expect(formatTokens(1_000)).toBe("1K");
+		expect(formatTokens(999_400)).toBe("999K");
+		expect(formatTokens(1_000_000)).toBe("1.0M");
+		expect(formatTokens(1_000_000_000)).toBe("1.0B");
+	});
 });

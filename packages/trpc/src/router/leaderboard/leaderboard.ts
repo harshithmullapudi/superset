@@ -1,4 +1,4 @@
-import { db } from "@superset/db/client";
+import { db, dbWs } from "@superset/db/client";
 import {
 	leaderboardDaily,
 	leaderboardDailyFactory,
@@ -447,15 +447,17 @@ export const leaderboardRouter = createTRPCRouter({
 
 	leave: protectedProcedure.mutation(async ({ ctx }) => {
 		const userId = ctx.session.user.id;
-		await db
-			.delete(leaderboardDaily)
-			.where(eq(leaderboardDaily.userId, userId));
-		await db
-			.delete(leaderboardDailyFactory)
-			.where(eq(leaderboardDailyFactory.userId, userId));
-		await db
-			.delete(leaderboardParticipants)
-			.where(eq(leaderboardParticipants.userId, userId));
+		await dbWs.transaction(async (tx) => {
+			await tx
+				.delete(leaderboardDaily)
+				.where(eq(leaderboardDaily.userId, userId));
+			await tx
+				.delete(leaderboardDailyFactory)
+				.where(eq(leaderboardDailyFactory.userId, userId));
+			await tx
+				.delete(leaderboardParticipants)
+				.where(eq(leaderboardParticipants.userId, userId));
+		});
 		return { success: true };
 	}),
 

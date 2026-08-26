@@ -26,6 +26,14 @@ export function readAutoPublishState(handle: string): AutoPublishState {
 	}
 }
 
+export function clearAutoPublishState(): void {
+	try {
+		localStorage.removeItem(STORAGE_KEY);
+	} catch {
+		return;
+	}
+}
+
 export function writeAutoPublishState(state: AutoPublishState): void {
 	try {
 		localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
