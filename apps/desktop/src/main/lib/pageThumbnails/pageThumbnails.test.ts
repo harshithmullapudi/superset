@@ -81,15 +81,6 @@ function serve(url: string): Promise<Response> {
 	return thumbnailProtocolHandler(new Request(url));
 }
 
-async function waitForMtimeAbove(path: string, floor: number): Promise<number> {
-	for (let attempt = 0; attempt < 50; attempt += 1) {
-		const info = await stat(path);
-		if (info.mtimeMs > floor) return info.mtimeMs;
-		await new Promise((resolve) => setTimeout(resolve, 10));
-	}
-	return (await stat(path)).mtimeMs;
-}
-
 beforeEach(async () => {
 	await rm(CACHE_DIR, { recursive: true, force: true });
 });
@@ -229,7 +220,7 @@ describe("thumbnailProtocolHandler", () => {
 		);
 		expect(response.status).toBe(200);
 
-		expect(await waitForMtimeAbove(path, before)).toBeGreaterThan(before);
+		expect((await stat(path)).mtimeMs).toBeGreaterThan(before);
 	});
 });
 

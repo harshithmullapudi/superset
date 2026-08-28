@@ -348,7 +348,7 @@ export async function thumbnailProtocolHandler(
 	try {
 		const bytes = await readFile(path);
 		const now = new Date();
-		void utimes(path, now, now).catch(() => undefined);
+		await utimes(path, now, now).catch(() => undefined);
 		return new Response(new Uint8Array(bytes), {
 			status: 200,
 			headers: {
