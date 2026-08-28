@@ -22218,10 +22218,9 @@ msgid "workspace.terminalPane.viewLog"
 msgstr "View log"
 
 #. js-lingui-explicit-id
-#. placeholder {0}: first.title
 #: ../../apps/desktop/src/renderer/routes/_authenticated/_dashboard/v2-workspace/$workspaceId/hooks/usePaneRegistry/components/TerminalPane/components/TerminalPaneHeaderExtras/components/TerminalPageWatchChip/TerminalPageWatchChip.tsx
-msgid "workspace.terminalPane.watchingOnePage"
-msgstr "Watching \"{0}\" for new comments"
+msgid "workspace.terminalPane.watchingAria"
+msgstr "Pages this agent is watching for comments"
 
 #. js-lingui-explicit-id
 #. placeholder {0}: mine.length
