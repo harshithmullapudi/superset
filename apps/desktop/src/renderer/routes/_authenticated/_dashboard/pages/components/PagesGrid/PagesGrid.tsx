@@ -22,21 +22,25 @@ const SKELETON_KEYS = [
 interface PagesGridProps {
 	pages: PageCardItem[];
 	pinnedPageIds: ReadonlySet<string>;
+	currentUserId: string | undefined;
 	isPending: boolean;
 	error?: string;
 	hasFilters: boolean;
 	onOpen: (page: PageCardItem, event: React.MouseEvent) => void;
 	onTogglePin: (pageId: string) => void;
+	onDelete: (pageId: string) => Promise<void>;
 }
 
 export function PagesGrid({
 	pages,
 	pinnedPageIds,
+	currentUserId,
 	isPending,
 	error,
 	hasFilters,
 	onOpen,
 	onTogglePin,
+	onDelete,
 }: PagesGridProps) {
 	if (isPending) {
 		return (
@@ -95,8 +99,10 @@ export function PagesGrid({
 					key={page.id}
 					page={page}
 					isPinned={pinnedPageIds.has(page.id)}
+					currentUserId={currentUserId}
 					onOpen={onOpen}
 					onTogglePin={onTogglePin}
+					onDelete={onDelete}
 				/>
 			))}
 		</div>

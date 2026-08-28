@@ -118,18 +118,25 @@ export function PageCommentsView({
 		);
 	}, []);
 
+	const popoverOpen = Boolean(draft || activeThreadId);
 	useEffect(() => {
 		const element = containerRef.current;
 		if (!element) return;
-		const observer = new ResizeObserver(() => {
-			setContainer({
-				width: element.clientWidth,
-				height: element.clientHeight,
-			});
-		});
+		const measure = () => {
+			const width = element.clientWidth;
+			const height = element.clientHeight;
+			setContainer((previous) =>
+				previous.width === width && previous.height === height
+					? previous
+					: { width, height },
+			);
+		};
+		measure();
+		if (!popoverOpen) return;
+		const observer = new ResizeObserver(measure);
 		observer.observe(element);
 		return () => observer.disconnect();
-	}, []);
+	}, [popoverOpen]);
 
 	useEffect(() => {
 		const onMessage = (event: MessageEvent) => {

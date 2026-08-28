@@ -1,7 +1,7 @@
 "use client";
 
 import { Building2, Check, Link2, Lock } from "lucide-react";
-import { type ReactNode, useCallback, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../../../../../ui/avatar";
 import { Button } from "../../../../../ui/button";
 import { Label } from "../../../../../ui/label";
@@ -62,6 +62,12 @@ export function PageSharePopover({
 }: PageSharePopoverProps) {
 	const [busy, setBusy] = useState(false);
 	const [copied, setCopied] = useState(false);
+	const [pending, setPending] = useState<PageVisibility | null>(null);
+	const visibility = pending ?? page.visibility;
+
+	useEffect(() => {
+		if (pending !== null && page.visibility === pending) setPending(null);
+	}, [page.visibility, pending]);
 
 	useFramePointerDown(useCallback(() => onOpenChange(false), [onOpenChange]));
 
@@ -72,6 +78,25 @@ export function PageSharePopover({
 			setTimeout(() => setCopied(false), 1500);
 		} catch {
 			toast.error("Could not copy the link");
+		}
+	};
+
+	const changeVisibility = async (next: PageVisibility) => {
+		if (next === visibility) return;
+		setPending(next);
+		if (next !== "just_me") void copyLink();
+		setBusy(true);
+		try {
+			await onSetVisibility(next);
+		} catch (error) {
+			setPending(null);
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Could not change who can see this page",
+			);
+		} finally {
+			setBusy(false);
 		}
 	};
 
@@ -146,13 +171,10 @@ export function PageSharePopover({
 						</p>
 					</div>
 					<Select
-						value={page.visibility}
+						value={visibility}
 						disabled={!editable || busy}
 						onValueChange={(value) =>
-							void run(
-								() => onSetVisibility(value as PageVisibility),
-								"Could not change who can see this page",
-							)
+							void changeVisibility(value as PageVisibility)
 						}
 					>
 						<SelectTrigger size="sm" className="w-full">

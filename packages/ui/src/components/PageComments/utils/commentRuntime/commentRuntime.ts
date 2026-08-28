@@ -74,10 +74,17 @@ const RUNTIME_SOURCE = `(() => {
 		return parts.join(" > ");
 	};
 
+	const resolveCache = new Map();
+
 	const resolve = (path) => {
 		if (!path) return null;
+		const cached = resolveCache.get(path);
+		if (cached && cached.isConnected) return cached;
 		try {
-			return document.body.querySelector(":scope > " + path);
+			const el = document.body.querySelector(":scope > " + path);
+			if (el) resolveCache.set(path, el);
+			else resolveCache.delete(path);
+			return el;
 		} catch {
 			return null;
 		}
@@ -184,7 +191,15 @@ const RUNTIME_SOURCE = `(() => {
 	addEventListener("scroll", schedule, true);
 	addEventListener("resize", schedule);
 	new ResizeObserver(schedule).observe(document.documentElement);
-	new MutationObserver(schedule).observe(document.documentElement, {
+	new MutationObserver((records) => {
+		for (const record of records) {
+			if (record.type === "childList") {
+				resolveCache.clear();
+				break;
+			}
+		}
+		schedule();
+	}).observe(document.documentElement, {
 		subtree: true,
 		childList: true,
 		attributes: true,

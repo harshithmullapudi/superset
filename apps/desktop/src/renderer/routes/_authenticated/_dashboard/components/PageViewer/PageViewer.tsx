@@ -1,9 +1,9 @@
-import { authClient } from "@superset/auth/client";
 import { CommentProvider, PageCommentsView } from "@superset/ui/page-comments";
 import { Spinner } from "@superset/ui/spinner";
 import { useQuery } from "@tanstack/react-query";
 import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useRef } from "react";
+import { authClient } from "renderer/lib/auth-client";
 import { cloudTrpc } from "renderer/lib/cloud-trpc";
 import { electronTrpcClient } from "renderer/lib/trpc-client";
 import { PageViewerMessage } from "./components/PageViewerMessage";

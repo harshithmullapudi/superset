@@ -19,6 +19,7 @@ import { createMenuRouter } from "./menu";
 import { createMigrationRouter } from "./migration";
 import { createNotificationsRouter } from "./notifications";
 import { createPageContentRouter } from "./page-content";
+import { createPageThumbnailRouter } from "./page-thumbnail";
 import { createPermissionsRouter } from "./permissions";
 import { createPluginsRouter } from "./plugins";
 import { createPortsRouter } from "./ports";
@@ -51,6 +52,7 @@ export const createAppRouter = (getWindow: () => BrowserWindow | null) => {
 		filesystem: createFilesystemRouter(),
 		notifications: createNotificationsRouter(getWindow),
 		pageContent: createPageContentRouter(),
+		pageThumbnail: createPageThumbnailRouter(),
 		permissions: createPermissionsRouter(),
 		plugins: createPluginsRouter(),
 		ports: createPortsRouter(),
