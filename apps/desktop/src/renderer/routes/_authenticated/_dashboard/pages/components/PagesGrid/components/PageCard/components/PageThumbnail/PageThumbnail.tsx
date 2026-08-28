@@ -1,5 +1,5 @@
 import { Spinner } from "@superset/ui/spinner";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FileText } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { cloudTrpc } from "renderer/lib/cloud-trpc";
@@ -18,6 +18,8 @@ export function PageThumbnail({
 	accountId,
 }: PageThumbnailProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
+	const recovered = useRef(false);
+	const queryClient = useQueryClient();
 	const [isVisible, setIsVisible] = useState(false);
 
 	useEffect(() => {
@@ -80,6 +82,16 @@ export function PageThumbnail({
 		},
 	});
 
+	const recoverFromEviction = () => {
+		if (recovered.current) return;
+		recovered.current = true;
+		for (const stage of ["cached", "captured"]) {
+			queryClient.removeQueries({
+				queryKey: ["page-thumbnail", stage, accountId, pageId, versionKey],
+			});
+		}
+	};
+
 	const src = cached.data ?? captured.data ?? null;
 	const isLoading =
 		enabled && !src && !captured.isError && (cached.isPending || needsCapture);
@@ -97,6 +109,7 @@ export function PageThumbnail({
 					aria-hidden="true"
 					loading="lazy"
 					decoding="async"
+					onError={recoverFromEviction}
 					className="absolute inset-0 h-full w-full object-cover object-top"
 				/>
 			) : (

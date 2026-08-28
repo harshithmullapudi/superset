@@ -138,6 +138,31 @@ async function captureWithRetry(
 		: new Error("Thumbnail capture failed");
 }
 
+const TIMED_OUT = Symbol("timed-out");
+
+const BLANK_PROBE_SIZE = 8;
+
+function isBlank(image: Electron.NativeImage): boolean {
+	const bitmap = image
+		.resize({
+			width: BLANK_PROBE_SIZE,
+			height: BLANK_PROBE_SIZE,
+			quality: "good",
+		})
+		.toBitmap();
+	if (bitmap.length < 4) return true;
+	for (let offset = 4; offset < bitmap.length; offset += 4) {
+		if (
+			bitmap[offset] !== bitmap[0] ||
+			bitmap[offset + 1] !== bitmap[1] ||
+			bitmap[offset + 2] !== bitmap[2]
+		) {
+			return false;
+		}
+	}
+	return true;
+}
+
 let partitionReady = false;
 
 function ensurePartitionProtocol(): void {
@@ -174,10 +199,13 @@ async function captureHtml(html: string): Promise<Buffer> {
 			.loadURL(url)
 			.then(() => null)
 			.catch((error: unknown) => error);
-		const failure = await Promise.race([navigation, delay(LOAD_TIMEOUT_MS)]);
-		if (failure) {
-			throw failure instanceof Error
-				? failure
+		const outcome = await Promise.race([
+			navigation,
+			delay(LOAD_TIMEOUT_MS).then(() => TIMED_OUT),
+		]);
+		if (outcome && outcome !== TIMED_OUT) {
+			throw outcome instanceof Error
+				? outcome
 				: new Error("Thumbnail page failed to load");
 		}
 
@@ -186,6 +214,11 @@ async function captureHtml(html: string): Promise<Buffer> {
 		}
 		await delay(SETTLE_MS);
 		const image = await captureWithRetry(window);
+		if (outcome === TIMED_OUT && isBlank(image)) {
+			throw new Error(
+				"Thumbnail page had not rendered when the load timed out",
+			);
+		}
 		return image
 			.resize({
 				width: THUMBNAIL_WIDTH,
