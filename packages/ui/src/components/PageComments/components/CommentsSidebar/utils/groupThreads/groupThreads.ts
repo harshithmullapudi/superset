@@ -10,10 +10,12 @@ export interface GroupedThreads {
 export function groupThreads({
 	threads,
 	rects,
+	rectsReady,
 	showResolved,
 }: {
 	threads: CommentThread[];
 	rects: Record<string, FrameRect | null>;
+	rectsReady: boolean;
 	showResolved: boolean;
 }): GroupedThreads {
 	const anchored: CommentThread[] = [];
@@ -23,7 +25,7 @@ export function groupThreads({
 	for (const thread of threads) {
 		if (!thread.resolved) openCount += 1;
 		if (thread.resolved && !showResolved) continue;
-		if (rects[thread.id]) anchored.push(thread);
+		if (!rectsReady || rects[thread.id]) anchored.push(thread);
 		else unanchored.push(thread);
 	}
 

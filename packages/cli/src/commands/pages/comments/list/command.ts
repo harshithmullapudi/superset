@@ -48,20 +48,18 @@ export default command({
 			const pages = await ctx.api.page.list.query(
 				options.workspace ? { workspaceId: options.workspace } : undefined,
 			);
-			threads = [];
-			for (const page of pages) {
+			const perPage = await mapWithConcurrency(pages, 8, async (page) => {
 				const rows = (await ctx.api.pageComment.list.query({
 					pageId: page.id,
 					...activatedOnly,
 				})) as unknown as Thread[];
-				for (const row of rows) {
-					threads.push({
-						...row,
-						pageTitle: page.title,
-						pageSlug: page.slug,
-					});
-				}
-			}
+				return rows.map((row) => ({
+					...row,
+					pageTitle: page.title,
+					pageSlug: page.slug,
+				}));
+			});
+			threads = perPage.flat();
 		}
 
 		if (options.unresolved) {
@@ -109,6 +107,26 @@ export default command({
 			.join("\n\n");
 	},
 });
+
+async function mapWithConcurrency<T, R>(
+	items: readonly T[],
+	limit: number,
+	work: (item: T) => Promise<R>,
+): Promise<R[]> {
+	const results = new Array<R>(items.length);
+	let next = 0;
+	const workers = Array.from(
+		{ length: Math.min(limit, items.length) },
+		async () => {
+			while (next < items.length) {
+				const index = next++;
+				results[index] = await work(items[index] as T);
+			}
+		},
+	);
+	await Promise.all(workers);
+	return results;
+}
 
 function indent(text: string, prefix: string): string {
 	return text

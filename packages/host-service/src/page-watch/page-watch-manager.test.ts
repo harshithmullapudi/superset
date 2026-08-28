@@ -48,12 +48,18 @@ function harness(
 	const busy = options.busy ?? new Set<string>();
 	const agents = options.agents ?? new Set(["term-1", "term-2"]);
 	let sendFails = false;
+	let setWatchFails = false;
 	let clock = T0;
 
 	const manager = new PageWatchManager({
 		api: {
 			listThreads: options.listThreads ?? (async () => options.threads ?? []),
 			setWatch: async (pageId, agentId) => {
+				if (setWatchFails) {
+					throw new Error(
+						"Only the person who created this page can change it",
+					);
+				}
 				setWatchCalls.push({ pageId, agentId });
 			},
 			clearWatch: async (pageId) => {
@@ -97,6 +103,9 @@ function harness(
 		failSends: (value: boolean) => {
 			sendFails = value;
 		},
+		failSetWatch: (value: boolean) => {
+			setWatchFails = value;
+		},
 		advance: (ms: number) => {
 			clock += ms;
 		},
@@ -107,7 +116,7 @@ function harness(
 describe("PageWatchManager", () => {
 	it("delivers a new human comment to the assigned terminal", async () => {
 		const h = harness({ threads: [humanThread("t1", T0 + 5_000)] });
-		h.assign();
+		await h.assign();
 		h.advance(5_000);
 		await h.manager.tick();
 
@@ -119,7 +128,7 @@ describe("PageWatchManager", () => {
 
 	it("does not redeliver the same comment on the next tick", async () => {
 		const h = harness({ threads: [humanThread("t1", T0 + 5_000)] });
-		h.assign();
+		await h.assign();
 		h.advance(5_000);
 		await h.manager.tick();
 		h.advance(10_000);
@@ -130,8 +139,8 @@ describe("PageWatchManager", () => {
 
 	it("watches many pages for one agent", async () => {
 		const h = harness({ threads: [humanThread("t1", T0 + 5_000)] });
-		h.assign({ pageId: "page-1" });
-		h.assign({ pageId: "page-2" });
+		await h.assign({ pageId: "page-1" });
+		await h.assign({ pageId: "page-2" });
 		h.advance(5_000);
 		await h.manager.tick();
 
@@ -141,9 +150,9 @@ describe("PageWatchManager", () => {
 
 	it("drops every page for a terminal that exits, and clears each cloud row", async () => {
 		const h = harness();
-		h.assign({ pageId: "page-1" });
-		h.assign({ pageId: "page-2" });
-		h.assign({ pageId: "page-3", terminalId: "term-2" });
+		await h.assign({ pageId: "page-1" });
+		await h.assign({ pageId: "page-2" });
+		await h.assign({ pageId: "page-3", terminalId: "term-2" });
 		h.alive.add("term-2");
 
 		h.alive.delete("term-1");
@@ -153,22 +162,26 @@ describe("PageWatchManager", () => {
 		expect(h.clearWatchCalls.sort()).toEqual(["page-1", "page-2"]);
 	});
 
-	it("refuses to exceed the watcher cap", () => {
+	it("refuses to exceed the watcher cap", async () => {
 		const h = harness();
-		for (let i = 0; i < MAX_WATCHERS; i += 1) h.assign({ pageId: `page-${i}` });
-		expect(() => h.assign({ pageId: "one-too-many" })).toThrow();
+		for (let i = 0; i < MAX_WATCHERS; i += 1) {
+			await h.assign({ pageId: `page-${i}` });
+		}
+		await expect(h.assign({ pageId: "one-too-many" })).rejects.toThrow();
 		expect(h.manager.list().length).toBe(MAX_WATCHERS);
 	});
 
-	it("lets a reassignment of an existing page through the cap", () => {
+	it("lets a reassignment of an existing page through the cap", async () => {
 		const h = harness();
-		for (let i = 0; i < MAX_WATCHERS; i += 1) h.assign({ pageId: `page-${i}` });
-		expect(() => h.assign({ pageId: "page-0" })).not.toThrow();
+		for (let i = 0; i < MAX_WATCHERS; i += 1) {
+			await h.assign({ pageId: `page-${i}` });
+		}
+		await expect(h.assign({ pageId: "page-0" })).resolves.toBeUndefined();
 	});
 
 	it("retires a page that has been quiet past the TTL", async () => {
 		const h = harness();
-		h.assign();
+		await h.assign();
 		h.advance(IDLE_TTL_MS + 1);
 		await h.manager.tick();
 
@@ -184,7 +197,7 @@ describe("PageWatchManager", () => {
 				throw new Error("offline");
 			},
 		});
-		h.assign();
+		await h.assign();
 
 		for (let i = 0; i < MAX_CONSECUTIVE_FAILURES; i += 1) {
 			h.advance(1_000);
@@ -207,7 +220,7 @@ describe("PageWatchManager", () => {
 				return [];
 			},
 		});
-		h.assign();
+		await h.assign();
 
 		for (let i = 0; i < MAX_CONSECUTIVE_FAILURES - 1; i += 1) {
 			h.advance(1_000);
@@ -227,7 +240,7 @@ describe("PageWatchManager", () => {
 
 	it("heartbeats no more than once per heartbeat interval", async () => {
 		const h = harness();
-		h.assign();
+		await h.assign();
 
 		h.advance(1_000);
 		await h.manager.tick();
@@ -244,7 +257,7 @@ describe("PageWatchManager", () => {
 
 	it("stops touching the cloud once every watcher is gone", async () => {
 		const h = harness();
-		h.assign();
+		await h.assign();
 		await h.manager.unwatch("page-1");
 
 		const before = h.setWatchCalls.length;
@@ -255,7 +268,7 @@ describe("PageWatchManager", () => {
 
 	it("retries a comment whose delivery failed instead of dropping it", async () => {
 		const h = harness({ threads: [humanThread("t1", T0 + 5_000)] });
-		h.assign();
+		await h.assign();
 		h.failSends(true);
 		h.advance(5_000);
 		await h.manager.tick();
@@ -271,7 +284,7 @@ describe("PageWatchManager", () => {
 
 	it("gives up after repeated send failures rather than retrying forever", async () => {
 		const h = harness({ threads: [humanThread("t1", T0 + 5_000)] });
-		h.assign();
+		await h.assign();
 		h.failSends(true);
 		for (let i = 0; i < MAX_CONSECUTIVE_FAILURES; i += 1) {
 			h.advance(5_000);
@@ -282,7 +295,7 @@ describe("PageWatchManager", () => {
 
 	it("holds delivery while the agent is working", async () => {
 		const h = harness({ threads: [humanThread("t1", T0 + 5_000)] });
-		h.assign();
+		await h.assign();
 		h.busy.add("term-1");
 		h.advance(5_000);
 		await h.manager.tick();
@@ -301,7 +314,7 @@ describe("PageWatchManager", () => {
 	it("batches everything that arrived while the agent was busy into one send", async () => {
 		const threads = [humanThread("t1", T0 + 1_000)];
 		const h = harness({ listThreads: async () => threads });
-		h.assign();
+		await h.assign();
 		h.busy.add("term-1");
 		h.advance(5_000);
 		await h.manager.tick();
@@ -321,7 +334,7 @@ describe("PageWatchManager", () => {
 
 	it("stops holding once the max hold elapses, so a wedged agent still hears", async () => {
 		const h = harness({ threads: [humanThread("t1", T0 + 5_000)] });
-		h.assign();
+		await h.assign();
 		h.busy.add("term-1");
 		h.advance(5_000);
 		await h.manager.tick();
@@ -332,15 +345,24 @@ describe("PageWatchManager", () => {
 		expect(h.sent.length).toBe(1);
 	});
 
-	it("refuses to watch a terminal with no agent in it", () => {
+	it("refuses to watch a terminal with no agent in it", async () => {
 		const h = harness({ agents: new Set() });
-		expect(() => h.assign()).toThrow();
+		await expect(h.assign()).rejects.toThrow();
+		expect(h.manager.list()).toEqual([]);
+	});
+
+	it("refuses to watch a page the cloud will not let this user claim", async () => {
+		const h = harness();
+		h.failSetWatch(true);
+		await expect(h.assign()).rejects.toThrow(
+			"Only the person who created this page can change it",
+		);
 		expect(h.manager.list()).toEqual([]);
 	});
 
 	it("drops a watcher whose agent has gone, without typing into the bare shell", async () => {
 		const h = harness({ threads: [humanThread("t1", T0 + 5_000)] });
-		h.assign();
+		await h.assign();
 		h.agents.delete("term-1");
 		h.advance(5_000);
 		await h.manager.tick();
@@ -353,7 +375,7 @@ describe("PageWatchManager", () => {
 		const capped = humanThread("capped", T0 + 9_000);
 		const live = humanThread("live", T0 + 1_000);
 		const h = harness({ listThreads: async () => [live, capped] });
-		h.assign();
+		await h.assign();
 
 		const entry = h.manager.list()[0];
 		expect(entry).toBeDefined();
@@ -382,9 +404,31 @@ describe("PageWatchManager", () => {
 
 	it("does not hold when the agent is idle", async () => {
 		const h = harness({ threads: [humanThread("t1", T0 + 5_000)] });
-		h.assign();
+		await h.assign();
 		h.advance(5_000);
 		await h.manager.tick();
 		expect(h.sent.length).toBe(1);
+	});
+
+	it("counts a malformed thread as a failure instead of wedging the tick", async () => {
+		const bad = humanThread("bad", T0 + 5_000);
+		(bad.comments[0] as { createdAt: unknown }).createdAt = "not a date";
+		const h = harness({
+			listThreads: async (pageId) =>
+				pageId === "page-1" ? [bad] : [humanThread("t2", T0 + 5_000)],
+		});
+		await h.assign({ pageId: "page-1" });
+		await h.assign({ pageId: "page-2" });
+
+		h.advance(5_000);
+		await h.manager.tick();
+
+		expect(h.sent.map((s) => s.text.includes("thread: t2"))).toEqual([true]);
+
+		for (let i = 1; i < MAX_CONSECUTIVE_FAILURES; i += 1) {
+			h.advance(5_000);
+			await h.manager.tick();
+		}
+		expect(h.manager.list().map((w) => w.pageId)).toEqual(["page-2"]);
 	});
 });

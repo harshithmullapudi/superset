@@ -1,5 +1,5 @@
 {
-  "id": "42284851-d4a5-44f2-b927-b0329fe4c45e",
+  "id": "3110bfed-3a04-4e68-9f61-602c18362f26",
   "prevId": "d36dfe23-9955-41f9-9577-abe68938918b",
   "version": "7",
   "dialect": "postgresql",
@@ -1820,6 +1820,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'{}'"
+        },
+        "last_active_organization_id": {
+          "name": "last_active_organization_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         },
         "onboarded_at": {
           "name": "onboarded_at",
@@ -6083,18 +6089,6 @@
         "shared_version": {
           "name": "shared_version",
           "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "watched_by_agent": {
-          "name": "watched_by_agent",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "watch_heartbeat_at": {
-          "name": "watch_heartbeat_at",
-          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },

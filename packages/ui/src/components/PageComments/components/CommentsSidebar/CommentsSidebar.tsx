@@ -19,14 +19,20 @@ export function CommentsSidebar({
 	header,
 	className,
 }: CommentsSidebarProps) {
-	const { threads, isLoading, rects, activeThreadId, setActiveThreadId } =
-		useComments();
+	const {
+		threads,
+		isLoading,
+		rects,
+		rectsReady,
+		activeThreadId,
+		setActiveThreadId,
+	} = useComments();
 	const { setResolved } = useComments();
 	const [showResolved, setShowResolved] = useState(false);
 
 	const { anchored, unanchored, openCount } = useMemo(
-		() => groupThreads({ threads, rects, showResolved }),
-		[threads, rects, showResolved],
+		() => groupThreads({ threads, rects, rectsReady, showResolved }),
+		[threads, rects, rectsReady, showResolved],
 	);
 
 	const sort = (list: typeof anchored) =>

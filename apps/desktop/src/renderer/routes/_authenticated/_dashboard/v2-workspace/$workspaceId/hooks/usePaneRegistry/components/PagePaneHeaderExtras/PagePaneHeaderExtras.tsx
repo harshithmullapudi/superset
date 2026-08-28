@@ -34,14 +34,19 @@ export function PagePaneHeaderExtras({
 	const { commentsEnabled, setCommentsEnabled, shareOpen, setShareOpen } =
 		usePagePaneUi(paneId);
 
+	const owned =
+		currentUserId !== undefined && currentUserId === page?.createdByUserId;
+
 	return (
 		<>
-			<PageWatcherMenu
-				workspaceId={workspaceId}
-				pageId={page?.id}
-				pageTitle={page?.title?.trim() || pagePaneLabel(data)}
-				pageSlug={data.slug}
-			/>
+			{owned ? (
+				<PageWatcherMenu
+					workspaceId={workspaceId}
+					pageId={page?.id}
+					pageTitle={page?.title?.trim() || pagePaneLabel(data)}
+					pageSlug={data.slug}
+				/>
+			) : null}
 			<CommentModeButton
 				compact
 				enabled={commentsEnabled}

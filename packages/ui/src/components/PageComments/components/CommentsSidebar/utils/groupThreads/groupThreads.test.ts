@@ -20,6 +20,7 @@ describe("groupThreads", () => {
 		const result = groupThreads({
 			threads: [thread({ id: "here" }), thread({ id: "gone" })],
 			rects: { here: rect, gone: null },
+			rectsReady: true,
 			showResolved: true,
 		});
 
@@ -31,10 +32,23 @@ describe("groupThreads", () => {
 		const result = groupThreads({
 			threads: [thread({ id: "unknown" })],
 			rects: {},
+			rectsReady: true,
 			showResolved: true,
 		});
 
 		expect(result.unanchored.map((t) => t.id)).toEqual(["unknown"]);
+	});
+
+	it("holds every thread as anchored until the frame reports its rects", () => {
+		const result = groupThreads({
+			threads: [thread({ id: "a" }), thread({ id: "b" })],
+			rects: {},
+			rectsReady: false,
+			showResolved: true,
+		});
+
+		expect(result.anchored.map((t) => t.id)).toEqual(["a", "b"]);
+		expect(result.unanchored).toEqual([]);
 	});
 
 	it("hides resolved threads unless asked for them", () => {
@@ -45,14 +59,20 @@ describe("groupThreads", () => {
 		const rects = { open: rect, done: rect };
 
 		expect(
-			groupThreads({ threads, rects, showResolved: false }).anchored.map(
-				(t) => t.id,
-			),
+			groupThreads({
+				threads,
+				rects,
+				rectsReady: true,
+				showResolved: false,
+			}).anchored.map((t) => t.id),
 		).toEqual(["open"]);
 		expect(
-			groupThreads({ threads, rects, showResolved: true }).anchored.map(
-				(t) => t.id,
-			),
+			groupThreads({
+				threads,
+				rects,
+				rectsReady: true,
+				showResolved: true,
+			}).anchored.map((t) => t.id),
 		).toEqual(["open", "done"]);
 	});
 
@@ -65,11 +85,13 @@ describe("groupThreads", () => {
 		const rects = { a: rect, b: null, c: rect };
 
 		expect(
-			groupThreads({ threads, rects, showResolved: false }).openCount,
+			groupThreads({ threads, rects, rectsReady: true, showResolved: false })
+				.openCount,
 		).toBe(2);
-		expect(groupThreads({ threads, rects, showResolved: true }).openCount).toBe(
-			2,
-		);
+		expect(
+			groupThreads({ threads, rects, rectsReady: true, showResolved: true })
+				.openCount,
+		).toBe(2);
 	});
 });
 

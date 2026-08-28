@@ -67,7 +67,7 @@ export class PageWatchManager {
 		});
 	}
 
-	assign(assignment: PageWatchAssignment): void {
+	async assign(assignment: PageWatchAssignment): Promise<void> {
 		if (!this.deps.hasAgent(assignment.terminalId)) {
 			throw new Error(
 				"No agent is running in that terminal. A page is watched by an agent, not by a shell.",
@@ -81,13 +81,15 @@ export class PageWatchManager {
 			);
 		}
 
+		await this.deps.api.setWatch(assignment.pageId, assignment.agentId);
+
 		const at = this.now();
 		this.entries.set(assignment.pageId, {
 			...assignment,
 			assignedAt: existing?.assignedAt ?? at,
 			cursor: existing?.cursor ?? at,
 			lastHumanCommentAt: at,
-			lastHeartbeatAt: 0,
+			lastHeartbeatAt: at,
 			failures: 0,
 			pings: existing?.pings ?? new Map(),
 			pendingSince: null,
@@ -103,7 +105,18 @@ export class PageWatchManager {
 		this.entries.delete(pageId);
 		this.stopTickingIfEmpty();
 		this.notifyChanged(entry.workspaceId);
-		await this.deps.api.clearWatch(pageId).catch(() => undefined);
+		await this.clearWatch(entry);
+	}
+
+	private async clearWatch(entry: PageWatchEntry): Promise<void> {
+		try {
+			await this.deps.api.clearWatch(entry.pageId);
+		} catch (error) {
+			console.warn(
+				`[page-watch] could not clear the watch flag on ${entry.slug}`,
+				error,
+			);
+		}
 	}
 
 	list(workspaceId?: string): PageWatchStatus[] {
@@ -145,7 +158,7 @@ export class PageWatchManager {
 		this.stopTickingIfEmpty();
 		for (const entry of dropped) {
 			this.notifyChanged(entry.workspaceId);
-			await this.deps.api.clearWatch(entry.pageId).catch(() => undefined);
+			await this.clearWatch(entry);
 		}
 	}
 
@@ -163,6 +176,7 @@ export class PageWatchManager {
 	}
 
 	private stopTicking(): void {
+		this.tickRequested = false;
 		if (this.ticker) {
 			this.clearIntervalFn(this.ticker);
 			this.ticker = null;
@@ -185,10 +199,9 @@ export class PageWatchManager {
 			this.ticking = false;
 		}
 
-		if (this.tickRequested && this.entries.size > 0) {
-			this.tickRequested = false;
-			await this.tick();
-		}
+		if (!this.tickRequested) return;
+		this.tickRequested = false;
+		if (this.entries.size > 0) await this.tick();
 	}
 
 	private isDue(entry: PageWatchEntry, at: number): boolean {
@@ -224,58 +237,56 @@ export class PageWatchManager {
 			return;
 		}
 
-		const result = selectThreadsToDeliver(threads, entry);
-
-		if (result.suppressed.length > 0) {
-			console.warn(
-				`[page-watch] ${entry.slug}: ping limit reached on ${result.suppressed.length} thread(s)`,
-				{ threadIds: result.suppressed },
-			);
-		}
-
-		if (result.fired.length === 0) {
-			if (result.suppressedCursor > entry.cursor) {
-				entry.cursor = result.suppressedCursor;
-			}
-			entry.failures = 0;
-			entry.pendingSince = null;
-			await this.maybeHeartbeat(entry, at);
-			return;
-		}
-
-		entry.pendingSince ??= at;
-
-		if (
-			this.deps.isAgentBusy(entry.terminalId) &&
-			at - entry.pendingSince < MAX_HOLD_MS
-		) {
-			entry.failures = 0;
-			await this.maybeHeartbeat(entry, at);
-			return;
-		}
-
+		let result: ReturnType<typeof selectThreadsToDeliver>;
+		let held = false;
 		try {
-			await this.deps.sendToTerminal({
-				workspaceId: entry.workspaceId,
-				terminalId: entry.terminalId,
-				text: buildWatchPrompt({
-					title: entry.title,
-					slug: entry.slug,
-					threads: result.fired,
-				}),
-			});
+			result = selectThreadsToDeliver(threads, entry);
+
+			if (result.suppressed.length > 0) {
+				console.warn(
+					`[page-watch] ${entry.slug}: ping limit reached on ${result.suppressed.length} thread(s)`,
+					{ threadIds: result.suppressed },
+				);
+			}
+
+			if (result.fired.length > 0) {
+				entry.pendingSince ??= at;
+				held =
+					this.deps.isAgentBusy(entry.terminalId) &&
+					at - entry.pendingSince < MAX_HOLD_MS;
+			}
+
+			if (result.fired.length > 0 && !held) {
+				await this.deps.sendToTerminal({
+					workspaceId: entry.workspaceId,
+					terminalId: entry.terminalId,
+					text: buildWatchPrompt({
+						title: entry.title,
+						slug: entry.slug,
+						threads: result.fired,
+					}),
+				});
+			}
 		} catch (error) {
 			await this.recordFailure(entry, error, "send");
 			return;
 		}
 
 		entry.failures = 0;
-		entry.pendingSince = null;
-		entry.pings = result.pings;
-		const delivered = Math.max(result.firedCursor, result.suppressedCursor);
-		if (delivered > entry.cursor) {
-			entry.cursor = delivered;
-			entry.lastHumanCommentAt = at;
+
+		if (result.fired.length === 0) {
+			if (result.suppressedCursor > entry.cursor) {
+				entry.cursor = result.suppressedCursor;
+			}
+			entry.pendingSince = null;
+		} else if (!held) {
+			entry.pendingSince = null;
+			entry.pings = result.pings;
+			const delivered = Math.max(result.firedCursor, result.suppressedCursor);
+			if (delivered > entry.cursor) {
+				entry.cursor = delivered;
+				entry.lastHumanCommentAt = at;
+			}
 		}
 
 		await this.maybeHeartbeat(entry, at);
@@ -284,7 +295,7 @@ export class PageWatchManager {
 	private async recordFailure(
 		entry: PageWatchEntry,
 		error: unknown,
-		stage: "list" | "send",
+		stage: "list" | "send" | "heartbeat",
 	): Promise<void> {
 		entry.failures += 1;
 		if (entry.failures < MAX_CONSECUTIVE_FAILURES) return;
@@ -301,9 +312,11 @@ export class PageWatchManager {
 	): Promise<void> {
 		if (at - entry.lastHeartbeatAt < HEARTBEAT_INTERVAL_MS) return;
 		entry.lastHeartbeatAt = at;
-		await this.deps.api
-			.setWatch(entry.pageId, entry.agentId)
-			.catch(() => undefined);
+		try {
+			await this.deps.api.setWatch(entry.pageId, entry.agentId);
+		} catch (error) {
+			await this.recordFailure(entry, error, "heartbeat");
+		}
 	}
 
 	private notifyChanged(workspaceId: string): void {

@@ -4,7 +4,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@superset/ui/tooltip";
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/react";
 
-const REFRESH_MS = 30_000;
+const WATCHING_REFRESH_MS = 30_000;
+const IDLE_REFRESH_MS = 5 * 60_000;
 
 interface PageWatchBadgeProps {
 	slug: string;
@@ -20,7 +21,10 @@ export function PageWatchBadge({
 	const trpc = useTRPC();
 	const { data } = useQuery({
 		...trpc.page.get.queryOptions({ slug }),
-		refetchInterval: REFRESH_MS,
+		refetchInterval: (query) =>
+			(query.state.data?.watch.watching ?? initialWatching)
+				? WATCHING_REFRESH_MS
+				: IDLE_REFRESH_MS,
 		refetchIntervalInBackground: false,
 	});
 

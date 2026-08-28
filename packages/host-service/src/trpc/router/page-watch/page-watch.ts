@@ -21,9 +21,9 @@ const listInputSchema = z
 export const pageWatchRouter = router({
 	assign: protectedProcedure
 		.input(assignInputSchema)
-		.mutation(({ ctx, input }): PageWatchStatus[] => {
+		.mutation(async ({ ctx, input }): Promise<PageWatchStatus[]> => {
 			try {
-				ctx.runtime.pageWatch.assign(input);
+				await ctx.runtime.pageWatch.assign(input);
 			} catch (error) {
 				throw new TRPCError({
 					code: "PRECONDITION_FAILED",
