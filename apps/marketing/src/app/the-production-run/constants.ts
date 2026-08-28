@@ -1,3 +1,5 @@
+import { i18n } from "@superset/i18n";
+import { formatDate } from "@superset/i18n/format";
 import {
 	COST_CEILINGS,
 	costTier,
@@ -378,7 +380,27 @@ export function runStatus(run: ProductionRun, now: Date): RunStatus {
 }
 
 export function runStatusLabel(status: RunStatus, run: ProductionRun): string {
-	if (status === "active") return "happening now";
-	if (status === "complete") return "complete";
-	return `starts ${new Date(`${run.startsOn}T00:00:00Z`).toLocaleDateString("en-US", { month: "long", day: "numeric", timeZone: "UTC" })}`;
+	if (status === "active") {
+		return i18n._({
+			id: "marketing.productionRun.status.active",
+			message: "happening now",
+		});
+	}
+	if (status === "complete") {
+		return i18n._({
+			id: "marketing.productionRun.status.complete",
+			message: "complete",
+		});
+	}
+	return i18n._({
+		id: "marketing.productionRun.status.upcoming",
+		message: "starts {date}",
+		values: {
+			date: formatDate(new Date(`${run.startsOn}T00:00:00Z`), {
+				month: "long",
+				day: "numeric",
+				timeZone: "UTC",
+			}),
+		},
+	});
 }

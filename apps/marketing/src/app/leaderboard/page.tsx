@@ -1,10 +1,11 @@
-import { Trans } from "@lingui/react/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
+import { formatNumber } from "@superset/i18n/format";
 import { COMPANY } from "@superset/shared/constants";
 import type { Metadata } from "next";
 import { Silkscreen } from "next/font/google";
 import Link from "next/link";
 import { FactoryBackdrop } from "@/app/components/FactoryBackdrop";
-import { tierRgb } from "@/app/components/TierBadge";
+import { tierLabel, tierRgb } from "@/app/components/TierBadge";
 import { initServerI18n } from "@/app/i18n-server";
 import {
 	RUNS,
@@ -48,9 +49,14 @@ const DEFAULT_PERIOD = "30d" as const;
 
 export default async function LeaderboardPage() {
 	initServerI18n();
+	const { t } = useLingui();
 
 	const run = RUNS[0];
-	const runLabel = run ? runStatusLabel(runStatus(run, new Date()), run) : null;
+	const runLabel = run ? runStatusLabel(runStatus(run, new Date()), run) : "";
+	const runNumber = run
+		? formatNumber(run.number, { minimumIntegerDigits: 2, useGrouping: false })
+		: "";
+	const operatorTier = t(tierLabel(2));
 
 	const [standings, stats] = await Promise.all([
 		fetchStandings({ period: DEFAULT_PERIOD, metric: "tokens", limit: 50 }),
@@ -82,8 +88,9 @@ export default async function LeaderboardPage() {
 						</Trans>
 					</Link>
 
-					<div className="mt-6">
-						<style>{`
+					{run && (
+						<div className="mt-6">
+							<style>{`
 							.run-callout {
 								position: relative;
 								border: 1px solid rgba(var(--run-glow), 0.22);
@@ -113,23 +120,43 @@ export default async function LeaderboardPage() {
 							@media (prefers-reduced-motion: reduce) {
 								.run-trail rect { animation: none; stroke-dasharray: none; stroke-opacity: 0.5; }
 							}
-						`}</style>
-						<Link
-							href="/the-production-run?run=1"
-							style={{ "--run-glow": tierRgb(2) } as React.CSSProperties}
-							className="run-callout group inline-flex items-center gap-2 px-3 py-1.5 font-mono text-[0.6rem] uppercase tracking-[0.14em]"
-						>
-							<svg className="run-trail" aria-hidden="true">
-								<title>Production run status</title>
-								<rect x="0" y="0" width="100%" height="100%" pathLength={100} />
-							</svg>
-							<span style={{ color: `rgb(${tierRgb(2)})` }}>Run 01</span>
-							<span className="text-muted-foreground">
-								{runLabel} · everybody to Operator
-							</span>
-							<span style={{ color: `rgba(${tierRgb(2)},0.8)` }}>→</span>
-						</Link>
-					</div>
+							`}</style>
+							<Link
+								href={`/the-production-run?run=${run.number}`}
+								style={{ "--run-glow": tierRgb(2) } as React.CSSProperties}
+								className="run-callout group inline-flex items-center gap-2 px-3 py-1.5 font-mono text-[0.6rem] uppercase tracking-[0.14em]"
+							>
+								<svg className="run-trail" aria-hidden="true">
+									<title>
+										{t({
+											id: "marketing.leaderboard.run.trailTitle",
+											message: "Production run status",
+										})}
+									</title>
+									<rect
+										x="0"
+										y="0"
+										width="100%"
+										height="100%"
+										pathLength={100}
+									/>
+								</svg>
+								<span style={{ color: `rgb(${tierRgb(2)})` }}>
+									{t({
+										id: "marketing.leaderboard.run.name",
+										message: `Run ${runNumber}`,
+									})}
+								</span>
+								<span className="text-muted-foreground">
+									{t({
+										id: "marketing.leaderboard.run.callout",
+										message: `${runLabel} · everybody to ${operatorTier}`,
+									})}
+								</span>
+								<span style={{ color: `rgba(${tierRgb(2)},0.8)` }}>→</span>
+							</Link>
+						</div>
+					)}
 				</header>
 				<div className="mt-10 md:mt-12">
 					<LeaderboardBoard

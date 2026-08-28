@@ -1,4 +1,5 @@
-import { describe, expect, test } from "bun:test";
+import { beforeAll, describe, expect, test } from "bun:test";
+import { initI18n } from "@superset/i18n";
 import {
 	COST_CEILINGS,
 	FLOORS,
@@ -17,6 +18,10 @@ import {
 	SLIDER_MONTHS,
 	TRAJECTORY,
 } from "./constants";
+
+beforeAll(() => {
+	initI18n("en");
+});
 
 const money = (text: string): number =>
 	Number(text.replace(/[^0-9.]/g, "")) || 0;
@@ -212,6 +217,18 @@ describe("runStatus", () => {
 		if (!run) throw new Error("expected at least one run");
 		expect(runStatusLabel("upcoming", run)).toBe("starts September 1");
 		expect(runStatusLabel("active", run)).toBe("happening now");
+		expect(runStatusLabel("complete", run)).toBe("complete");
+	});
+
+	test("the status text and its date follow the active locale", () => {
+		if (!run) throw new Error("expected at least one run");
+		try {
+			initI18n("ja");
+			expect(runStatusLabel("active", run)).toBe("開催中");
+			expect(runStatusLabel("upcoming", run)).toBe("9月1日 開始");
+		} finally {
+			initI18n("en");
+		}
 	});
 });
 
