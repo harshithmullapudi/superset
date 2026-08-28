@@ -24,7 +24,8 @@ export const FRAME_CHANNEL = "superset-comments/frame";
 
 export type HostMessageBody =
 	| { type: "set-mode"; enabled: boolean }
-	| { type: "track"; anchors: { id: string; anchor: CommentAnchor }[] };
+	| { type: "track"; anchors: { id: string; anchor: CommentAnchor }[] }
+	| { type: "restore-scroll"; y: number };
 
 export type HostMessage = HostMessageBody & { channel: typeof HOST_CHANNEL };
 
@@ -33,6 +34,7 @@ export type FrameMessage =
 	| { channel: typeof FRAME_CHANNEL; type: "hover"; rect: FrameRect | null }
 	| { channel: typeof FRAME_CHANNEL; type: "pointer-down" }
 	| { channel: typeof FRAME_CHANNEL; type: "escape" }
+	| { channel: typeof FRAME_CHANNEL; type: "scroll"; y: number }
 	| {
 			channel: typeof FRAME_CHANNEL;
 			type: "pick";
@@ -53,6 +55,9 @@ const RUNTIME_SOURCE = `(() => {
 	let tracked = [];
 	let lastHoverPath = null;
 	let frame = 0;
+	let lastScrollY = 0;
+	let restoreY = null;
+	let restoreDeadline = 0;
 
 	const post = (message) => {
 		parent.postMessage({ channel: FRAME, ...message }, "*");
@@ -107,6 +112,15 @@ const RUNTIME_SOURCE = `(() => {
 		return el;
 	};
 
+	const applyRestore = () => {
+		if (restoreY === null) return;
+		if (Date.now() > restoreDeadline) {
+			restoreY = null;
+			return;
+		}
+		scrollTo({ top: restoreY, behavior: "instant" });
+	};
+
 	const syncRects = () => {
 		post({
 			type: "rects",
@@ -122,6 +136,11 @@ const RUNTIME_SOURCE = `(() => {
 		frame = requestAnimationFrame(() => {
 			frame = 0;
 			syncRects();
+			if (restoreY !== null && Date.now() > restoreDeadline) restoreY = null;
+			if (restoreY === null && scrollY !== lastScrollY) {
+				lastScrollY = scrollY;
+				post({ type: "scroll", y: scrollY });
+			}
 		});
 	};
 
@@ -190,7 +209,15 @@ const RUNTIME_SOURCE = `(() => {
 
 	addEventListener("scroll", schedule, true);
 	addEventListener("resize", schedule);
-	new ResizeObserver(schedule).observe(document.documentElement);
+	for (const type of ["wheel", "touchstart", "keydown"]) {
+		addEventListener(type, () => {
+			restoreY = null;
+		}, { capture: true, passive: true });
+	}
+	new ResizeObserver(() => {
+		applyRestore();
+		schedule();
+	}).observe(document.documentElement);
 	new MutationObserver((records) => {
 		for (const record of records) {
 			if (record.type === "childList") {
@@ -220,6 +247,11 @@ const RUNTIME_SOURCE = `(() => {
 		if (data.type === "track") {
 			tracked = Array.isArray(data.anchors) ? data.anchors : [];
 			schedule();
+		}
+		if (data.type === "restore-scroll") {
+			restoreY = Number(data.y) || 0;
+			restoreDeadline = Date.now() + 1000;
+			applyRestore();
 		}
 	});
 

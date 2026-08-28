@@ -10,6 +10,8 @@ import { electronTrpcClient } from "renderer/lib/trpc-client";
 import { PageViewerMessage } from "./components/PageViewerMessage";
 import { usePageCommentStore } from "./hooks/usePageCommentStore";
 
+const scrollPositions = new Map<string, number>();
+
 export interface ResolvedPage {
 	id: string;
 	slug: string;
@@ -43,6 +45,7 @@ export function PageViewer({
 		pageId: resolvedPageId ?? "",
 		version: pull.data?.version ?? 0,
 	});
+	const scrollKey = `${resolvedPageId ?? slug}:${pull.data?.version ?? 0}`;
 
 	const onResolvedRef = useRef(onResolved);
 	onResolvedRef.current = onResolved;
@@ -154,6 +157,8 @@ export function PageViewer({
 						html={content.data}
 						title={resolvedTitle}
 						serveHtml={serveHtml}
+						initialScrollY={scrollPositions.get(scrollKey) ?? 0}
+						onScrollYChange={(y) => scrollPositions.set(scrollKey, y)}
 					/>
 				</div>
 			</div>

@@ -23,13 +23,20 @@ interface PageCommentsViewProps {
 	html: string;
 	title: string;
 	serveHtml?: (injectedHtml: string) => Promise<string>;
+	initialScrollY?: number;
+	onScrollYChange?: (y: number) => void;
 }
 
 export function PageCommentsView({
 	html,
 	title,
 	serveHtml,
+	initialScrollY,
+	onScrollYChange,
 }: PageCommentsViewProps) {
+	const scrollYRef = useRef(initialScrollY ?? 0);
+	const onScrollYChangeRef = useRef(onScrollYChange);
+	onScrollYChangeRef.current = onScrollYChange;
 	const frameRef = useRef<HTMLIFrameElement>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [container, setContainer] = useState({ width: 0, height: 0 });
@@ -144,7 +151,16 @@ export function PageCommentsView({
 			const data = event.data as FrameMessage | undefined;
 			if (!data || data.channel !== FRAME_CHANNEL) return;
 
-			if (data.type === "ready") setFrameEpoch((epoch) => epoch + 1);
+			if (data.type === "ready") {
+				setFrameEpoch((epoch) => epoch + 1);
+				if (scrollYRef.current > 0) {
+					send({ type: "restore-scroll", y: scrollYRef.current });
+				}
+			}
+			if (data.type === "scroll") {
+				scrollYRef.current = data.y;
+				onScrollYChangeRef.current?.(data.y);
+			}
 			if (data.type === "hover") setHoverRect(data.rect);
 			if (data.type === "pointer-down") {
 				notifyFramePointerDown();
@@ -167,6 +183,7 @@ export function PageCommentsView({
 		dismiss,
 		notifyFramePointerDown,
 		openDraft,
+		send,
 		setActiveThreadId,
 		setHoverRect,
 		setRects,
