@@ -1,4 +1,6 @@
+import { Trans, useLingui } from "@lingui/react/macro";
 import type { HostAgentConfig } from "@superset/host-service/settings";
+import { errorMessage } from "@superset/i18n/errors";
 import {
 	HOST_AGENT_PRESETS,
 	type HostAgentPreset,
@@ -77,6 +79,7 @@ interface V2AgentsSettingsProps {
 export function V2AgentsSettings({
 	initialAgentId,
 }: V2AgentsSettingsProps = {}) {
+	const { t } = useLingui();
 	const hostService = useLocalHostService();
 	const { activeHostUrl } = hostService;
 	const queryClient = useQueryClient();
@@ -161,7 +164,15 @@ export function V2AgentsSettings({
 			}
 		},
 		onError: (err) =>
-			toast.error(err instanceof Error ? err.message : "Failed to add agent"),
+			toast.error(
+				errorMessage(
+					err,
+					t({
+						id: "settings.agents.v2.addFailed",
+						message: "Failed to add agent",
+					}),
+				),
+			),
 	});
 
 	const addCustomMutation = useMutation({
@@ -186,7 +197,15 @@ export function V2AgentsSettings({
 			}
 		},
 		onError: (err) =>
-			toast.error(err instanceof Error ? err.message : "Failed to add agent"),
+			toast.error(
+				errorMessage(
+					err,
+					t({
+						id: "settings.agents.v2.addFailed",
+						message: "Failed to add agent",
+					}),
+				),
+			),
 	});
 
 	const reorderMutation = useMutation({
@@ -223,7 +242,15 @@ export function V2AgentsSettings({
 			if (ctx?.previous) {
 				queryClient.setQueryData(queryKey, ctx.previous);
 			}
-			toast.error(err instanceof Error ? err.message : "Failed to reorder");
+			toast.error(
+				errorMessage(
+					err,
+					t({
+						id: "settings.agents.v2.reorderFailed",
+						message: "Failed to reorder",
+					}),
+				),
+			);
 		},
 		onSettled: () => invalidate(),
 	});
@@ -248,7 +275,15 @@ export function V2AgentsSettings({
 			invalidate();
 		},
 		onError: (err) =>
-			toast.error(err instanceof Error ? err.message : "Failed to reset"),
+			toast.error(
+				errorMessage(
+					err,
+					t({
+						id: "settings.agents.v2.resetFailed",
+						message: "Failed to reset",
+					}),
+				),
+			),
 	});
 
 	const configs = configsQuery.data ?? [];
@@ -296,10 +331,12 @@ export function V2AgentsSettings({
 	if (configsQuery.isError) {
 		return (
 			<div className="p-6 text-sm text-destructive">
-				Couldn't load agent settings:{" "}
-				{configsQuery.error instanceof Error
-					? configsQuery.error.message
-					: hostServiceUnavailableMessage}
+				<Trans id="settings.agents.loadError">
+					Couldn't load agent settings:{" "}
+					{configsQuery.error instanceof Error
+						? configsQuery.error.message
+						: hostServiceUnavailableMessage}
+				</Trans>
 			</div>
 		);
 	}
@@ -342,7 +379,10 @@ export function V2AgentsSettings({
 						config={selectedAgent}
 						description={
 							DESCRIPTION_BY_PRESET_ID.get(selectedAgent.presetId) ??
-							"Terminal agent launch configuration"
+							t({
+								id: "settings.agents.v2.defaultDescription",
+								message: "Terminal agent launch configuration",
+							})
 						}
 						onChanged={(updated) => {
 							updateCachedConfig(updated);
@@ -382,9 +422,13 @@ function EmptyState() {
 					aria-hidden="true"
 					className="mx-auto size-10 text-muted-foreground/60"
 				/>
-				<h3 className="mt-3 text-sm font-medium">No agents yet</h3>
+				<h3 className="mt-3 text-sm font-medium">
+					<Trans id="settings.agents.empty.title">No agents yet</Trans>
+				</h3>
 				<p className="mt-1 text-xs text-muted-foreground">
-					Add one from the menu in the sidebar to get started.
+					<Trans id="settings.agents.empty.hint">
+						Add one from the menu in the sidebar to get started.
+					</Trans>
 				</p>
 			</div>
 		</div>

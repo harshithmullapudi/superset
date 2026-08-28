@@ -1,3 +1,6 @@
+import { msg } from "@lingui/core/macro";
+import { i18n } from "@superset/i18n";
+import { errorMessage } from "@superset/i18n/errors";
 import type { DesktopNotice } from "@superset/shared/desktop-notices";
 import { toast } from "@superset/ui/sonner";
 import {
@@ -115,7 +118,10 @@ export const actionsProvider: CommandProvider = {
 		const commands: Command[] = [
 			{
 				id: "actions.toggleTheme",
-				title: "Toggle theme",
+				title: msg({
+					id: "commandPalette.actions.toggleTheme",
+					message: "Toggle theme",
+				}),
 				section: "actions",
 				icon: PaletteIcon,
 				keywords: ["dark", "light", "appearance", "color"],
@@ -125,8 +131,14 @@ export const actionsProvider: CommandProvider = {
 			{
 				id: "actions.toggleNotificationSounds",
 				title: context.notificationSoundsMuted
-					? "Unmute notifications"
-					: "Mute notifications",
+					? msg({
+							id: "commandPalette.actions.unmuteNotifications",
+							message: "Unmute notifications",
+						})
+					: msg({
+							id: "commandPalette.actions.muteNotifications",
+							message: "Mute notifications",
+						}),
 				section: "actions",
 				icon: context.notificationSoundsMuted ? BellIcon : BellOffIcon,
 				keywords: ["dnd", "silence", "notifications", "ringtone"],
@@ -137,7 +149,10 @@ export const actionsProvider: CommandProvider = {
 			checkResourcesCommand,
 			{
 				id: "actions.toggleLeftSidebar",
-				title: "Toggle left sidebar",
+				title: msg({
+					id: "commandPalette.actions.toggleLeftSidebar",
+					message: "Toggle left sidebar",
+				}),
 				section: "actions",
 				icon: PanelLeftIcon,
 				hotkeyId: "TOGGLE_WORKSPACE_SIDEBAR",
@@ -148,7 +163,10 @@ export const actionsProvider: CommandProvider = {
 		if (context.workspace) {
 			commands.push({
 				id: "actions.toggleRightSidebar",
-				title: "Toggle right sidebar",
+				title: msg({
+					id: "commandPalette.actions.toggleRightSidebar",
+					message: "Toggle right sidebar",
+				}),
 				section: "actions",
 				icon: PanelRightIcon,
 				hotkeyId: "TOGGLE_SIDEBAR",
@@ -159,7 +177,10 @@ export const actionsProvider: CommandProvider = {
 		commands.push(
 			{
 				id: "actions.showShortcuts",
-				title: "Show keyboard shortcuts",
+				title: msg({
+					id: "commandPalette.actions.showShortcuts",
+					message: "Show keyboard shortcuts",
+				}),
 				section: "actions",
 				icon: KeyboardIcon,
 				hotkeyId: "SHOW_HOTKEYS",
@@ -168,7 +189,10 @@ export const actionsProvider: CommandProvider = {
 			},
 			{
 				id: "actions.checkUpdates",
-				title: "Check for updates",
+				title: msg({
+					id: "commandPalette.actions.checkUpdates",
+					message: "Check for updates",
+				}),
 				section: "actions",
 				icon: RefreshCwIcon,
 				keywords: ["update", "upgrade"],
@@ -176,15 +200,23 @@ export const actionsProvider: CommandProvider = {
 					try {
 						await electronTrpcClient.autoUpdate.checkInteractive.mutate();
 					} catch (error) {
-						const message =
-							error instanceof Error ? error.message : String(error);
-						toast.error(`Failed to check for updates: ${message}`);
+						const message = errorMessage(error);
+						toast.error(
+							i18n._({
+								id: "commandPalette.actions.checkUpdatesFailed",
+								message: "Failed to check for updates: {message}",
+								values: { message },
+							}),
+						);
 					}
 				},
 			},
 			{
 				id: "actions.newWindow",
-				title: "New window",
+				title: msg({
+					id: "commandPalette.actions.newWindow",
+					message: "New window",
+				}),
 				section: "actions",
 				icon: AppWindowIcon,
 				keywords: ["open", "multi"],
@@ -192,9 +224,14 @@ export const actionsProvider: CommandProvider = {
 					try {
 						await electronTrpcClient.window.openNew.mutate();
 					} catch (error) {
-						const message =
-							error instanceof Error ? error.message : String(error);
-						toast.error(`Failed to open new window: ${message}`);
+						const message = errorMessage(error);
+						toast.error(
+							i18n._({
+								id: "commandPalette.actions.newWindowFailed",
+								message: "Failed to open new window: {message}",
+								values: { message },
+							}),
+						);
 					}
 				},
 			},
@@ -205,7 +242,10 @@ export const actionsProvider: CommandProvider = {
 			commands.push(
 				{
 					id: "dev.simulateUpdateDownloading",
-					title: "Simulate update: downloading",
+					title: {
+						id: "commandPalette.dev",
+						message: "Simulate update: downloading",
+					},
 					section: "dev",
 					icon: DownloadIcon,
 					keywords: ["update", "dev", "simulate", "test"],
@@ -215,7 +255,10 @@ export const actionsProvider: CommandProvider = {
 				},
 				{
 					id: "dev.simulateUpdateReady",
-					title: "Simulate update: ready",
+					title: {
+						id: "commandPalette.dev",
+						message: "Simulate update: ready",
+					},
 					section: "dev",
 					icon: CircleCheckIcon,
 					keywords: ["update", "dev", "simulate", "test"],
@@ -225,7 +268,10 @@ export const actionsProvider: CommandProvider = {
 				},
 				{
 					id: "dev.simulateUpdateError",
-					title: "Simulate update: error",
+					title: {
+						id: "commandPalette.dev",
+						message: "Simulate update: error",
+					},
 					section: "dev",
 					icon: TriangleAlertIcon,
 					keywords: ["update", "dev", "simulate", "test"],
@@ -235,7 +281,7 @@ export const actionsProvider: CommandProvider = {
 				},
 				{
 					id: "dev.previewNoticeInfo",
-					title: "Preview notice: info",
+					title: { id: "commandPalette.dev", message: "Preview notice: info" },
 					section: "dev",
 					icon: InfoIcon,
 					keywords: PREVIEW_KEYWORDS,
@@ -243,7 +289,10 @@ export const actionsProvider: CommandProvider = {
 				},
 				{
 					id: "dev.previewNoticeWarning",
-					title: "Preview notice: warning",
+					title: {
+						id: "commandPalette.dev",
+						message: "Preview notice: warning",
+					},
 					section: "dev",
 					icon: TriangleAlertIcon,
 					keywords: PREVIEW_KEYWORDS,
@@ -251,7 +300,10 @@ export const actionsProvider: CommandProvider = {
 				},
 				{
 					id: "dev.previewNoticeBlocking",
-					title: "Preview notice: blocking (update required)",
+					title: {
+						id: "commandPalette.dev",
+						message: "Preview notice: blocking (update required)",
+					},
 					section: "dev",
 					icon: OctagonAlertIcon,
 					keywords: PREVIEW_KEYWORDS,
@@ -259,7 +311,10 @@ export const actionsProvider: CommandProvider = {
 				},
 				{
 					id: "dev.previewNoticePostUpdate",
-					title: "Preview notice: post-update announcement",
+					title: {
+						id: "commandPalette.dev",
+						message: "Preview notice: post-update announcement",
+					},
 					section: "dev",
 					icon: MegaphoneIcon,
 					keywords: PREVIEW_KEYWORDS,
@@ -267,7 +322,10 @@ export const actionsProvider: CommandProvider = {
 				},
 				{
 					id: "dev.previewNoticePreUpdate",
-					title: "Preview notice: pre-update confirm",
+					title: {
+						id: "commandPalette.dev",
+						message: "Preview notice: pre-update confirm",
+					},
 					section: "dev",
 					icon: DownloadIcon,
 					keywords: PREVIEW_KEYWORDS,
@@ -283,7 +341,7 @@ export const actionsProvider: CommandProvider = {
 				},
 				{
 					id: "dev.clearNoticePreview",
-					title: "Clear notice preview",
+					title: { id: "commandPalette.dev", message: "Clear notice preview" },
 					section: "dev",
 					icon: XIcon,
 					keywords: PREVIEW_KEYWORDS,
@@ -291,7 +349,10 @@ export const actionsProvider: CommandProvider = {
 				},
 				{
 					id: "dev.previewStarNagToast",
-					title: "Preview: GitHub star nag toast",
+					title: {
+						id: "commandPalette.dev",
+						message: "Preview: GitHub star nag toast",
+					},
 					section: "dev",
 					icon: StarIcon,
 					keywords: ["star", "github", "nag", "dev", "preview", "test"],
@@ -303,7 +364,10 @@ export const actionsProvider: CommandProvider = {
 				},
 				{
 					id: "dev.resetStarNagState",
-					title: "Reset GitHub star nag state",
+					title: {
+						id: "commandPalette.dev",
+						message: "Reset GitHub star nag state",
+					},
 					section: "dev",
 					icon: RefreshCwIcon,
 					keywords: ["star", "github", "nag", "dev", "reset", "test"],
