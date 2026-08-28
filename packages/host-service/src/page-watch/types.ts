@@ -14,6 +14,7 @@ export interface PageWatchEntry extends PageWatchAssignment {
 	lastHeartbeatAt: number;
 	failures: number;
 	pings: Map<string, number>;
+	pendingSince: number | null;
 }
 
 export interface WatchedThreadComment {
@@ -43,4 +44,5 @@ export interface PageWatchStatus {
 	agentId: string | null;
 	assignedAt: number;
 	lastHumanCommentAt: number;
+	pendingSince: number | null;
 }

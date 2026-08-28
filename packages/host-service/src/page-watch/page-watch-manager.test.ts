@@ -1,8 +1,10 @@
 import { describe, expect, it } from "bun:test";
 import {
 	HEARTBEAT_INTERVAL_MS,
+	IDLE_AFTER_MS,
 	IDLE_TTL_MS,
 	MAX_CONSECUTIVE_FAILURES,
+	MAX_HOLD_MS,
 	MAX_WATCHERS,
 	PageWatchManager,
 } from "./page-watch-manager.ts";
@@ -35,12 +37,15 @@ function harness(
 		threads?: WatchedThread[];
 		listThreads?: (pageId: string) => Promise<WatchedThread[]>;
 		alive?: Set<string>;
+		busy?: Set<string>;
 	} = {},
 ) {
 	const sent: { terminalId: string; text: string }[] = [];
 	const setWatchCalls: { pageId: string; agentId: string | null }[] = [];
 	const clearWatchCalls: string[] = [];
 	const alive = options.alive ?? new Set(["term-1"]);
+	const busy = options.busy ?? new Set<string>();
+	let sendFails = false;
 	let clock = T0;
 
 	const manager = new PageWatchManager({
@@ -54,9 +59,11 @@ function harness(
 			},
 		},
 		sendToTerminal: async ({ terminalId, text }) => {
+			if (sendFails) throw new Error("terminal gone");
 			sent.push({ terminalId, text });
 		},
 		isTerminalAlive: (terminalId) => alive.has(terminalId),
+		isAgentBusy: (terminalId) => busy.has(terminalId),
 		now: () => clock,
 		setIntervalFn: (() => {
 			const handle = { unref() {} };
@@ -81,7 +88,11 @@ function harness(
 		setWatchCalls,
 		clearWatchCalls,
 		alive,
+		busy,
 		assign,
+		failSends: (value: boolean) => {
+			sendFails = value;
+		},
 		advance: (ms: number) => {
 			clock += ms;
 		},
@@ -238,18 +249,108 @@ describe("PageWatchManager", () => {
 		expect(h.setWatchCalls.length).toBe(before);
 	});
 
-	it("survives a terminal send that throws", async () => {
+	it("retries a comment whose delivery failed instead of dropping it", async () => {
+		const h = harness({ threads: [humanThread("t1", T0 + 5_000)] });
+		h.assign();
+		h.failSends(true);
+		h.advance(5_000);
+		await h.manager.tick();
+		expect(h.sent.length).toBe(0);
+		expect(h.manager.list().length).toBe(1);
+
+		h.failSends(false);
+		h.advance(5_000);
+		await h.manager.tick();
+		expect(h.sent.length).toBe(1);
+		expect(h.sent[0]?.text).toContain("thread: t1");
+	});
+
+	it("gives up after repeated send failures rather than retrying forever", async () => {
+		const h = harness({ threads: [humanThread("t1", T0 + 5_000)] });
+		h.assign();
+		h.failSends(true);
+		for (let i = 0; i < MAX_CONSECUTIVE_FAILURES; i += 1) {
+			h.advance(5_000);
+			await h.manager.tick();
+		}
+		expect(h.manager.list()).toEqual([]);
+	});
+
+	it("holds delivery while the agent is working", async () => {
+		const h = harness({ threads: [humanThread("t1", T0 + 5_000)] });
+		h.assign();
+		h.busy.add("term-1");
+		h.advance(5_000);
+		await h.manager.tick();
+		expect(h.sent.length).toBe(0);
+
+		h.advance(5_000);
+		await h.manager.tick();
+		expect(h.sent.length).toBe(0);
+
+		h.busy.delete("term-1");
+		h.advance(5_000);
+		await h.manager.tick();
+		expect(h.sent.length).toBe(1);
+	});
+
+	it("batches everything that arrived while the agent was busy into one send", async () => {
+		const threads = [humanThread("t1", T0 + 1_000)];
+		const h = harness({ listThreads: async () => threads });
+		h.assign();
+		h.busy.add("term-1");
+		h.advance(5_000);
+		await h.manager.tick();
+
+		threads.push(humanThread("t2", T0 + 6_000));
+		h.advance(5_000);
+		await h.manager.tick();
+		expect(h.sent.length).toBe(0);
+
+		h.busy.delete("term-1");
+		h.advance(5_000);
+		await h.manager.tick();
+		expect(h.sent.length).toBe(1);
+		expect(h.sent[0]?.text).toContain("thread: t1");
+		expect(h.sent[0]?.text).toContain("thread: t2");
+	});
+
+	it("stops holding once the max hold elapses, so a wedged agent still hears", async () => {
+		const h = harness({ threads: [humanThread("t1", T0 + 5_000)] });
+		h.assign();
+		h.busy.add("term-1");
+		h.advance(5_000);
+		await h.manager.tick();
+		expect(h.sent.length).toBe(0);
+
+		h.advance(MAX_HOLD_MS);
+		await h.manager.tick();
+		expect(h.sent.length).toBe(1);
+	});
+
+	it("keeps a pending page on the fast cadence instead of letting it go quiet", async () => {
+		const h = harness({ threads: [humanThread("t1", T0 + 1_000)] });
+		h.assign();
+		h.busy.add("term-1");
+		h.advance(1_000);
+		await h.manager.tick();
+		expect(h.sent.length).toBe(0);
+
+		h.advance(IDLE_AFTER_MS + 1_000);
+		await h.manager.tick();
+		expect(h.sent.length).toBe(0);
+
+		h.busy.delete("term-1");
+		h.advance(5_000);
+		await h.manager.tick();
+		expect(h.sent.length).toBe(1);
+	});
+
+	it("does not hold when the agent is idle", async () => {
 		const h = harness({ threads: [humanThread("t1", T0 + 5_000)] });
 		h.assign();
 		h.advance(5_000);
-		const manager = h.manager as unknown as {
-			deps: { sendToTerminal: () => Promise<void> };
-		};
-		manager.deps.sendToTerminal = async () => {
-			throw new Error("terminal gone");
-		};
-
 		await h.manager.tick();
-		expect(h.manager.list().length).toBe(1);
+		expect(h.sent.length).toBe(1);
 	});
 });

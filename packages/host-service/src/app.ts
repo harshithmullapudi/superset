@@ -10,7 +10,7 @@ import { createApiClient } from "./api";
 import { createChatV3Mount, registerChatV3Routes } from "./chat-v3";
 import { createDb, type HostDb } from "./db";
 import { EventBus, GitWatcher, registerEventBusRoute } from "./events";
-import { PageWatchManager } from "./page-watch/index.ts";
+import { agentIsBusy, PageWatchManager } from "./page-watch/index.ts";
 import type { ApiAuthProvider } from "./providers/auth";
 import type { HostAuthProvider } from "./providers/host-auth";
 import { runArchivedWorkspaceReconcile } from "./runtime/archived-workspace-reconcile";
@@ -180,6 +180,8 @@ export function createApp(options: CreateAppOptions): CreateAppResult {
 			if ("error" in result) throw new Error(result.error);
 		},
 		isTerminalAlive: isLiveTerminalSession,
+		isAgentBusy: (terminalId) =>
+			agentIsBusy(terminalAgentStore.get(terminalId)?.lastEventType),
 	});
 
 	const runtime = {

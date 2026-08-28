@@ -1,5 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import { MAX_PINGS_PER_THREAD, selectThreadsToDeliver } from "./trigger.ts";
+import {
+	agentIsBusy,
+	MAX_PINGS_PER_THREAD,
+	selectThreadsToDeliver,
+} from "./trigger.ts";
 import type { WatchedThread, WatchedThreadComment } from "./types.ts";
 
 const T0 = 1_800_000_000_000;
@@ -37,14 +41,14 @@ describe("selectThreadsToDeliver", () => {
 	it("fires on a human comment newer than the cursor", () => {
 		const result = selectThreadsToDeliver([thread()], entry(T0));
 		expect(result.fired.map((t) => t.id)).toEqual(["t1"]);
-		expect(result.cursor).toBe(T0 + 1000);
+		expect(result.firedCursor).toBe(T0 + 1000);
 	});
 
 	it("does not fire twice on the same comment", () => {
 		const threads = [thread()];
 		const first = selectThreadsToDeliver(threads, entry(T0));
 		const second = selectThreadsToDeliver(threads, {
-			cursor: first.cursor,
+			cursor: first.firedCursor,
 			pings: first.pings,
 		});
 		expect(second.fired).toEqual([]);
@@ -60,7 +64,7 @@ describe("selectThreadsToDeliver", () => {
 			entry(T0),
 		);
 		expect(result.fired).toEqual([]);
-		expect(result.cursor).toBe(T0);
+		expect(result.firedCursor).toBe(0);
 	});
 
 	it("does not let an agent reply advance the cursor past an unseen human one", () => {
@@ -76,7 +80,7 @@ describe("selectThreadsToDeliver", () => {
 			entry(T0),
 		);
 		expect(result.fired.map((t) => t.id)).toEqual(["t1"]);
-		expect(result.cursor).toBe(T0 + 1000);
+		expect(result.firedCursor).toBe(T0 + 1000);
 	});
 
 	it("skips resolved threads", () => {
@@ -98,7 +102,7 @@ describe("selectThreadsToDeliver", () => {
 			);
 			expect(result.fired.length).toBe(1);
 			pings = result.pings;
-			cursor = result.cursor;
+			cursor = result.firedCursor;
 		}
 
 		const over = selectThreadsToDeliver(
@@ -113,14 +117,15 @@ describe("selectThreadsToDeliver", () => {
 		expect(over.suppressed).toEqual(["t1"]);
 	});
 
-	it("advances the cursor past a suppressed thread so it cannot spin", () => {
+	it("reports a suppressed thread's cursor separately so it can skip without a send", () => {
 		const pings = new Map([["t1", MAX_PINGS_PER_THREAD]]);
 		const result = selectThreadsToDeliver(
 			[thread({ comments: [comment({ at: T0 + 4000 })] })],
 			{ cursor: T0, pings },
 		);
 		expect(result.fired).toEqual([]);
-		expect(result.cursor).toBe(T0 + 4000);
+		expect(result.suppressedCursor).toBe(T0 + 4000);
+		expect(result.firedCursor).toBe(0);
 	});
 
 	it("batches every firing thread into one delivery", () => {
@@ -132,6 +137,26 @@ describe("selectThreadsToDeliver", () => {
 			entry(T0),
 		);
 		expect(result.fired.map((t) => t.id)).toEqual(["t1", "t2"]);
-		expect(result.cursor).toBe(T0 + 2000);
+		expect(result.firedCursor).toBe(T0 + 2000);
+	});
+});
+
+describe("agentIsBusy", () => {
+	it("treats a working agent as busy", () => {
+		expect(agentIsBusy("Start")).toBe(true);
+	});
+
+	it("treats an agent waiting on a permission prompt as busy", () => {
+		expect(agentIsBusy("PermissionRequest")).toBe(true);
+	});
+
+	it("treats a stopped or failed agent as free", () => {
+		expect(agentIsBusy("Stop")).toBe(false);
+		expect(agentIsBusy("Failed")).toBe(false);
+	});
+
+	it("treats an unknown or absent event as free rather than blocking forever", () => {
+		expect(agentIsBusy(undefined)).toBe(false);
+		expect(agentIsBusy("SomethingNew")).toBe(false);
 	});
 });

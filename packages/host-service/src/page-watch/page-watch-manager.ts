@@ -15,6 +15,7 @@ export const HEARTBEAT_INTERVAL_MS = 30_000;
 export const IDLE_TTL_MS = 2 * 60 * 60_000;
 export const MAX_WATCHERS = 20;
 export const MAX_CONSECUTIVE_FAILURES = 5;
+export const MAX_HOLD_MS = 10 * 60_000;
 
 export interface PageWatchApi {
 	listThreads(pageId: string): Promise<WatchedThread[]>;
@@ -30,6 +31,7 @@ export interface PageWatchDeps {
 		text: string;
 	}): Promise<void>;
 	isTerminalAlive(terminalId: string): boolean;
+	isAgentBusy(terminalId: string): boolean;
 	now?: () => number;
 	setIntervalFn?: typeof setInterval;
 	clearIntervalFn?: typeof clearInterval;
@@ -81,6 +83,7 @@ export class PageWatchManager {
 			lastHeartbeatAt: 0,
 			failures: 0,
 			pings: existing?.pings ?? new Map(),
+			pendingSince: null,
 		});
 
 		this.ensureTicking();
@@ -109,6 +112,7 @@ export class PageWatchManager {
 				agentId: entry.agentId,
 				assignedAt: entry.assignedAt,
 				lastHumanCommentAt: entry.lastHumanCommentAt,
+				pendingSince: entry.pendingSince,
 			});
 		}
 		return out;
@@ -181,6 +185,7 @@ export class PageWatchManager {
 	}
 
 	private isDue(entry: PageWatchEntry, at: number): boolean {
+		if (entry.pendingSince !== null) return true;
 		const quiet = at - entry.lastHumanCommentAt > IDLE_AFTER_MS;
 		if (!quiet) return true;
 		return at - entry.lastHeartbeatAt >= IDLE_TICK_INTERVAL_MS;
@@ -204,58 +209,90 @@ export class PageWatchManager {
 		let threads: WatchedThread[];
 		try {
 			threads = await this.deps.api.listThreads(entry.pageId);
-			entry.failures = 0;
 		} catch (error) {
-			entry.failures += 1;
-			if (entry.failures >= MAX_CONSECUTIVE_FAILURES) {
-				console.error(
-					`[page-watch] giving up on ${entry.slug} after ${entry.failures} failures`,
-					{ error },
-				);
-				await this.unwatch(entry.pageId);
-			}
+			await this.recordFailure(entry, error, "list");
 			return;
 		}
 
 		const result = selectThreadsToDeliver(threads, entry);
-		entry.pings = result.pings;
 
 		if (result.suppressed.length > 0) {
 			console.warn(
 				`[page-watch] ${entry.slug}: ping limit reached on ${result.suppressed.length} thread(s)`,
 				{ threadIds: result.suppressed },
 			);
-		}
-
-		if (result.cursor > entry.cursor) {
-			entry.cursor = result.cursor;
-			entry.lastHumanCommentAt = at;
-		}
-
-		if (result.fired.length > 0) {
-			try {
-				await this.deps.sendToTerminal({
-					workspaceId: entry.workspaceId,
-					terminalId: entry.terminalId,
-					text: buildWatchPrompt({
-						title: entry.title,
-						slug: entry.slug,
-						threads: result.fired,
-					}),
-				});
-			} catch (error) {
-				console.error(`[page-watch] failed to notify ${entry.terminalId}`, {
-					error,
-				});
+			if (result.suppressedCursor > entry.cursor) {
+				entry.cursor = result.suppressedCursor;
 			}
 		}
 
-		if (at - entry.lastHeartbeatAt >= HEARTBEAT_INTERVAL_MS) {
-			entry.lastHeartbeatAt = at;
-			await this.deps.api
-				.setWatch(entry.pageId, entry.agentId)
-				.catch(() => undefined);
+		if (result.fired.length === 0) {
+			entry.failures = 0;
+			entry.pendingSince = null;
+			await this.maybeHeartbeat(entry, at);
+			return;
 		}
+
+		entry.pendingSince ??= at;
+
+		if (
+			this.deps.isAgentBusy(entry.terminalId) &&
+			at - entry.pendingSince < MAX_HOLD_MS
+		) {
+			entry.failures = 0;
+			await this.maybeHeartbeat(entry, at);
+			return;
+		}
+
+		try {
+			await this.deps.sendToTerminal({
+				workspaceId: entry.workspaceId,
+				terminalId: entry.terminalId,
+				text: buildWatchPrompt({
+					title: entry.title,
+					slug: entry.slug,
+					threads: result.fired,
+				}),
+			});
+		} catch (error) {
+			await this.recordFailure(entry, error, "send");
+			return;
+		}
+
+		entry.failures = 0;
+		entry.pendingSince = null;
+		entry.pings = result.pings;
+		if (result.firedCursor > entry.cursor) {
+			entry.cursor = result.firedCursor;
+			entry.lastHumanCommentAt = at;
+		}
+
+		await this.maybeHeartbeat(entry, at);
+	}
+
+	private async recordFailure(
+		entry: PageWatchEntry,
+		error: unknown,
+		stage: "list" | "send",
+	): Promise<void> {
+		entry.failures += 1;
+		if (entry.failures < MAX_CONSECUTIVE_FAILURES) return;
+		console.error(
+			`[page-watch] giving up on ${entry.slug} after ${entry.failures} ${stage} failures`,
+			{ error },
+		);
+		await this.unwatch(entry.pageId);
+	}
+
+	private async maybeHeartbeat(
+		entry: PageWatchEntry,
+		at: number,
+	): Promise<void> {
+		if (at - entry.lastHeartbeatAt < HEARTBEAT_INTERVAL_MS) return;
+		entry.lastHeartbeatAt = at;
+		await this.deps.api
+			.setWatch(entry.pageId, entry.agentId)
+			.catch(() => undefined);
 	}
 
 	private notifyChanged(workspaceId: string): void {
