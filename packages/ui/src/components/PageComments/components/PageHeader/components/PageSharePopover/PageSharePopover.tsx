@@ -62,12 +62,18 @@ export function PageSharePopover({
 }: PageSharePopoverProps) {
 	const [busy, setBusy] = useState(false);
 	const [copied, setCopied] = useState(false);
-	const [pending, setPending] = useState<PageVisibility | null>(null);
-	const visibility = pending ?? page.visibility;
+	const [pending, setPending] = useState<{
+		pageId: string;
+		value: PageVisibility;
+	} | null>(null);
+	const pendingValue = pending?.pageId === page.id ? pending.value : null;
+	const visibility = pendingValue ?? page.visibility;
 
 	useEffect(() => {
-		if (pending !== null && page.visibility === pending) setPending(null);
-	}, [page.visibility, pending]);
+		if (pendingValue !== null && page.visibility === pendingValue) {
+			setPending(null);
+		}
+	}, [page.visibility, pendingValue]);
 
 	useFramePointerDown(useCallback(() => onOpenChange(false), [onOpenChange]));
 
@@ -83,7 +89,7 @@ export function PageSharePopover({
 
 	const changeVisibility = async (next: PageVisibility) => {
 		if (next === visibility) return;
-		setPending(next);
+		setPending({ pageId: page.id, value: next });
 		if (next !== "just_me") void copyLink();
 		setBusy(true);
 		try {

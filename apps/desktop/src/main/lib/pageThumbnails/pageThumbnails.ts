@@ -4,6 +4,7 @@ import {
 	readFile,
 	stat,
 	unlink,
+	utimes,
 	writeFile,
 } from "node:fs/promises";
 import { join } from "node:path";
@@ -34,23 +35,41 @@ const CAPTURE_RETRY_INTERVAL_MS = 100;
 const LOAD_TIMEOUT_MS = 10_000;
 const SETTLE_MS = 400;
 
-const PAGE_ID_PATTERN = /^[a-zA-Z0-9-]+$/;
+const ID_PATTERN = /^[a-zA-Z0-9-]+$/;
 const VERSION_PATTERN = /^\d+$/;
+
+export interface ThumbnailKey {
+	accountId: string;
+	pageId: string;
+	version: string;
+}
 
 function cacheDir(): string {
 	return join(app.getPath("userData"), "page-thumbnails");
 }
 
-function thumbnailPath(pageId: string, version: string): string {
-	return join(cacheDir(), `${pageId}-${version}.jpg`);
+function accountDir(accountId: string): string {
+	return join(cacheDir(), accountId);
 }
 
-export function thumbnailUrl(pageId: string, version: string): string {
-	return `${THUMBNAIL_SCHEME}://${pageId}/${version}`;
+function thumbnailPath({ accountId, pageId, version }: ThumbnailKey): string {
+	return join(accountDir(accountId), `${pageId}-${version}.jpg`);
 }
 
-function isValidKey(pageId: string, version: string): boolean {
-	return PAGE_ID_PATTERN.test(pageId) && VERSION_PATTERN.test(version);
+export function thumbnailUrl({
+	accountId,
+	pageId,
+	version,
+}: ThumbnailKey): string {
+	return `${THUMBNAIL_SCHEME}://${accountId}/${pageId}/${version}`;
+}
+
+function isValidKey({ accountId, pageId, version }: ThumbnailKey): boolean {
+	return (
+		ID_PATTERN.test(accountId) &&
+		ID_PATTERN.test(pageId) &&
+		VERSION_PATTERN.test(version)
+	);
 }
 
 function delay(ms: number): Promise<void> {
@@ -150,10 +169,18 @@ async function captureHtml(html: string): Promise<Buffer> {
 
 	try {
 		window.webContents.setAudioMuted(true);
-		await Promise.race([
-			window.loadURL(url).catch(() => undefined),
-			delay(LOAD_TIMEOUT_MS),
-		]);
+
+		const navigation = window
+			.loadURL(url)
+			.then(() => null)
+			.catch((error: unknown) => error);
+		const failure = await Promise.race([navigation, delay(LOAD_TIMEOUT_MS)]);
+		if (failure) {
+			throw failure instanceof Error
+				? failure
+				: new Error("Thumbnail page failed to load");
+		}
+
 		if (window.isDestroyed()) {
 			throw new Error("Thumbnail window closed before capture");
 		}
@@ -172,38 +199,49 @@ async function captureHtml(html: string): Promise<Buffer> {
 	}
 }
 
+async function listCachedFiles(): Promise<
+	Array<{ path: string; mtimeMs: number }>
+> {
+	const root = cacheDir();
+	const accounts = await readdir(root, { withFileTypes: true });
+	const perAccount = await Promise.all(
+		accounts.map(async (account) => {
+			if (!account.isDirectory()) return [];
+			const dir = join(root, account.name);
+			const names = await readdir(dir).catch(() => [] as string[]);
+			const entries = await Promise.all(
+				names.map(async (name) => {
+					const path = join(dir, name);
+					try {
+						const info = await stat(path);
+						return { path, mtimeMs: info.mtimeMs };
+					} catch {
+						return null;
+					}
+				}),
+			);
+			return entries.filter(
+				(entry): entry is { path: string; mtimeMs: number } => Boolean(entry),
+			);
+		}),
+	);
+	return perAccount.flat();
+}
+
 let pruning = false;
 
 async function pruneCache(): Promise<void> {
 	if (pruning) return;
 	pruning = true;
 	try {
-		const dir = cacheDir();
-		const names = await readdir(dir);
-		if (names.length <= MAX_CACHED_THUMBNAILS) return;
-
-		const entries = await Promise.all(
-			names.map(async (name) => {
-				try {
-					const info = await stat(join(dir, name));
-					return { name, mtimeMs: info.mtimeMs };
-				} catch {
-					return null;
-				}
-			}),
-		);
-
-		const sorted = entries
-			.filter((entry): entry is { name: string; mtimeMs: number } =>
-				Boolean(entry),
-			)
-			.sort((a, b) => a.mtimeMs - b.mtimeMs);
-
+		const files = await listCachedFiles();
+		if (files.length <= MAX_CACHED_THUMBNAILS) return;
+		const sorted = files.sort((a, b) => a.mtimeMs - b.mtimeMs);
 		const excess = sorted.length - MAX_CACHED_THUMBNAILS;
 		await Promise.all(
 			sorted
 				.slice(0, excess)
-				.map((entry) => unlink(join(dir, entry.name)).catch(() => undefined)),
+				.map((entry) => unlink(entry.path).catch(() => undefined)),
 		);
 	} catch {
 		return;
@@ -212,64 +250,51 @@ async function pruneCache(): Promise<void> {
 	}
 }
 
-async function hasThumbnail(pageId: string, version: string): Promise<boolean> {
+async function hasThumbnail(key: ThumbnailKey): Promise<boolean> {
 	try {
-		await stat(thumbnailPath(pageId, version));
+		await stat(thumbnailPath(key));
 		return true;
 	} catch {
 		return false;
 	}
 }
 
-export async function peekThumbnail(
-	pageId: string,
-	version: string,
-): Promise<string | null> {
-	if (!isValidKey(pageId, version)) return null;
-	return (await hasThumbnail(pageId, version))
-		? thumbnailUrl(pageId, version)
-		: null;
+export async function peekThumbnail(key: ThumbnailKey): Promise<string | null> {
+	if (!isValidKey(key)) return null;
+	return (await hasThumbnail(key)) ? thumbnailUrl(key) : null;
 }
 
 const inflight = new Map<string, Promise<string>>();
 
-export function ensureThumbnail({
-	pageId,
-	version,
-	html,
-}: {
-	pageId: string;
-	version: string;
-	html: string;
-}): Promise<string> {
-	if (!isValidKey(pageId, version)) {
+export function ensureThumbnail(
+	key: ThumbnailKey & { html: string },
+): Promise<string> {
+	if (!isValidKey(key)) {
 		return Promise.reject(new Error("Invalid thumbnail key"));
 	}
 
-	const key = `${pageId}:${version}`;
-	const existing = inflight.get(key);
+	const cacheKey = `${key.accountId}:${key.pageId}:${key.version}`;
+	const existing = inflight.get(cacheKey);
 	if (existing) return existing;
 
 	const pending: Promise<string> = (async () => {
-		if (await hasThumbnail(pageId, version)) {
-			return thumbnailUrl(pageId, version);
-		}
+		if (await hasThumbnail(key)) return thumbnailUrl(key);
 
 		await acquireCaptureSlot();
 		try {
-			const jpeg = await captureHtml(html);
-			await mkdir(cacheDir(), { recursive: true });
-			await writeFile(thumbnailPath(pageId, version), jpeg);
+			const jpeg = await captureHtml(key.html);
+			await mkdir(accountDir(key.accountId), { recursive: true });
+			await writeFile(thumbnailPath(key), jpeg);
 			void pruneCache();
-			return thumbnailUrl(pageId, version);
+			return thumbnailUrl(key);
 		} finally {
 			releaseCaptureSlot();
 		}
 	})().finally(() => {
-		if (inflight.get(key) === pending) inflight.delete(key);
+		if (inflight.get(cacheKey) === pending) inflight.delete(cacheKey);
 	});
 
-	inflight.set(key, pending);
+	inflight.set(cacheKey, pending);
 	return pending;
 }
 
@@ -277,15 +302,20 @@ export async function thumbnailProtocolHandler(
 	request: Request,
 ): Promise<Response> {
 	const url = new URL(request.url);
-	const pageId = url.hostname;
-	const version = url.pathname.replace(/^\//, "");
+	const [pageId = "", version = ""] = url.pathname
+		.replace(/^\//, "")
+		.split("/");
+	const key = { accountId: url.hostname, pageId, version };
 
-	if (!isValidKey(pageId, version)) {
+	if (!isValidKey(key)) {
 		return new Response("Not found", { status: 404 });
 	}
 
+	const path = thumbnailPath(key);
 	try {
-		const bytes = await readFile(thumbnailPath(pageId, version));
+		const bytes = await readFile(path);
+		const now = new Date();
+		void utimes(path, now, now).catch(() => undefined);
 		return new Response(new Uint8Array(bytes), {
 			status: 200,
 			headers: {

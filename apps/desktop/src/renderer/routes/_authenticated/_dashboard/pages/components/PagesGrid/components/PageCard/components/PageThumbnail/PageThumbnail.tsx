@@ -9,9 +9,14 @@ import { THUMBNAIL_ASPECT_RATIO } from "../../../../constants";
 interface PageThumbnailProps {
 	pageId: string;
 	version: number | null;
+	accountId: string | undefined;
 }
 
-export function PageThumbnail({ pageId, version }: PageThumbnailProps) {
+export function PageThumbnail({
+	pageId,
+	version,
+	accountId,
+}: PageThumbnailProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [isVisible, setIsVisible] = useState(false);
 
@@ -31,30 +36,33 @@ export function PageThumbnail({ pageId, version }: PageThumbnailProps) {
 	}, []);
 
 	const versionKey = version === null ? null : String(version);
-	const enabled = isVisible && versionKey !== null;
+	const enabled = isVisible && versionKey !== null && accountId !== undefined;
+	const key =
+		enabled && versionKey
+			? { accountId: accountId as string, pageId, version: versionKey }
+			: null;
 
 	const cached = useQuery({
-		queryKey: ["page-thumbnail", "cached", pageId, versionKey],
+		queryKey: ["page-thumbnail", "cached", accountId, pageId, versionKey],
 		enabled,
 		staleTime: Number.POSITIVE_INFINITY,
 		queryFn: () =>
-			electronTrpcClient.pageThumbnail.peek.query({
-				pageId,
-				version: versionKey as string,
-			}),
+			electronTrpcClient.pageThumbnail.peek.query(
+				key as NonNullable<typeof key>,
+			),
 	});
 
 	const needsCapture = enabled && cached.isSuccess && cached.data === null;
 
 	const pull = cloudTrpc.page.pull.useQuery(
-		{ id: pageId },
+		{ id: pageId, version: version ?? undefined },
 		{ enabled: needsCapture, staleTime: 5 * 60 * 1000 },
 	);
 
 	const downloadUrl = pull.data?.downloadUrl;
 
 	const captured = useQuery({
-		queryKey: ["page-thumbnail", "captured", pageId, versionKey],
+		queryKey: ["page-thumbnail", "captured", accountId, pageId, versionKey],
 		enabled: needsCapture && Boolean(downloadUrl),
 		staleTime: Number.POSITIVE_INFINITY,
 		retry: false,
@@ -66,8 +74,7 @@ export function PageThumbnail({ pageId, version }: PageThumbnailProps) {
 				throw new Error(`Preview failed to load (${response.status})`);
 			}
 			return electronTrpcClient.pageThumbnail.ensure.mutate({
-				pageId,
-				version: versionKey as string,
+				...(key as NonNullable<typeof key>),
 				html: await response.text(),
 			});
 		},

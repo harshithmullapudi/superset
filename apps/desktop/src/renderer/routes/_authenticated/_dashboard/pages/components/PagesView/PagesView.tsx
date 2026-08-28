@@ -1,7 +1,7 @@
 import { Input } from "@superset/ui/input";
 import { toast } from "@superset/ui/sonner";
 import { Tabs, TabsList, TabsTrigger } from "@superset/ui/tabs";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { LuSearch } from "react-icons/lu";
 import { authClient } from "renderer/lib/auth-client";
 import { cloudTrpc } from "renderer/lib/cloud-trpc";
@@ -79,7 +79,12 @@ export function PagesView({
 		[counts.pinned],
 	);
 
-	const activeScope = scope === "pinned" && counts.pinned === 0 ? "all" : scope;
+	const pinnedEmpty = scope === "pinned" && counts.pinned === 0;
+	const activeScope = pinnedEmpty ? "all" : scope;
+
+	useEffect(() => {
+		if (pinnedEmpty) onScopeChange("all");
+	}, [pinnedEmpty, onScopeChange]);
 
 	const visible = useMemo(
 		() =>

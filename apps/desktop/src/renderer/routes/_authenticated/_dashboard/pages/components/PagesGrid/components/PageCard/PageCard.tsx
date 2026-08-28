@@ -87,6 +87,7 @@ export function PageCard({
 				<PageThumbnail
 					pageId={page.id}
 					version={page.sharedVersion ?? page.latestVersion}
+					accountId={currentUserId}
 				/>
 				<div className="flex flex-col gap-1 border-border/60 border-t px-3 py-2.5">
 					<span className="truncate font-medium text-sm">{page.title}</span>

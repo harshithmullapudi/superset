@@ -84,7 +84,7 @@ export function PageHeader({
 					}}
 				/>
 				{!isOwner && page.owner ? (
-					<span className="ml-2 shrink-0 truncate text-muted-foreground text-xs">
+					<span className="ml-2 min-w-0 truncate text-muted-foreground text-xs">
 						{page.owner.name}
 					</span>
 				) : null}

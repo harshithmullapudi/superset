@@ -44,7 +44,7 @@ local browser and fatal once published:
   access you cannot avoid in `try`/`catch`.
 - **`navigator.serviceWorker` is unavailable** for the same reason.
 - **`fetch`/`XHR`/WebSocket send `Origin: null`**, which almost every API and
-  CORS policy rejects. Write pages that need no network at all: bake the data
+  CORS policy rejects. Write pages that need no network for their data: bake it
   into the document as a literal.
 - **`fetch("data:...")` is blocked as well.** `connect-src` permits no `data:`
   on either viewer, so a page cannot read its own inlined data URIs back out.
@@ -89,8 +89,10 @@ everything they need is already in the file.
 
 Check before publishing: no remote script, stylesheet, or font URLs, no `eval`
 or `new Function` anywhere in the file or in anything you inlined, no `fetch`
-of any kind including of a `data:` URI, no bare `localStorage`, page fits in
-3 MB, and it opens correctly from `file://` with the network disabled.
+of any kind including of a `data:` URI, no bare `localStorage`, and the page
+fits in 3 MB. Opened from `file://` with the network disabled it should still
+render, with remote images the one permitted exception: they go blank offline,
+which is the price of not inlining them.
 
 ## Design
 
