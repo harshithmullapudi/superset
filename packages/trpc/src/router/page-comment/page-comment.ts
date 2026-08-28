@@ -93,8 +93,6 @@ export const pageCommentRouter = {
 			const userId = ctx.session.user.id;
 			await loadReadablePage({ pageId: input.pageId, organizationId, userId });
 
-			// Forced on for MCP: an agent sees what it was handed, never the whole
-			// page. A human can opt in, which only ever narrows their own view.
 			const activatedOnly = ctx.agentCaller
 				? true
 				: (input.activatedOnly ?? false);

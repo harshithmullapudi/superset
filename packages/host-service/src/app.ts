@@ -182,6 +182,10 @@ export function createApp(options: CreateAppOptions): CreateAppResult {
 		isTerminalAlive: isLiveTerminalSession,
 		isAgentBusy: (terminalId) =>
 			agentIsBusy(terminalAgentStore.get(terminalId)?.lastEventType),
+		hasAgent: (terminalId) => {
+			const binding = terminalAgentStore.get(terminalId);
+			return binding !== undefined && binding.endedAt === undefined;
+		},
 	});
 
 	const runtime = {

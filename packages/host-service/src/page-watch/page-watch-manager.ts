@@ -32,6 +32,7 @@ export interface PageWatchDeps {
 	}): Promise<void>;
 	isTerminalAlive(terminalId: string): boolean;
 	isAgentBusy(terminalId: string): boolean;
+	hasAgent(terminalId: string): boolean;
 	now?: () => number;
 	setIntervalFn?: typeof setInterval;
 	clearIntervalFn?: typeof clearInterval;
@@ -67,6 +68,12 @@ export class PageWatchManager {
 	}
 
 	assign(assignment: PageWatchAssignment): void {
+		if (!this.deps.hasAgent(assignment.terminalId)) {
+			throw new Error(
+				"No agent is running in that terminal. A page is watched by an agent, not by a shell.",
+			);
+		}
+
 		const existing = this.entries.get(assignment.pageId);
 		if (!existing && this.entries.size >= MAX_WATCHERS) {
 			throw new Error(
@@ -194,7 +201,10 @@ export class PageWatchManager {
 	private async pollEntry(entry: PageWatchEntry): Promise<void> {
 		const at = this.now();
 
-		if (!this.deps.isTerminalAlive(entry.terminalId)) {
+		if (
+			!this.deps.isTerminalAlive(entry.terminalId) ||
+			!this.deps.hasAgent(entry.terminalId)
+		) {
 			await this.dropTerminal(entry.terminalId);
 			return;
 		}
@@ -221,12 +231,12 @@ export class PageWatchManager {
 				`[page-watch] ${entry.slug}: ping limit reached on ${result.suppressed.length} thread(s)`,
 				{ threadIds: result.suppressed },
 			);
-			if (result.suppressedCursor > entry.cursor) {
-				entry.cursor = result.suppressedCursor;
-			}
 		}
 
 		if (result.fired.length === 0) {
+			if (result.suppressedCursor > entry.cursor) {
+				entry.cursor = result.suppressedCursor;
+			}
 			entry.failures = 0;
 			entry.pendingSince = null;
 			await this.maybeHeartbeat(entry, at);
@@ -262,8 +272,9 @@ export class PageWatchManager {
 		entry.failures = 0;
 		entry.pendingSince = null;
 		entry.pings = result.pings;
-		if (result.firedCursor > entry.cursor) {
-			entry.cursor = result.firedCursor;
+		const delivered = Math.max(result.firedCursor, result.suppressedCursor);
+		if (delivered > entry.cursor) {
+			entry.cursor = delivered;
 			entry.lastHumanCommentAt = at;
 		}
 

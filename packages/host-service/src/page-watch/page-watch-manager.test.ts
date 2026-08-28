@@ -7,6 +7,7 @@ import {
 	MAX_WATCHERS,
 	PageWatchManager,
 } from "./page-watch-manager.ts";
+import { MAX_PINGS_PER_THREAD } from "./trigger.ts";
 import type { WatchedThread } from "./types.ts";
 
 const T0 = 1_800_000_000_000;
@@ -37,6 +38,7 @@ function harness(
 		listThreads?: (pageId: string) => Promise<WatchedThread[]>;
 		alive?: Set<string>;
 		busy?: Set<string>;
+		agents?: Set<string>;
 	} = {},
 ) {
 	const sent: { terminalId: string; text: string }[] = [];
@@ -44,6 +46,7 @@ function harness(
 	const clearWatchCalls: string[] = [];
 	const alive = options.alive ?? new Set(["term-1"]);
 	const busy = options.busy ?? new Set<string>();
+	const agents = options.agents ?? new Set(["term-1", "term-2"]);
 	let sendFails = false;
 	let clock = T0;
 
@@ -63,6 +66,7 @@ function harness(
 		},
 		isTerminalAlive: (terminalId) => alive.has(terminalId),
 		isAgentBusy: (terminalId) => busy.has(terminalId),
+		hasAgent: (terminalId) => agents.has(terminalId),
 		now: () => clock,
 		setIntervalFn: (() => {
 			const handle = { unref() {} };
@@ -88,6 +92,7 @@ function harness(
 		clearWatchCalls,
 		alive,
 		busy,
+		agents,
 		assign,
 		failSends: (value: boolean) => {
 			sendFails = value;
@@ -325,6 +330,54 @@ describe("PageWatchManager", () => {
 		h.advance(MAX_HOLD_MS);
 		await h.manager.tick();
 		expect(h.sent.length).toBe(1);
+	});
+
+	it("refuses to watch a terminal with no agent in it", () => {
+		const h = harness({ agents: new Set() });
+		expect(() => h.assign()).toThrow();
+		expect(h.manager.list()).toEqual([]);
+	});
+
+	it("drops a watcher whose agent has gone, without typing into the bare shell", async () => {
+		const h = harness({ threads: [humanThread("t1", T0 + 5_000)] });
+		h.assign();
+		h.agents.delete("term-1");
+		h.advance(5_000);
+		await h.manager.tick();
+
+		expect(h.sent).toEqual([]);
+		expect(h.manager.list()).toEqual([]);
+	});
+
+	it("does not skip a live thread past a ping-capped one when nothing was sent", async () => {
+		const capped = humanThread("capped", T0 + 9_000);
+		const live = humanThread("live", T0 + 1_000);
+		const h = harness({ listThreads: async () => [live, capped] });
+		h.assign();
+
+		const entry = h.manager.list()[0];
+		expect(entry).toBeDefined();
+		for (let i = 0; i < MAX_PINGS_PER_THREAD; i += 1) {
+			(
+				h.manager as unknown as {
+					entries: Map<string, { pings: Map<string, number> }>;
+				}
+			).entries
+				.get("page-1")
+				?.pings.set("capped", MAX_PINGS_PER_THREAD);
+		}
+
+		h.busy.add("term-1");
+		h.advance(5_000);
+		await h.manager.tick();
+		expect(h.sent).toEqual([]);
+
+		h.busy.delete("term-1");
+		h.advance(5_000);
+		await h.manager.tick();
+
+		expect(h.sent.length).toBe(1);
+		expect(h.sent[0]?.text).toContain("thread: live");
 	});
 
 	it("does not hold when the agent is idle", async () => {

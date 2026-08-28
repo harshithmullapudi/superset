@@ -99,29 +99,40 @@ export default command({
 				: "";
 
 		const terminalId = watchTerminalId();
-		const watching =
+		const organizationId = ctx.config.organizationId;
+		let watching = false;
+		let watchNote = "";
+
+		if (
 			!options.noWatch &&
 			workspaceId !== undefined &&
 			terminalId !== undefined &&
-			ctx.config.organizationId !== undefined &&
-			(await registerWatch({
-				pageId: page.id,
-				slug: page.slug,
-				title: page.title,
-				workspaceId,
-				terminalId,
-				organizationId: ctx.config.organizationId,
-				userJwt: ctx.bearer,
-				api: ctx.api,
-			}));
-
-		const watch = watching
-			? "\nWatching for comments — they will be sent to this session"
-			: "";
+			organizationId !== undefined
+		) {
+			try {
+				await registerWatch({
+					pageId: page.id,
+					slug: page.slug,
+					title: page.title,
+					workspaceId,
+					terminalId,
+					organizationId,
+					userJwt: ctx.bearer,
+					api: ctx.api,
+				});
+				watching = true;
+				watchNote =
+					"\nWatching for comments — they will be sent to this session";
+			} catch (error) {
+				watchNote = `\nNot watching for comments: ${
+					error instanceof Error ? error.message : "could not reach the host"
+				}`;
+			}
+		}
 
 		return {
 			data: { ...page, watching },
-			message: `Published "${page.title}" v${page.version}\n${page.url}${external}${watch}`,
+			message: `Published "${page.title}" v${page.version}\n${page.url}${external}${watchNote}`,
 		};
 	},
 });
