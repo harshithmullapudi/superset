@@ -1,10 +1,11 @@
 "use client";
 
-import { Check, RotateCcw } from "lucide-react";
+import { Bot, Check, RotateCcw } from "lucide-react";
 import { cn } from "../../../../../../lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "../../../../../ui/avatar";
 import { Button } from "../../../../../ui/button";
 import type { CommentThread } from "../../../../providers/CommentProvider";
+import { commentAuthor } from "../../../../utils/commentAuthor";
 import { relativeTime } from "../../../../utils/relativeTime";
 import { initialsOf } from "../../../PageCommentsView/components/CommentPopover";
 
@@ -24,6 +25,7 @@ export function SidebarThread({
 	onToggleResolved,
 }: SidebarThreadProps) {
 	const first = thread.comments[0];
+	const author = first ? commentAuthor(first) : null;
 	const rest = thread.comments.length - 1;
 	const fromAnotherVersion =
 		servedVersion !== null && thread.version !== servedVersion;
@@ -45,21 +47,20 @@ export function SidebarThread({
 			>
 				<div className="flex w-full items-center gap-2">
 					<Avatar className="size-5">
-						{first?.authorImage ? (
-							<AvatarImage src={first.authorImage} alt={first.authorName} />
+						{author?.image ? (
+							<AvatarImage src={author.image} alt={author.name} />
 						) : null}
 						<AvatarFallback className="text-[9px]">
-							{initialsOf(first?.authorName ?? "?")}
+							{author?.isAgent ? (
+								<Bot className="size-2.5" />
+							) : (
+								initialsOf(author?.name ?? "?")
+							)}
 						</AvatarFallback>
 					</Avatar>
 					<span className="truncate text-xs font-medium">
-						{first?.authorName ?? "Unknown"}
+						{author?.name ?? "Unknown"}
 					</span>
-					{first?.authorKind === "agent" ? (
-						<span className="rounded bg-foreground/10 px-1 text-[10px] leading-4">
-							agent
-						</span>
-					) : null}
 					<span className="ml-auto shrink-0 text-[10px] text-muted-foreground">
 						{first ? relativeTime(first.createdAt) : ""}
 					</span>
