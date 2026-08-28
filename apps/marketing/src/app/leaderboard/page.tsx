@@ -4,7 +4,13 @@ import type { Metadata } from "next";
 import { Silkscreen } from "next/font/google";
 import Link from "next/link";
 import { FactoryBackdrop } from "@/app/components/FactoryBackdrop";
+import { tierRgb } from "@/app/components/TierBadge";
 import { initServerI18n } from "@/app/i18n-server";
+import {
+	RUNS,
+	runStatus,
+	runStatusLabel,
+} from "@/app/the-production-run/constants";
 import { fetchStandings, fetchStats } from "@/app/utils/fetchLeaderboard";
 import { LeaderboardBoard } from "./components/LeaderboardBoard";
 
@@ -43,6 +49,9 @@ const DEFAULT_PERIOD = "30d" as const;
 export default async function LeaderboardPage() {
 	initServerI18n();
 
+	const run = RUNS[0];
+	const runLabel = run ? runStatusLabel(runStatus(run, new Date()), run) : null;
+
 	const [standings, stats] = await Promise.all([
 		fetchStandings({ period: DEFAULT_PERIOD, metric: "tokens", limit: 50 }),
 		fetchStats({ period: DEFAULT_PERIOD }),
@@ -72,8 +81,56 @@ export default async function LeaderboardPage() {
 							See all stats →
 						</Trans>
 					</Link>
-				</header>
 
+					<div className="mt-6">
+						<style>{`
+							.run-callout {
+								position: relative;
+								border: 1px solid rgba(var(--run-glow), 0.22);
+								background: rgba(var(--run-glow), 0.04);
+							}
+							.run-trail {
+								position: absolute;
+								inset: 0;
+								width: 100%;
+								height: 100%;
+								pointer-events: none;
+								overflow: visible;
+							}
+							.run-trail rect {
+								fill: none;
+								stroke: rgb(var(--run-glow));
+								stroke-width: 1.5;
+								stroke-linecap: round;
+								stroke-dasharray: 5 95;
+								filter: drop-shadow(0 0 4px rgba(var(--run-glow), 0.9));
+								animation: run-trail 4s linear infinite;
+							}
+							@keyframes run-trail {
+								from { stroke-dashoffset: 0; }
+								to   { stroke-dashoffset: -100; }
+							}
+							@media (prefers-reduced-motion: reduce) {
+								.run-trail rect { animation: none; stroke-dasharray: none; stroke-opacity: 0.5; }
+							}
+						`}</style>
+						<Link
+							href="/the-production-run?run=1"
+							style={{ "--run-glow": tierRgb(2) } as React.CSSProperties}
+							className="run-callout group inline-flex items-center gap-2 px-3 py-1.5 font-mono text-[0.6rem] uppercase tracking-[0.14em]"
+						>
+							<svg className="run-trail" aria-hidden="true">
+								<title>Production run status</title>
+								<rect x="0" y="0" width="100%" height="100%" pathLength={100} />
+							</svg>
+							<span style={{ color: `rgb(${tierRgb(2)})` }}>Run 01</span>
+							<span className="text-muted-foreground">
+								{runLabel} · everybody to Operator
+							</span>
+							<span style={{ color: `rgba(${tierRgb(2)},0.8)` }}>→</span>
+						</Link>
+					</div>
+				</header>
 				<div className="mt-10 md:mt-12">
 					<LeaderboardBoard
 						initialStandings={standings}

@@ -8,9 +8,9 @@ import { Calendar } from "@superset/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@superset/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import type { DateRange } from "react-day-picker";
+import { PillTabs } from "@/app/components/PillTabs";
 import type { LeaderboardPeriod } from "@/app/utils/fetchLeaderboard";
 import { formatRangeLabel } from "@/app/utils/formatRangeLabel";
-import { PillTabs } from "../PillTabs";
 
 const PRESETS: Array<{ id: LeaderboardPeriod; label: MessageDescriptor }> = [
 	{
