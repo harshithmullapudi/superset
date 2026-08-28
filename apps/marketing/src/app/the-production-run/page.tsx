@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { GridCross } from "@/app/blog/components/GridCross";
+import { initServerI18n } from "@/app/i18n-server";
 import { ProductionLineMark } from "./components/ProductionLineMark";
 import { RunningLine } from "./components/RunningLine";
 import { RunSimulator } from "./components/RunSimulator";
@@ -55,6 +56,8 @@ export default async function ProductionRunPage({
 }: {
 	searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+	initServerI18n();
+
 	const requested = (await searchParams).run;
 	const wanted = Array.isArray(requested) ? requested[0] : requested;
 	const initialTab =
