@@ -49,7 +49,7 @@ export function PageThumbnail({
 		enabled,
 		staleTime: Number.POSITIVE_INFINITY,
 		queryFn: () =>
-			electronTrpcClient.pageThumbnail.peek.query(
+			electronTrpcClient.page.thumbnail.peek.query(
 				key as NonNullable<typeof key>,
 			),
 	});
@@ -75,7 +75,7 @@ export function PageThumbnail({
 			if (!response.ok) {
 				throw new Error(`Preview failed to load (${response.status})`);
 			}
-			return electronTrpcClient.pageThumbnail.ensure.mutate({
+			return electronTrpcClient.page.thumbnail.ensure.mutate({
 				...(key as NonNullable<typeof key>),
 				html: await response.text(),
 			});

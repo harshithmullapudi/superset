@@ -73,13 +73,14 @@ export function PageViewer({
 	const servedToken = useRef<string | null>(null);
 	const serveHtml = useCallback(async (injectedHtml: string) => {
 		if (servedToken.current) {
-			void electronTrpcClient.pageContent.release.mutate({
+			void electronTrpcClient.page.content.release.mutate({
 				token: servedToken.current,
 			});
 		}
-		const { token, url } = await electronTrpcClient.pageContent.register.mutate(
-			{ html: injectedHtml },
-		);
+		const { token, url } =
+			await electronTrpcClient.page.content.register.mutate({
+				html: injectedHtml,
+			});
 		servedToken.current = token;
 		return url;
 	}, []);
@@ -87,7 +88,7 @@ export function PageViewer({
 	useEffect(
 		() => () => {
 			if (servedToken.current) {
-				void electronTrpcClient.pageContent.release.mutate({
+				void electronTrpcClient.page.content.release.mutate({
 					token: servedToken.current,
 				});
 				servedToken.current = null;
