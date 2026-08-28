@@ -1,7 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import {
 	HEARTBEAT_INTERVAL_MS,
-	IDLE_AFTER_MS,
 	IDLE_TTL_MS,
 	MAX_CONSECUTIVE_FAILURES,
 	MAX_HOLD_MS,
@@ -324,24 +323,6 @@ describe("PageWatchManager", () => {
 		expect(h.sent.length).toBe(0);
 
 		h.advance(MAX_HOLD_MS);
-		await h.manager.tick();
-		expect(h.sent.length).toBe(1);
-	});
-
-	it("keeps a pending page on the fast cadence instead of letting it go quiet", async () => {
-		const h = harness({ threads: [humanThread("t1", T0 + 1_000)] });
-		h.assign();
-		h.busy.add("term-1");
-		h.advance(1_000);
-		await h.manager.tick();
-		expect(h.sent.length).toBe(0);
-
-		h.advance(IDLE_AFTER_MS + 1_000);
-		await h.manager.tick();
-		expect(h.sent.length).toBe(0);
-
-		h.busy.delete("term-1");
-		h.advance(5_000);
 		await h.manager.tick();
 		expect(h.sent.length).toBe(1);
 	});

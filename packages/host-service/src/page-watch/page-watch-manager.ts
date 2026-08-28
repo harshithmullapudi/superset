@@ -15,7 +15,7 @@ export const HEARTBEAT_INTERVAL_MS = 30_000;
 export const IDLE_TTL_MS = 2 * 60 * 60_000;
 export const MAX_WATCHERS = 20;
 export const MAX_CONSECUTIVE_FAILURES = 5;
-export const MAX_HOLD_MS = 10 * 60_000;
+export const MAX_HOLD_MS = 2 * 60_000;
 
 export interface PageWatchApi {
 	listThreads(pageId: string): Promise<WatchedThread[]>;
