@@ -8,7 +8,7 @@ import {
 	writeFile,
 } from "node:fs/promises";
 import { join } from "node:path";
-import { app, BrowserWindow, session } from "electron";
+import * as electron from "electron";
 import {
 	PAGE_SCHEME,
 	pageProtocolHandler,
@@ -45,7 +45,7 @@ export interface ThumbnailKey {
 }
 
 function cacheDir(): string {
-	return join(app.getPath("userData"), "page-thumbnails");
+	return join(electron.app.getPath("userData"), "page-thumbnails");
 }
 
 function accountDir(accountId: string): string {
@@ -113,7 +113,7 @@ function releaseCaptureSlot(): void {
 }
 
 async function captureWithRetry(
-	window: BrowserWindow,
+	window: Electron.BrowserWindow,
 ): Promise<Electron.NativeImage> {
 	const deadline = Date.now() + CAPTURE_DEADLINE_MS;
 	let lastError: unknown = null;
@@ -168,7 +168,7 @@ let partitionReady = false;
 function ensurePartitionProtocol(): void {
 	if (partitionReady) return;
 	partitionReady = true;
-	const partition = session.fromPartition(THUMBNAIL_PARTITION);
+	const partition = electron.session.fromPartition(THUMBNAIL_PARTITION);
 	if (!partition.protocol.isProtocolHandled(PAGE_SCHEME)) {
 		partition.protocol.handle(PAGE_SCHEME, pageProtocolHandler);
 	}
@@ -177,7 +177,7 @@ function ensurePartitionProtocol(): void {
 async function captureHtml(html: string): Promise<Buffer> {
 	ensurePartitionProtocol();
 	const { token, url } = registerPageContent(html);
-	const window = new BrowserWindow({
+	const window = new electron.BrowserWindow({
 		show: false,
 		paintWhenInitiallyHidden: true,
 		width: FRAME_WIDTH,
