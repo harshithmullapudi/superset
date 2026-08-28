@@ -8,7 +8,7 @@ import type {
 	WatchedThread,
 } from "./types.ts";
 
-export const TICK_INTERVAL_MS = 10_000;
+export const TICK_INTERVAL_MS = 5_000;
 export const IDLE_AFTER_MS = 5 * 60_000;
 export const IDLE_TICK_INTERVAL_MS = 60_000;
 export const HEARTBEAT_INTERVAL_MS = 30_000;

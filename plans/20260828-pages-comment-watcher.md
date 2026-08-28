@@ -47,7 +47,7 @@ agent is listening.
 
 ## Non-Goals
 
-- Real-time push. Comments are human-typed and infrequent; a 10s poll is
+- Real-time push. Comments are human-typed and infrequent; a 5s poll is
   indistinguishable in practice and costs a fraction of the machinery.
 - Watching from the browser. A browser has no terminal to deliver into, so it
   displays watcher state but never holds a watcher.
@@ -232,7 +232,7 @@ Borrowed from the port manager, deliberately:
   an idle host runs none.
 - **`.unref()`** on the ticker (`:212`) so it never holds the process open.
 - **Two-tier cadence** (`isSessionDue`, `:283`): a page with a human comment in the
-  last 5 minutes polls every 10s; quiet pages decay to 60s.
+  last 5 minutes polls every 5s; quiet pages decay to 60s.
 - **Reentrancy guard** — `isScanning` + a single queued follow-up (`:441,475`).
 - **`AbortController`** around in-flight cloud calls (`:218`).
 - **Reconcile, don't trust** — `reaper.ts:133-145` checks the registry against live
