@@ -21,6 +21,7 @@ export interface PageComment {
 	id: string;
 	authorName: string;
 	authorImage: string | null;
+	authorKind: "human" | "agent";
 	body: string;
 	createdAt: number;
 }
@@ -30,6 +31,7 @@ export interface CommentThread {
 	anchor: CommentAnchor;
 	comments: PageComment[];
 	resolved: boolean;
+	version: number;
 }
 
 export interface CommentDraft {

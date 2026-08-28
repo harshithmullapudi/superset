@@ -1,7 +1,7 @@
 import { CLIError, string } from "@superset/cli-framework";
 import { command } from "../../../../lib/command";
+import { resolvePageId } from "../../pageId";
 import { agentSessionId } from "../agentSession";
-import { resolvePageId } from "../pageId";
 
 interface ThreadComment {
 	authorName: string;

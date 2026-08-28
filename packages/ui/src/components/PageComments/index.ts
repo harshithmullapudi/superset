@@ -2,6 +2,7 @@ export {
 	CommentModeButton,
 	CommentModeToggle,
 } from "./components/CommentModeToggle";
+export { CommentsSidebar } from "./components/CommentsSidebar";
 export { PageCommentsView } from "./components/PageCommentsView";
 export {
 	DeletePageDialog,

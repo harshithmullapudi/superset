@@ -1,6 +1,10 @@
 import { useLingui } from "@lingui/react/macro";
 import { authClient } from "@superset/auth/client";
-import { CommentProvider, PageCommentsView } from "@superset/ui/page-comments";
+import {
+	CommentProvider,
+	CommentsSidebar,
+	PageCommentsView,
+} from "@superset/ui/page-comments";
 import { Spinner } from "@superset/ui/spinner";
 import { useQuery } from "@tanstack/react-query";
 import { TRPCClientError } from "@trpc/client";
@@ -147,7 +151,7 @@ export function PageViewer({
 				image: session?.user.image ?? null,
 			}}
 		>
-			<div className="flex h-full w-full flex-col">
+			<div className="flex h-full w-full">
 				<div className="min-h-0 min-w-0 flex-1">
 					<PageCommentsView
 						html={content.data}
@@ -155,6 +159,9 @@ export function PageViewer({
 						serveHtml={serveHtml}
 					/>
 				</div>
+				{commentsEnabled ? (
+					<CommentsSidebar servedVersion={pull.data?.version ?? null} />
+				) : null}
 			</div>
 		</CommentProvider>
 	);

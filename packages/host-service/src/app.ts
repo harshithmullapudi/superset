@@ -10,6 +10,7 @@ import { createApiClient } from "./api";
 import { createChatV3Mount, registerChatV3Routes } from "./chat-v3";
 import { createDb, type HostDb } from "./db";
 import { EventBus, GitWatcher, registerEventBusRoute } from "./events";
+import { PageWatchManager } from "./page-watch/index.ts";
 import type { ApiAuthProvider } from "./providers/auth";
 import type { HostAuthProvider } from "./providers/host-auth";
 import { runArchivedWorkspaceReconcile } from "./runtime/archived-workspace-reconcile";
@@ -24,7 +25,11 @@ import {
 	readSandboxIdentity,
 	runSandboxSelfSeed,
 } from "./runtime/sandbox-self-seed";
-import { registerWorkspaceTerminalRoute } from "./terminal/terminal";
+import {
+	isLiveTerminalSession,
+	registerWorkspaceTerminalRoute,
+	writeFramedInputToSession,
+} from "./terminal/terminal";
 import {
 	SqliteTerminalAgentBindingPersistence,
 	TerminalAgentStore,
@@ -153,10 +158,35 @@ export function createApp(options: CreateAppOptions): CreateAppResult {
 	// pane on the `chat-v3` PostHog flag.
 	const chatV3 = createChatV3Mount({ db, dbPath: config.dbPath });
 
+	const pageWatch = new PageWatchManager({
+		api: {
+			listThreads: (pageId) => api.pageComment.list.query({ pageId }),
+			setWatch: async (pageId, agentId) => {
+				await api.page.setWatch.mutate({ id: pageId, agentId });
+			},
+			clearWatch: async (pageId) => {
+				await api.page.clearWatch.mutate({ id: pageId });
+			},
+		},
+		sendToTerminal: async ({ workspaceId, terminalId, text }) => {
+			const result = await writeFramedInputToSession({
+				terminalId,
+				workspaceId,
+				text,
+				submit: true,
+				db,
+				eventBus,
+			});
+			if ("error" in result) throw new Error(result.error);
+		},
+		isTerminalAlive: isLiveTerminalSession,
+	});
+
 	const runtime = {
 		auth: chatService,
 		filesystem,
 		pullRequests: pullRequestRuntime,
+		pageWatch,
 	};
 	const app = new Hono();
 	const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app });
@@ -180,6 +210,7 @@ export function createApp(options: CreateAppOptions): CreateAppResult {
 	// newly created workspaces get their first branch/upstream sync + PR link
 	// immediately instead of waiting for the 5-min safety net.
 	pullRequestRuntime.subscribeToWorkspaceEvents(eventBus);
+	pageWatch.subscribeToTerminalEvents(eventBus);
 
 	const terminalAgentPersistence = new SqliteTerminalAgentBindingPersistence(
 		db,
@@ -320,6 +351,11 @@ export function createApp(options: CreateAppOptions): CreateAppResult {
 			pullRequestRuntime.stop();
 		} catch (err) {
 			console.warn("[host-service] pullRequestRuntime.stop failed:", err);
+		}
+		try {
+			pageWatch.stop();
+		} catch (err) {
+			console.warn("[host-service] pageWatch.stop failed:", err);
 		}
 		try {
 			await chatV3.dispose();
