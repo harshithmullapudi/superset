@@ -94,7 +94,7 @@ export function TrajectoryChart() {
 			<div className="mt-4 border border-border p-4">
 				<div className="flex items-baseline justify-between gap-3">
 					<span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-						Measured today · the bands above are the target
+						Measured 27 Aug 2026 · the bands above are the target
 					</span>
 					<span className="text-[10px] font-mono text-muted-foreground">
 						1 of 320 ranked above the bottom tier

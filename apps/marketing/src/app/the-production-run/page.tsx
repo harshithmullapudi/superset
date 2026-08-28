@@ -394,9 +394,9 @@ export default async function ProductionRunPage({
 										The frontier arrives long before the median.
 									</strong>{" "}
 									One developer on the board sustained a median of 15 concurrent
-									sessions over the last 30 days, which is Henry Ford width
-									today, while the median developer sits at one. Their badge is
-									still low, because Output has not caught up.
+									sessions over the 30 days to 27 August 2026, which is Henry
+									Ford width, while the median developer sat at one. Their badge
+									is still low, because Output has not caught up.
 								</p>
 
 								<div className="mt-10">
@@ -404,11 +404,12 @@ export default async function ProductionRunPage({
 								</div>
 
 								<p className={BODY}>
-									That measured strip is real: one person in 320 ranked
-									developers is above the bottom tier. Some of the gap is the
-									instrument, Output cannot see most merged PRs yet, so people
-									running four agents read as Button pushers. Some of it is not.
-									Telling those apart is most of what September is for.
+									That measured strip is real: on 27 August 2026, one person in
+									320 ranked developers was above the bottom tier. Some of the
+									gap is the instrument, Output cannot see most merged PRs yet,
+									so people running four agents read as Button pushers. Some of
+									it is not. Telling those apart is most of what September is
+									for.
 								</p>
 								<p className={BODY}>
 									Two things this forecast leans on, said plainly. The modelled
