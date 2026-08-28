@@ -1,3 +1,4 @@
+import { useLingui } from "@lingui/react/macro";
 import { TIER_NAMES, TIER_RGB } from "@/app/components/TierBadge";
 import { MEASURED_TODAY, TRAJECTORY } from "../../constants";
 
@@ -28,6 +29,8 @@ function bandPath(index: number): string {
 }
 
 export function TrajectoryChart() {
+	const { t } = useLingui();
+
 	return (
 		<figure className="m-0">
 			<div className="border border-border bg-foreground/[0.015] p-4">
@@ -114,7 +117,7 @@ export function TrajectoryChart() {
 			<figcaption className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
 				{TIER_NAMES.map((name, index) => (
 					<span
-						key={name}
+						key={TIER_RGB[index]}
 						className="inline-flex items-center gap-2 text-xs text-muted-foreground"
 					>
 						<span
@@ -122,7 +125,7 @@ export function TrajectoryChart() {
 							className="inline-block h-2.5 w-2.5"
 							style={{ background: `rgb(${TIER_RGB[index]})` }}
 						/>
-						{name}
+						{t(name)}
 					</span>
 				))}
 			</figcaption>

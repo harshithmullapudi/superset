@@ -1,7 +1,8 @@
 "use client";
 
+import { useLingui } from "@lingui/react/macro";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { TIER_NAMES, tierRgb } from "@/app/components/TierBadge";
+import { tierLabel, tierRgb } from "@/app/components/TierBadge";
 import { TierIcon } from "@/app/components/TierIcon";
 import {
 	COST_CEILINGS,
@@ -22,6 +23,7 @@ function formatTokens(value: number): string {
 }
 
 export function RunSimulator() {
+	const { t } = useLingui();
 	const [months, setMonths] = useState(0);
 	const [playing, setPlaying] = useState(false);
 	const frame = useRef<number | null>(null);
@@ -195,7 +197,7 @@ export function RunSimulator() {
 							className="text-xl md:text-2xl font-medium tracking-tight mt-1"
 							style={{ color: `rgb(${rgb})` }}
 						>
-							{TIER_NAMES[state.tier - 1]}
+							{t(tierLabel(state.tier))}
 						</p>
 					</div>
 
@@ -204,7 +206,7 @@ export function RunSimulator() {
 							<span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
 								{atTop
 									? "Ladder complete"
-									: `Progress to ${TIER_NAMES[state.tier]}`}
+									: `Progress to ${t(tierLabel(state.tier + 1))}`}
 							</span>
 							<span className="text-[11px] font-mono text-muted-foreground tabular-nums">
 								{Math.round(state.progress * 100)}%
