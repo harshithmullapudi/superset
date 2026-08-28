@@ -276,7 +276,7 @@ export function runStateAt(months: number): RunState {
 export function monthLabel(months: number): string {
 	const date = new Date(Date.UTC(2026, 7, 1));
 	date.setUTCMonth(date.getUTCMonth() + Math.round(months));
-	return date.toLocaleDateString("en-US", {
+	return formatDate(date, {
 		month: "short",
 		year: "numeric",
 		timeZone: "UTC",
