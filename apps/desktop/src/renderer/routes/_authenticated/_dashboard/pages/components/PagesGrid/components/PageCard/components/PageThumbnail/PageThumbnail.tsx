@@ -93,8 +93,9 @@ export function PageThumbnail({
 	};
 
 	const src = cached.data ?? captured.data ?? null;
+	const failed = cached.isError || pull.isError || captured.isError;
 	const isLoading =
-		enabled && !src && !captured.isError && (cached.isPending || needsCapture);
+		enabled && !src && !failed && (cached.isPending || needsCapture);
 
 	return (
 		<div
