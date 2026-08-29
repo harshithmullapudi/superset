@@ -9,10 +9,13 @@ import { Spinner } from "@superset/ui/spinner";
 import { useQuery } from "@tanstack/react-query";
 import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useRef } from "react";
+import { authClient } from "renderer/lib/auth-client";
 import { cloudTrpc } from "renderer/lib/cloud-trpc";
 import { electronTrpcClient } from "renderer/lib/trpc-client";
 import { PageViewerMessage } from "./components/PageViewerMessage";
 import { usePageCommentStore } from "./hooks/usePageCommentStore";
+
+const scrollPositions = new Map<string, number>();
 
 export interface ResolvedPage {
 	id: string;
@@ -47,6 +50,7 @@ export function PageViewer({
 		pageId: resolvedPageId ?? "",
 		version: pull.data?.version ?? 0,
 	});
+	const scrollKey = `${resolvedPageId ?? slug}:${pull.data?.version ?? 0}`;
 
 	const onResolvedRef = useRef(onResolved);
 	onResolvedRef.current = onResolved;
@@ -77,13 +81,14 @@ export function PageViewer({
 	const servedToken = useRef<string | null>(null);
 	const serveHtml = useCallback(async (injectedHtml: string) => {
 		if (servedToken.current) {
-			void electronTrpcClient.pageContent.release.mutate({
+			void electronTrpcClient.page.content.release.mutate({
 				token: servedToken.current,
 			});
 		}
-		const { token, url } = await electronTrpcClient.pageContent.register.mutate(
-			{ html: injectedHtml },
-		);
+		const { token, url } =
+			await electronTrpcClient.page.content.register.mutate({
+				html: injectedHtml,
+			});
 		servedToken.current = token;
 		return url;
 	}, []);
@@ -91,7 +96,7 @@ export function PageViewer({
 	useEffect(
 		() => () => {
 			if (servedToken.current) {
-				void electronTrpcClient.pageContent.release.mutate({
+				void electronTrpcClient.page.content.release.mutate({
 					token: servedToken.current,
 				});
 				servedToken.current = null;
@@ -157,6 +162,8 @@ export function PageViewer({
 						html={content.data}
 						title={resolvedTitle}
 						serveHtml={serveHtml}
+						initialScrollY={scrollPositions.get(scrollKey) ?? 0}
+						onScrollYChange={(y) => scrollPositions.set(scrollKey, y)}
 					/>
 				</div>
 				{commentsEnabled ? (
