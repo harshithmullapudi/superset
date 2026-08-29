@@ -34912,7 +34912,7 @@ msgstr "Pages dont cet agent surveille les commentaires"
 #. placeholder {0}: mine.length
 #: ../../apps/desktop/src/renderer/routes/_authenticated/_dashboard/v2-workspace/$workspaceId/hooks/usePaneRegistry/components/TerminalPane/components/TerminalPaneHeaderExtras/components/TerminalPageWatchChip/TerminalPageWatchChip.tsx
 msgid "workspace.terminalPane.watchingPageCount"
-msgstr "{0, plural, one {Surveille # page pour de nouveaux commentaires} other {Surveille # pages pour de nouveaux commentaires}}"
+msgstr "{0, plural, one {Surveille # page pour les commentaires} other {Surveille # pages pour les commentaires}}"
 
 #. js-lingui-explicit-id
 #: ../../apps/desktop/src/renderer/routes/_authenticated/_dashboard/v2-workspace/$workspaceId/hooks/usePaneRegistry/components/TerminalPane/components/TerminalSessionDropdown/TerminalSessionDropdown.tsx

@@ -34913,7 +34913,7 @@ msgstr "이 에이전트가 댓글을 감시 중인 페이지"
 #. placeholder {0}: mine.length
 #: ../../apps/desktop/src/renderer/routes/_authenticated/_dashboard/v2-workspace/$workspaceId/hooks/usePaneRegistry/components/TerminalPane/components/TerminalPaneHeaderExtras/components/TerminalPageWatchChip/TerminalPageWatchChip.tsx
 msgid "workspace.terminalPane.watchingPageCount"
-msgstr "{0, plural, one {#개 페이지의 새 댓글을 감시 중} other {#개 페이지의 새 댓글을 감시 중}}"
+msgstr "{0, plural, one {#개 페이지의 댓글을 감시 중} other {#개 페이지의 댓글을 감시 중}}"
 
 #. js-lingui-explicit-id
 #: ../../apps/desktop/src/renderer/routes/_authenticated/_dashboard/v2-workspace/$workspaceId/hooks/usePaneRegistry/components/TerminalPane/components/TerminalSessionDropdown/TerminalSessionDropdown.tsx

@@ -34912,7 +34912,7 @@ msgstr "此智能体正在关注这些页面的评论"
 #. placeholder {0}: mine.length
 #: ../../apps/desktop/src/renderer/routes/_authenticated/_dashboard/v2-workspace/$workspaceId/hooks/usePaneRegistry/components/TerminalPane/components/TerminalPaneHeaderExtras/components/TerminalPageWatchChip/TerminalPageWatchChip.tsx
 msgid "workspace.terminalPane.watchingPageCount"
-msgstr "{0, plural, one {正在关注#个页面的新评论} other {正在关注#个页面的新评论}}"
+msgstr "{0, plural, one {正在关注#个页面的评论} other {正在关注#个页面的评论}}"
 
 #. js-lingui-explicit-id
 #: ../../apps/desktop/src/renderer/routes/_authenticated/_dashboard/v2-workspace/$workspaceId/hooks/usePaneRegistry/components/TerminalPane/components/TerminalSessionDropdown/TerminalSessionDropdown.tsx

@@ -34912,7 +34912,7 @@ msgstr "このエージェントがコメントを監視しているページ"
 #. placeholder {0}: mine.length
 #: ../../apps/desktop/src/renderer/routes/_authenticated/_dashboard/v2-workspace/$workspaceId/hooks/usePaneRegistry/components/TerminalPane/components/TerminalPaneHeaderExtras/components/TerminalPageWatchChip/TerminalPageWatchChip.tsx
 msgid "workspace.terminalPane.watchingPageCount"
-msgstr "{0, plural, one {#件のページで新しいコメントを監視中} other {#件のページで新しいコメントを監視中}}"
+msgstr "{0, plural, one {#件のページのコメントを監視中} other {#件のページのコメントを監視中}}"
 
 #. js-lingui-explicit-id
 #: ../../apps/desktop/src/renderer/routes/_authenticated/_dashboard/v2-workspace/$workspaceId/hooks/usePaneRegistry/components/TerminalPane/components/TerminalSessionDropdown/TerminalSessionDropdown.tsx
