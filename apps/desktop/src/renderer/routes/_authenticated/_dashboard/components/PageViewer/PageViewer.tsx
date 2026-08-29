@@ -1,5 +1,4 @@
 import { useLingui } from "@lingui/react/macro";
-import { authClient } from "@superset/auth/client";
 import {
 	CommentProvider,
 	CommentsSidebar,
