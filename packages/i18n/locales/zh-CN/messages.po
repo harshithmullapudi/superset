@@ -34906,7 +34906,7 @@ msgstr "查看日志"
 #. js-lingui-explicit-id
 #: ../../apps/desktop/src/renderer/routes/_authenticated/_dashboard/v2-workspace/$workspaceId/hooks/usePaneRegistry/components/TerminalPane/components/TerminalPaneHeaderExtras/components/TerminalPageWatchChip/TerminalPageWatchChip.tsx
 msgid "workspace.terminalPane.watchingAria"
-msgstr "此智能体正在关注评论的页面"
+msgstr "此智能体正在关注这些页面的评论"
 
 #. js-lingui-explicit-id
 #. placeholder {0}: mine.length

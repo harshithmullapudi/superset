@@ -199,6 +199,8 @@ type WatchEntry = {
   cursor: number                    // max human-comment createdAt delivered
   pings: Map<string, number>        // threadId -> count, circuit breaker
   lastHumanCommentAt: number        // TTL clock
+  lastHeartbeatAt: number           // heartbeat clock, read by the tick below
+  pendingSince: number | null       // set while delivery is held for a busy agent
   failures: number
 }
 
@@ -248,7 +250,7 @@ Bounds, each one load-bearing:
 | watcher cap per host | 20 | unbounded registry growth |
 | idle TTL | 2h without a human comment | forgotten pages polling forever |
 | consecutive failures | stop at 5, surface why | a dead token retrying forever |
-| pings per thread per version | 5 | see below |
+| pings per thread | 5 | see below; not reset by a republish |
 | registry storage | in-memory only | stale watchers resurrecting on restart |
 
 The per-thread ping cap deserves its reasoning. The trigger already ignores
@@ -386,7 +388,8 @@ threads by default is the first lever.
 
 Watcher, against a faked `ApiClient`:
 
-- an agent's own reply never re-triggers a ping
+- an agent's reply attributed via `SUPERSET_PANE_ID` never re-triggers a ping; an
+  unattributed one is recorded as human and can, bounded by the ping cap
 - resolved threads are skipped
 - terminal exit drops every entry for that terminal and clears its cloud rows
 - an entry whose terminal vanished without an event is dropped by reconciliation
