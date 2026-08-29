@@ -1,7 +1,9 @@
 # Pages Comment Watcher: Closing the Loop Between Readers and Agents
 
-Status: implemented on branch `pages-watch`, not yet exercised end to end against a
-live agent. Every test is a unit test against fakes.
+Status: implemented on branch `pages-watch`, and run end to end once against a live
+agent — an agent published a page, a comment from the web viewer reached its
+terminal, and its reply landed with `author_kind = agent`. The busy-hold,
+failure/backoff, and reassignment paths are still only unit-tested against fakes.
 
 Two things changed during implementation and are recorded in place below: the cloud
 row became two columns on `pages` rather than a `page_watchers` table, and
@@ -164,8 +166,8 @@ this flag.
 and add `version` (resolved from `pageVersionId`) and `authorKind` to the output. The
 client already drops pins for unresolved anchors; the sidebar carries the rest.
 
-**`pageComment.activate` — retained, unchanged.** No longer on the critical path but
-still the explicit hand-off primitive.
+**`pageComment.activate` — deleted.** Activation moved to the first human write, so
+the explicit hand-off primitive no longer has a caller.
 
 **`page.setWatch({ pageId, agentId })` / `page.clearWatch({ pageId })`** — writes the
 two columns above; requires page-write access. `setWatch` doubles as the heartbeat,

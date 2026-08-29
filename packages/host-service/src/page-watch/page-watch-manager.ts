@@ -211,7 +211,12 @@ export class PageWatchManager {
 		return at - entry.lastHeartbeatAt >= IDLE_TICK_INTERVAL_MS;
 	}
 
+	private isCurrent(entry: PageWatchEntry): boolean {
+		return this.entries.get(entry.pageId) === entry;
+	}
+
 	private async pollEntry(entry: PageWatchEntry): Promise<void> {
+		if (!this.isCurrent(entry)) return;
 		const at = this.now();
 
 		if (
@@ -236,6 +241,8 @@ export class PageWatchManager {
 			await this.recordFailure(entry, error, "list");
 			return;
 		}
+
+		if (!this.isCurrent(entry)) return;
 
 		let result: ReturnType<typeof selectThreadsToDeliver>;
 		let held = false;
@@ -272,6 +279,8 @@ export class PageWatchManager {
 			return;
 		}
 
+		if (!this.isCurrent(entry)) return;
+
 		entry.failures = 0;
 
 		if (result.fired.length === 0) {
@@ -297,6 +306,7 @@ export class PageWatchManager {
 		error: unknown,
 		stage: "list" | "send" | "heartbeat",
 	): Promise<void> {
+		if (!this.isCurrent(entry)) return;
 		entry.failures += 1;
 		if (entry.failures < MAX_CONSECUTIVE_FAILURES) return;
 		console.error(

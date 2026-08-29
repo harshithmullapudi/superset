@@ -410,6 +410,31 @@ describe("PageWatchManager", () => {
 		expect(h.sent.length).toBe(1);
 	});
 
+	it("drops a poll whose watcher was stopped while the fetch was in flight", async () => {
+		let release!: () => void;
+		const gate = new Promise<void>((resolve) => {
+			release = resolve;
+		});
+		const h = harness({
+			listThreads: async () => {
+				await gate;
+				return [humanThread("t1", T0 + 5_000)];
+			},
+		});
+		await h.assign();
+		const setWatchesAfterAssign = h.setWatchCalls.length;
+
+		h.advance(HEARTBEAT_INTERVAL_MS + 5_000);
+		const polling = h.manager.tick();
+		await h.manager.unwatch("page-1");
+		release();
+		await polling;
+
+		expect(h.sent).toEqual([]);
+		expect(h.manager.list()).toEqual([]);
+		expect(h.setWatchCalls.length).toBe(setWatchesAfterAssign);
+	});
+
 	it("counts a malformed thread as a failure instead of wedging the tick", async () => {
 		const bad = humanThread("bad", T0 + 5_000);
 		(bad.comments[0] as { createdAt: unknown }).createdAt = "not a date";

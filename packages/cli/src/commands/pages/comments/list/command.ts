@@ -15,6 +15,7 @@ interface Thread {
 	anchor: { path: string; tag: string } | null;
 	anchorText: string | null;
 	resolved: boolean;
+	createdAt: string | Date;
 	comments: ThreadComment[];
 	pageTitle?: string;
 	pageSlug?: string;
@@ -59,7 +60,9 @@ export default command({
 					pageSlug: page.slug,
 				}));
 			});
-			threads = perPage.flat();
+			threads = perPage
+				.flat()
+				.sort((a, b) => stamp(a.createdAt) - stamp(b.createdAt));
 		}
 
 		if (options.unresolved) {
@@ -107,6 +110,10 @@ export default command({
 			.join("\n\n");
 	},
 });
+
+function stamp(value: string | Date): number {
+	return value instanceof Date ? value.getTime() : Date.parse(value);
+}
 
 async function mapWithConcurrency<T, R>(
 	items: readonly T[],

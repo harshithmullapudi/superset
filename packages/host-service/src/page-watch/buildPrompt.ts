@@ -1,7 +1,13 @@
 import type { WatchedThread } from "./types.ts";
 
+// Control characters would reach the PTY verbatim. A body carrying the
+// bracketed-paste terminator would close the paste early and land the rest as
+// keystrokes.
+// biome-ignore lint/suspicious/noControlCharactersInRegex: removing them is the point
+const CONTROL_CHARS = /[\u0000-\u001f\u007f-\u009f]/g;
+
 function quote(text: string): string {
-	return text.replace(/\s+/g, " ").trim();
+	return text.replace(CONTROL_CHARS, " ").replace(/\s+/g, " ").trim();
 }
 
 function describeAnchor(thread: WatchedThread): string {
