@@ -1,4 +1,5 @@
 import { Trans } from "@lingui/react/macro";
+import { formatRelativeTime } from "@superset/i18n/format";
 import type { DraftTrigger } from "@superset/shared/automation-triggers";
 import {
 	formatDateTimeInTimezone,
@@ -6,7 +7,6 @@ import {
 } from "@superset/shared/rrule";
 import type { RouterOutputs } from "@superset/trpc";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@superset/ui/tooltip";
-import { formatDistanceStrict } from "date-fns";
 import { useMemo } from "react";
 import { useRecentProjects } from "renderer/hooks/host-projects/useRecentProjects";
 import type { apiTrpcClient } from "renderer/lib/api-trpc-client";
@@ -15,6 +15,7 @@ import { ProjectPicker } from "../../../components/ProjectPicker";
 import { RelayOfflineNotice } from "../../../components/RelayOfflineNotice";
 import { TriggersEditor } from "../../../components/TriggersEditor";
 import { WorkspacePicker } from "../../../components/WorkspacePicker";
+import { AutomationTagsPicker } from "./components/AutomationTagsPicker";
 
 export type AutomationUpdatePatch = Partial<
 	Omit<Parameters<typeof apiTrpcClient.automation.update.mutate>[0], "id">
@@ -113,7 +114,7 @@ export function TriggersCard({
 								Would run
 							</Trans>
 						)}{" "}
-						{formatDistanceStrict(run.at, new Date(), { addSuffix: true })}
+						{formatRelativeTime(run.at)}
 					</span>
 				</TooltipTrigger>
 				<TooltipContent side="right">
@@ -181,6 +182,14 @@ export function TriggersCard({
 									: {}),
 							})
 						}
+					/>{" "}
+					<span>tagged</span>{" "}
+					<AutomationTagsPicker
+						className={SCOPE_CHIP}
+						tags={automation.tags}
+						projectId={automation.v2ProjectId}
+						disabled={readOnly}
+						onChange={(tags) => onUpdate({ tags })}
 					/>
 				</Trans>
 			</div>

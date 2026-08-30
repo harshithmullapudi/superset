@@ -1,5 +1,5 @@
 {
-  "id": "6bcd6aa3-4bf5-4a36-bc81-70da3340e602",
+  "id": "35bba4c9-467b-4a7b-8e37-fd0f5015f088",
   "prevId": "af0c54c2-a6d6-409f-af84-317b1fb8db8b",
   "version": "7",
   "dialect": "postgresql",
@@ -3218,13 +3218,6 @@
           "notNull": true,
           "default": "'0'"
         },
-        "axis_cost": {
-          "name": "axis_cost",
-          "type": "numeric(10, 2)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'0'"
-        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -4489,6 +4482,13 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
+        },
+        "tags": {
+          "name": "tags",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[\"automation\"]'::jsonb"
         },
         "enabled": {
           "name": "enabled",
