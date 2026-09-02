@@ -64,6 +64,18 @@ export async function POST(
 	}
 
 	const { plugin } = await params;
+	const url = new URL(request.url);
+
+	const requested = url.searchParams.get("marketplace");
+	if (requested && requested !== FIRST_PARTY_MARKETPLACE) {
+		return Response.json(
+			{
+				error: `Account install resolves "${FIRST_PARTY_MARKETPLACE}" manifests only, so "${plugin}" from "${requested}" cannot be installed to your account yet. It stays installed on this machine.`,
+			},
+			{ status: 400 },
+		);
+	}
+
 	const manifest = firstPartyManifest(plugin);
 	if (!manifest) {
 		return Response.json(
@@ -72,8 +84,7 @@ export async function POST(
 		);
 	}
 
-	const organizationId =
-		new URL(request.url).searchParams.get("organizationId") ?? null;
+	const organizationId = url.searchParams.get("organizationId") ?? null;
 
 	const [row] = await db
 		.insert(pluginInstalls)

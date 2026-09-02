@@ -72,7 +72,7 @@ export default command({
 		try {
 			account = await apiRequest<InstallResponse>(
 				ctx.bearer,
-				`/api/plugins/${name}/install`,
+				`/api/plugins/${name}/install?marketplace=${encodeURIComponent(local.marketplace)}`,
 				{ method: "POST" },
 			);
 		} catch (error) {
