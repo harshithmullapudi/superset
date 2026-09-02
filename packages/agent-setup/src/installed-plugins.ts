@@ -28,21 +28,20 @@ interface InstalledPluginRecord {
  * plugins out would delete the skills another caller had just written — the
  * desktop's next boot would undo every `plugins sync`. One file on disk is
  * what keeps them from disagreeing.
- *
- * A missing or corrupt file means no plugins, which is correct: the file is
- * written whole on every change, so its absence is the state before anything
- * was installed.
  */
-export function readInstalledPluginSources(): PluginSkillSource[] {
+export function readInstalledPluginSources(): PluginSkillSource[] | null {
+	const file = installedPluginsFilePath();
+	if (!fs.existsSync(file)) return [];
+
 	let parsed: unknown;
 	try {
-		parsed = JSON.parse(fs.readFileSync(installedPluginsFilePath(), "utf-8"));
+		parsed = JSON.parse(fs.readFileSync(file, "utf-8"));
 	} catch {
-		return [];
+		return null;
 	}
 
 	const plugins = (parsed as { plugins?: unknown })?.plugins;
-	if (!Array.isArray(plugins)) return [];
+	if (!Array.isArray(plugins)) return null;
 
 	const sources: PluginSkillSource[] = [];
 	for (const entry of plugins as InstalledPluginRecord[]) {

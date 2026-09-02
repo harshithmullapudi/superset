@@ -8,6 +8,7 @@ import { electronTrpc } from "renderer/lib/electron-trpc";
 import { posthog } from "renderer/lib/posthog";
 import { PLUGIN_CATALOG_KEY } from "renderer/routes/_authenticated/_dashboard/plugins/hooks/usePluginCatalog";
 import {
+	PLUGIN_CONNECTIONS_KEY,
 	registerPluginEnabled,
 	registerPluginInstall,
 	registerPluginUninstall,
@@ -25,11 +26,9 @@ export function usePluginMutations() {
 	// The account is the only place install state is read from, so every
 	// mutation ends by refetching it — the local install writes skills and
 	// agent config but is never queried back.
-	const invalidate = (name: string) => {
+	const invalidate = () => {
 		void queryClient.invalidateQueries({ queryKey: PLUGIN_CATALOG_KEY });
-		void queryClient.invalidateQueries({
-			queryKey: ["plugin-connections", name],
-		});
+		void queryClient.invalidateQueries({ queryKey: PLUGIN_CONNECTIONS_KEY });
 	};
 
 	// The local install materializes skills and agent config; the account
@@ -40,10 +39,11 @@ export function usePluginMutations() {
 	const syncAccount = async (
 		name: string,
 		action: "install" | "uninstall",
-	): Promise<void> => {
+	): Promise<boolean> => {
 		try {
 			if (action === "install") await registerPluginInstall(name);
 			else await registerPluginUninstall(name);
+			return true;
 		} catch (error) {
 			toast.warning(
 				t({
@@ -52,8 +52,9 @@ export function usePluginMutations() {
 				}),
 				{ description: errorMessage(error) },
 			);
+			return false;
 		} finally {
-			invalidate(name);
+			invalidate();
 		}
 	};
 
@@ -118,7 +119,7 @@ export function usePluginMutations() {
 						{ description: errorMessage(error) },
 					),
 				)
-				.finally(() => invalidate(variables.name));
+				.finally(() => invalidate());
 			posthog.capture(
 				variables.enabled ? "plugin_enabled" : "plugin_disabled",
 				{ plugin: variables.name },
@@ -190,10 +191,10 @@ export function usePluginMutations() {
 	 * connect route resolves a manifest from — a caller that authenticates
 	 * straight after adding would otherwise race it and 404.
 	 */
-	const add = async (name: string): Promise<void> => {
+	const add = async (name: string): Promise<boolean> => {
 		navigate({ to: "/plugins/$pluginName", params: { pluginName: name } });
 		await installMutation.mutateAsync({ name });
-		await syncAccount(name, "install");
+		return await syncAccount(name, "install");
 	};
 
 	/**
@@ -202,9 +203,9 @@ export function usePluginMutations() {
 	 * the marketplace's current version, so this is the only path that moves
 	 * one — and it is worth the user having asked for it by name.
 	 */
-	const update = async (name: string): Promise<void> => {
+	const update = async (name: string): Promise<boolean> => {
 		await updateMutation.mutateAsync({ name });
-		await syncAccount(name, "install");
+		return await syncAccount(name, "install");
 	};
 
 	return {
@@ -212,7 +213,7 @@ export function usePluginMutations() {
 		update,
 		install: async (name: string) => {
 			await installMutation.mutateAsync({ name });
-			await syncAccount(name, "install");
+			return await syncAccount(name, "install");
 		},
 		uninstall: (name: string) => uninstallMutation.mutate({ name }),
 		setEnabled: (name: string, enabled: boolean) =>

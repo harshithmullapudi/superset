@@ -51,7 +51,7 @@ export function PluginConnections({
 	auth?: readonly PluginAuthSpec[];
 	installed: boolean;
 	/** Installs here and on the account; resolves once the account row exists. */
-	onAdd: () => Promise<void>;
+	onAdd: () => Promise<boolean>;
 	onRemove: () => void;
 	isBusy: boolean;
 }) {
@@ -98,7 +98,7 @@ export function PluginConnections({
 		// idempotent — a repeat install rewrites the record and re-provisions —
 		// so running it here is what converges the machine you are sitting at.
 		try {
-			await onAdd();
+			if (!(await onAdd())) return;
 		} catch {
 			// The install mutation already surfaced why.
 			return;
@@ -201,6 +201,21 @@ export function PluginConnections({
 				</div>
 			)}
 
+			{methods.length > 0 && installed && (
+				<div className="mt-6 flex justify-end">
+					<Button
+						variant="outline"
+						size="sm"
+						className="shrink-0 text-destructive"
+						disabled={isBusy}
+						onClick={onRemove}
+					>
+						<LuTrash2 className="size-4" />
+						<Trans id="dashboard.plugins.detail.remove">Remove</Trans>
+					</Button>
+				</div>
+			)}
+
 			{methods.length > 0 && !connected && !isLoading && (
 				<div className="mt-4 rounded-lg border border-border/60 p-4">
 					{/* A select with one option is a control that cannot be used —
@@ -276,7 +291,7 @@ export function PluginConnections({
 					<div>
 						<Button
 							className="w-full"
-							disabled={missingRequired || isConnecting}
+							disabled={missingRequired || isConnecting || isBusy}
 							onClick={() => void authenticate()}
 						>
 							{method === "api_key" ? (

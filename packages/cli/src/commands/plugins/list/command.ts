@@ -51,17 +51,27 @@ export default command({
 		};
 
 		return {
-			data: visible.map((plugin) => ({
-				name: plugin.name,
-				version: plugin.version,
-				marketplace: plugin.marketplace,
-				status: status(plugin),
-				// What `mcp tools` and `mcp call-tool` address a plugin by. One
-				// per connected account, so a plugin with two accounts lists two.
-				pluginId: plugin.connections.map((connection) => connection.id),
-				connections: plugin.connections,
-				description: plugin.description,
-			})),
+			data: visible.flatMap((plugin) => {
+				const row = {
+					name: plugin.name,
+					version: plugin.version,
+					marketplace: plugin.marketplace,
+					status: status(plugin),
+					connections: plugin.connections,
+					description: plugin.description,
+				};
+				// What `mcp tools` and `mcp call-tool` address a plugin by, so it
+				// has to be one id per row: joining them produced a value that
+				// answers "Connection not found" when pasted.
+				if (plugin.connections.length === 0) {
+					return [{ ...row, pluginId: "", account: null }];
+				}
+				return plugin.connections.map((connection) => ({
+					...row,
+					pluginId: connection.id,
+					account: connection.account,
+				}));
+			}),
 			message: visible.length
 				? `${visible.length} plugin${visible.length === 1 ? "" : "s"}.`
 				: "No plugins installed. See what's available: superset plugins list --available",

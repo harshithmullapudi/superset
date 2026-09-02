@@ -1,7 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { env } from "renderer/env.renderer";
-import { getAuthToken, useAuthToken } from "renderer/lib/auth-client";
+import {
+	authClient,
+	getAuthToken,
+	useAuthToken,
+} from "renderer/lib/auth-client";
+
 import { PLUGIN_CATALOG_KEY } from "renderer/routes/_authenticated/_dashboard/plugins/hooks/usePluginCatalog";
+
+export const PLUGIN_CONNECTIONS_KEY = ["plugin-connections"] as const;
 
 export interface PluginConnection {
 	id: string;
@@ -106,7 +113,9 @@ export function openPluginOAuth(
 export function usePluginConnections(pluginName: string) {
 	const token = useAuthToken();
 	const queryClient = useQueryClient();
-	const queryKey = ["plugin-connections", pluginName];
+	const { data: session } = authClient.useSession();
+	const userId = session?.user?.id ?? null;
+	const queryKey = [...PLUGIN_CONNECTIONS_KEY, userId, pluginName];
 	// The catalog carries each plugin's connected accounts, so the cards on the
 	// list page go stale on the same events this list does.
 	const refresh = () => {
@@ -118,7 +127,7 @@ export function usePluginConnections(pluginName: string) {
 		queryKey,
 		// Same reason as the catalog: without this the list fires before auth
 		// resolves, 401s, and never retries.
-		enabled: Boolean(token),
+		enabled: Boolean(token) && Boolean(userId),
 		queryFn: async () => {
 			const { connections } = await request<{
 				connections: PluginConnection[];

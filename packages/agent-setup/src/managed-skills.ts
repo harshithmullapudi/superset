@@ -445,9 +445,14 @@ export async function createManagedSkills(
 		MANAGED_COMMAND_NAMESPACE,
 	);
 
-	const pluginSources = resolvePluginSources(
-		options.pluginSources ?? readInstalledPluginSources(),
-	);
+	const installed = options.pluginSources ?? readInstalledPluginSources();
+	if (installed === null) {
+		console.warn(
+			"[agent-setup] Skipping skill provisioning and reaping — installed_plugins.json is unreadable",
+		);
+		return;
+	}
+	const pluginSources = resolvePluginSources(installed);
 
 	try {
 		await provisionClaudePlugin(
@@ -596,10 +601,17 @@ export async function provisionManagedClaudePluginAt(
 		);
 		return;
 	}
+	const installed = options.pluginSources ?? readInstalledPluginSources();
+	if (installed === null) {
+		console.warn(
+			`[agent-setup] Skipping plugin provisioning for ${claudeDir} — installed_plugins.json is unreadable`,
+		);
+		return;
+	}
 	await provisionClaudePlugin(
 		bundledPluginDir,
 		claudeDir,
 		new Set(options.disabledSkills ?? []),
-		resolvePluginSources(options.pluginSources ?? readInstalledPluginSources()),
+		resolvePluginSources(installed),
 	);
 }

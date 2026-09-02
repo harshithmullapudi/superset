@@ -5,6 +5,7 @@ export type {
 export {
 	connectPluginApiKey,
 	openPluginOAuth,
+	PLUGIN_CONNECTIONS_KEY,
 	registerPluginEnabled,
 	registerPluginInstall,
 	registerPluginUninstall,

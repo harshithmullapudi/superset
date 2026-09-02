@@ -9,13 +9,18 @@ export default command({
 		paths: boolean().desc("Print only the paths, one per line"),
 	},
 	skipMiddleware: true,
-	display: (data) =>
-		table(
-			(data ?? []) as Record<string, unknown>[],
+	display: (data) => {
+		const rows = (data ?? []) as unknown[];
+		if (rows.length > 0 && rows.every((row) => typeof row === "string")) {
+			return (rows as string[]).join("\n");
+		}
+		return table(
+			rows as Record<string, unknown>[],
 			["directory", "plugin", "path"],
 			["SKILL", "PLUGIN", "PATH"],
 			[30, 16, 54],
-		),
+		);
+	},
 	run: async ({ options }) => {
 		const skills = listSkills();
 
