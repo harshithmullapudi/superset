@@ -68,6 +68,7 @@ export function isPublishedBuildCurrent(
 	versionPath: string,
 ): boolean | null {
 	if (!plugin.hasServerSource) return true;
+	if (!fs.existsSync(path.join(versionPath, SERVER_ENTRY))) return false;
 	const stamp = path.join(versionPath, SERVER_STAMP);
 	if (!fs.existsSync(stamp)) return null;
 	try {

@@ -11,12 +11,16 @@ export const SUPERSET_EXTENSION = "superset";
  * version like "1.0.0/../../../.." escapes the cache root — which then gets
  * rmSync'd recursively. Validate before joining, not after.
  */
-const SAFE_SEGMENT = /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/;
+const SAFE_SEGMENT = /^[a-zA-Z0-9][a-zA-Z0-9._+-]*$/;
 
 export function assertSafeSegment(value: string, label: string): string {
-	if (!SAFE_SEGMENT.test(value) || value.includes("..")) {
+	if (
+		typeof value !== "string" ||
+		!SAFE_SEGMENT.test(value) ||
+		value.includes("..")
+	) {
 		throw new CLIError(
-			`Refusing to use ${label} "${value}": it must be alphanumeric with dots, dashes, or underscores, and cannot contain "..".`,
+			`Refusing to use ${label} "${value}": it must be alphanumeric with dots, dashes, pluses, or underscores, and cannot contain "..".`,
 		);
 	}
 	return value;

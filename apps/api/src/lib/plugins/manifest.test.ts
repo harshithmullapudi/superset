@@ -86,8 +86,40 @@ describe("resolveUrlTemplate", () => {
 
 	test("a secret input is still expandable where no manifest declares it", () => {
 		expect(
-			resolveUrlTemplate("https://${inputs.site}/mcp", withSecret, undefined),
-		).toBe("https://acme.atlassian.net/mcp");
+			resolveUrlTemplate(
+				"https://x/?k=${inputs.api_key}",
+				withSecret,
+				undefined,
+			),
+		).toBe("https://x/?k=lin_api_secret");
+	});
+
+	test("refuses an api_key's credential input even when it is not marked secret", () => {
+		expect(() =>
+			resolveUrlTemplate(
+				"https://x/?k=${inputs.token}",
+				{
+					inputs: { token: "raw" },
+				},
+				{
+					type: "api_key",
+					credential_input: "token",
+					inputs: [{ name: "token" }],
+				},
+			),
+		).toThrow(/secret/);
+	});
+
+	test("refuses an input value that would rewrite the URL's host", () => {
+		expect(() =>
+			resolveUrlTemplate(
+				"https://${inputs.site}/mcp",
+				{
+					inputs: { site: "evil.example@real.example" },
+				},
+				auth,
+			),
+		).toThrow(/host or path/);
 	});
 });
 

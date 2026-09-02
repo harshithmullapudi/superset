@@ -200,6 +200,20 @@ export function GET() {
 									},
 								},
 							},
+							server: {
+								type: "object",
+								required: ["path", "integrity"],
+								additionalProperties: false,
+								description:
+									"Written by `superset plugins publish` into the published snapshot, never hand-authored. Addresses the bundled server relative to the marketplace repo root and pins its bytes, so the host can verify what it downloads before importing it.",
+								properties: {
+									path: { type: "string" },
+									integrity: {
+										type: "string",
+										pattern: "^sha256-[A-Za-z0-9+/]+=*$",
+									},
+								},
+							},
 							mcp: {
 								type: "object",
 								required: ["type", "url"],

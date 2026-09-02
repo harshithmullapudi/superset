@@ -82,7 +82,41 @@ export async function run(event: PluginEvent): Promise<PluginResult> {
 `;
 }
 
-function serverTools(name: string): string {
+function serverTools(name: string, auth: boolean): string {
+	const guard = auth
+		? `	if (!accessToken) {
+		return {
+			content: [
+				{ type: "text", text: "Not connected; connect the plugin first." },
+			],
+			isError: true,
+		};
+	}
+
+`
+		: "";
+	return `${serverToolsHeader(name)}export async function callTool(
+	name: string,
+	args: Record<string, unknown>,
+	accessToken${auth ? "" : "?"}: string,
+): Promise<ToolResult> {
+${guard}	switch (name) {
+		case "${name.replace(/[.-]/g, "_")}_example":
+			return {
+				content: [{ type: "text", text: JSON.stringify(args, null, 2) }],
+			};
+
+		default:
+			return {
+				content: [{ type: "text", text: \`Unknown tool: \${name}\` }],
+				isError: true,
+			};
+	}
+}
+`;
+}
+
+function serverToolsHeader(name: string): string {
 	return `import type { ToolDefinition, ToolResult } from "./types";
 
 export function getTools(): ToolDefinition[] {
@@ -106,33 +140,6 @@ export function getTools(): ToolDefinition[] {
 	];
 }
 
-export async function callTool(
-	name: string,
-	args: Record<string, unknown>,
-	accessToken: string,
-): Promise<ToolResult> {
-	if (!accessToken) {
-		return {
-			content: [
-				{ type: "text", text: "Not connected; connect the plugin first." },
-			],
-			isError: true,
-		};
-	}
-
-	switch (name) {
-		case "${name.replace(/[.-]/g, "_")}_example":
-			return {
-				content: [{ type: "text", text: JSON.stringify(args, null, 2) }],
-			};
-
-		default:
-			return {
-				content: [{ type: "text", text: \`Unknown tool: \${name}\` }],
-				isError: true,
-			};
-	}
-}
 `;
 }
 
@@ -310,7 +317,7 @@ export function scaffoldPlugin(
 
 	if (kind === "server") {
 		add(path.join("src", "index.ts"), serverIndex());
-		add(path.join("src", "tools.ts"), serverTools(name));
+		add(path.join("src", "tools.ts"), serverTools(name, options.auth));
 		add(path.join("src", "types.ts"), SERVER_TYPES);
 		add("tsconfig.json", TSCONFIG);
 	}

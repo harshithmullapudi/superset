@@ -97,6 +97,8 @@ export interface TemplateScope {
 
 const TEMPLATE = /\$\{(config|inputs)\.([\w.-]+)\}/g;
 
+const URL_STRUCTURE = /[/\\?#@:[\]%\s]|^$/;
+
 /**
  * Resolves `${config.access_token}` and `${inputs.site}` in a manifest string.
  * Only these two roots expand; anything else stays literal, so a manifest can
@@ -126,6 +128,9 @@ export function resolveUrlTemplate(
 			.filter((input) => input.secret)
 			.map((input) => input.name),
 	);
+	if (auth?.type === "api_key" && auth.credential_input) {
+		secrets.add(auth.credential_input);
+	}
 	return value.replace(TEMPLATE, (whole, root: string, key: string) => {
 		if (root === "config") {
 			throw new Error(
@@ -138,9 +143,14 @@ export function resolveUrlTemplate(
 			);
 		}
 		const resolved = scope.inputs?.[key];
-		return resolved === undefined || resolved === null
-			? whole
-			: String(resolved);
+		if (resolved === undefined || resolved === null) return whole;
+		const text = String(resolved);
+		if (URL_STRUCTURE.test(text)) {
+			throw new Error(
+				`${what} template expands \${inputs.${key}} to "${text}", which contains characters that would change the URL's host or path.`,
+			);
+		}
+		return text;
 	});
 }
 

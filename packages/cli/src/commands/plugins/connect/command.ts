@@ -130,18 +130,7 @@ export default command({
 		// OAuth cannot complete headlessly: the user has to authorize in a
 		// browser. Return the URL so an agent can hand it over rather than
 		// pretending to have finished.
-		const missing = declared.filter(
-			(input) => input.required && !provided[input.name],
-		);
-		if (missing.length) throw missingInputsError(name, missing, declared);
-
-		// `plugins check` rejects a secret input on an oauth2 method, but this
-		// reads the installed plugin.json, which a marketplace outside that check
-		// may have written. The URL is opened in a browser and printed to the
-		// terminal, so a secret reaching it lands in history and scrollback.
-		const secrets = declared.filter(
-			(input) => input.secret && provided[input.name],
-		);
+		const secrets = declared.filter((input) => input.secret);
 		if (secrets.length) {
 			throw new CLIError(
 				`"${name}" declares ${secrets
@@ -151,6 +140,11 @@ export default command({
 					)} as secret on its oauth2 method. A browser authorization URL cannot carry a secret; report this to the plugin's author.`,
 			);
 		}
+
+		const missing = declared.filter(
+			(input) => input.required && !provided[input.name],
+		);
+		if (missing.length) throw missingInputsError(name, missing, declared);
 
 		const params = new URLSearchParams({
 			...Object.fromEntries(

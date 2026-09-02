@@ -229,7 +229,22 @@ function sourceDir(marketplace: string, entry: MarketplaceEntry): string {
 	return dir;
 }
 
+function assertNotSymlink(target: string): void {
+	let stat: fs.Stats;
+	try {
+		stat = fs.lstatSync(target);
+	} catch {
+		return;
+	}
+	if (stat.isSymbolicLink()) {
+		throw new CLIError(
+			`Refusing to copy "${target}": a plugin cannot ship a symlink.`,
+		);
+	}
+}
+
 function copyTree(from: string, to: string): void {
+	assertNotSymlink(from);
 	fs.mkdirSync(to, { recursive: true });
 	for (const item of fs.readdirSync(from, { withFileTypes: true })) {
 		const src = path.join(from, item.name);
@@ -304,15 +319,29 @@ export async function installPlugin(
 			`Run: superset plugins install ${name} --update`,
 		);
 	}
+	assertNotSymlink(manifestPath);
 	const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8")) as {
-		version: string;
+		name?: string;
+		version?: string;
 	};
+	if (manifest.name !== name) {
+		throw new CLIError(
+			`Marketplace "${found.marketplace}" lists "${name}", but its plugin.json declares "${manifest.name ?? "no name"}"; they must match.`,
+		);
+	}
+	if (entry.version && manifest.version && entry.version !== manifest.version) {
+		throw new CLIError(
+			`Marketplace "${found.marketplace}" lists "${name}" at ${entry.version}, but its plugin.json declares ${manifest.version}; they must match.`,
+		);
+	}
 	const version = assertSafeSegment(
-		entry.version ?? manifest.version,
+		entry.version ?? manifest.version ?? "",
 		"version",
 	);
 
+	assertNotSymlink(path.join(dir, "versions"));
 	const versioned = path.join(dir, "versions", version);
+	assertNotSymlink(versioned);
 	const payload = fs.existsSync(versioned) ? versioned : dir;
 
 	const target = pluginCachePath(found.marketplace, name, version);

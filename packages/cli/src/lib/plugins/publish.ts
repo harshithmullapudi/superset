@@ -279,6 +279,20 @@ function snapshotDrift(plugin: ResolvedPlugin, version: string): string[] {
 		}
 	}
 
+	const stamped = fs.existsSync(publishedManifest)
+		? (
+				JSON.parse(fs.readFileSync(publishedManifest, "utf8"))?.extensions
+					?.superset?.server as { integrity?: string } | undefined
+			)?.integrity
+		: undefined;
+	if (stamped) {
+		const bundle = path.join(target, SERVER_ENTRY);
+		const actual = fs.existsSync(bundle)
+			? `sha256-${createHash("sha256").update(fs.readFileSync(bundle)).digest("base64")}`
+			: null;
+		if (actual !== stamped) drifted.push(SERVER_ENTRY);
+	}
+
 	return drifted.sort();
 }
 

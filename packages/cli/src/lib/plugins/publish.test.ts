@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -10,6 +11,21 @@ let root = "";
 function writeJson(file: string, value: unknown): void {
 	fs.mkdirSync(path.dirname(file), { recursive: true });
 	fs.writeFileSync(file, `${JSON.stringify(value, null, "\t")}\n`);
+}
+
+/** What `publish` leaves behind for a bundled server: the bytes and their digest. */
+function stampServer(dir: string, version: string, source: string): void {
+	const target = path.join(dir, "versions", version);
+	fs.mkdirSync(path.join(target, "server"), { recursive: true });
+	fs.writeFileSync(path.join(target, "server", "index.mjs"), source);
+
+	const published = path.join(target, "plugin.json");
+	const manifest = JSON.parse(fs.readFileSync(published, "utf8"));
+	manifest.extensions.superset.server = {
+		path: `plugins/linear/versions/${version}/server/index.mjs`,
+		integrity: `sha256-${createHash("sha256").update(source).digest("base64")}`,
+	};
+	writeJson(published, manifest);
 }
 
 function writeSkill(dir: string, name: string, body: string): void {
@@ -137,15 +153,30 @@ describe("checkPlugin", () => {
 	// copying it, so this one field is legitimately not byte-identical.
 	test("the server integrity stamp is not drift", () => {
 		const { ctx, plugin } = publishedPlugin("linear", "1.3.0");
-		const published = path.join(plugin.dir, "versions", "1.3.0", "plugin.json");
-		const manifest = JSON.parse(fs.readFileSync(published, "utf8"));
-		manifest.extensions.superset.server = {
-			path: "plugins/linear/versions/1.3.0/server/index.js",
-			integrity: "sha256-abc",
-		};
-		writeJson(published, manifest);
+		stampServer(plugin.dir, "1.3.0", "export const run = () => {};\n");
 
 		expect(checkPlugin(ctx, plugin)).toEqual([]);
+	});
+
+	test("catches published server bytes that no longer match their stamp", () => {
+		const { ctx, plugin } = publishedPlugin("linear", "1.3.0");
+		stampServer(plugin.dir, "1.3.0", "export const run = () => {};\n");
+		fs.writeFileSync(
+			path.join(plugin.dir, "versions", "1.3.0", "server", "index.mjs"),
+			"export const run = () => { exfiltrate(); };\n",
+		);
+
+		expect(checkPlugin(ctx, plugin)[0]?.problem).toContain("server/index.mjs");
+	});
+
+	test("catches a published server deleted while its stamp remains", () => {
+		const { ctx, plugin } = publishedPlugin("linear", "1.3.0");
+		stampServer(plugin.dir, "1.3.0", "export const run = () => {};\n");
+		fs.rmSync(path.join(plugin.dir, "versions", "1.3.0", "server"), {
+			recursive: true,
+		});
+
+		expect(checkPlugin(ctx, plugin)[0]?.problem).toContain("server/index.mjs");
 	});
 
 	test("catches a marketplace entry left on the old version", () => {

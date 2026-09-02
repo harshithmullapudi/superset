@@ -34,15 +34,14 @@ export class PluginDispatchError extends Error {
 	}
 }
 
-async function rpc(
+async function post(
 	url: string,
 	headers: Record<string, string>,
-	method: string,
-	params: unknown,
-): Promise<unknown> {
+	body: unknown,
+): Promise<Response> {
 	// `headers` carries the connection's bound credential, so this is https-only
 	// and does not follow a redirect to a host the manifest did not name.
-	const response = await credentialFetch(
+	return await credentialFetch(
 		url,
 		{
 			method: "POST",
@@ -51,15 +50,38 @@ async function rpc(
 				accept: "application/json, text/event-stream",
 				...headers,
 			},
-			body: JSON.stringify({ jsonrpc: "2.0", id: REQUEST_ID, method, params }),
+			body: JSON.stringify(body),
 		},
 		"mcp",
 	);
+}
+
+async function rpc(
+	url: string,
+	headers: Record<string, string>,
+	method: string,
+	params: unknown,
+): Promise<{ result: unknown; response: Response }> {
+	const response = await post(url, headers, {
+		jsonrpc: "2.0",
+		id: REQUEST_ID,
+		method,
+		params,
+	});
 
 	if (response.status === 401 || response.status === 403) {
 		throw new PluginDispatchError(
 			`Upstream rejected the credential (${response.status}); reconnect the plugin.`,
 			401,
+		);
+	}
+	// A streamable-HTTP server answers 404 once its session has expired, and
+	// 400 when it wants an initialize it has not seen. Both are recoverable by
+	// opening a new session, so they carry their own status out of here.
+	if (response.status === 404 || response.status === 400) {
+		throw new PluginDispatchError(
+			`Upstream returned ${response.status} ${response.statusText}`,
+			response.status,
 		);
 	}
 	if (!response.ok) {
@@ -97,13 +119,79 @@ async function rpc(
 		if (payload.error) {
 			throw new PluginDispatchError(payload.error.message, 502);
 		}
-		return payload.result;
+		return { result: payload.result, response };
 	}
 
 	throw new PluginDispatchError(
 		"Upstream returned no JSON-RPC response for this request",
 		502,
 	);
+}
+
+const PROTOCOL_VERSION = "2025-06-18";
+
+/**
+ * Opens an MCP session, for the one case that needs one.
+ *
+ * The proxy is stateless: a tool call is one HTTP request and nothing here
+ * outlives it, so there is no session to keep. Holding one in memory would
+ * only be a session this instance leaks upstream the moment the next request
+ * lands on another. Both first-party servers answer an uninitialized
+ * `tools/call` outright — mcp.linear.app does not even issue an
+ * `mcp-session-id` — so this exists for a third-party marketplace plugin
+ * pointing at a spec-strict server, and what it returns is used by the one
+ * retry below and then dropped.
+ */
+async function initialize(
+	url: string,
+	headers: Record<string, string>,
+): Promise<Record<string, string>> {
+	const { result, response } = await rpc(url, headers, "initialize", {
+		protocolVersion: PROTOCOL_VERSION,
+		capabilities: {},
+		clientInfo: { name: "superset", version: "1.0.0" },
+	});
+
+	const session: Record<string, string> = {
+		"mcp-protocol-version":
+			(result as { protocolVersion?: string } | undefined)?.protocolVersion ??
+			PROTOCOL_VERSION,
+	};
+	const id = response.headers.get("mcp-session-id");
+	if (id) session["mcp-session-id"] = id;
+
+	await post(
+		url,
+		{ ...headers, ...session },
+		{
+			jsonrpc: "2.0",
+			method: "notifications/initialized",
+		},
+	).catch(() => undefined);
+	return session;
+}
+
+/** One MCP request, handshaking only if the server turns the first one down. */
+async function mcpCall(
+	target: { url: string; headers: Record<string, string> },
+	method: string,
+	params: unknown,
+): Promise<unknown> {
+	try {
+		return (await rpc(target.url, target.headers, method, params)).result;
+	} catch (error) {
+		// 400 is what a server wanting an initialize it never saw answers, and 404
+		// a session it does not recognise. Anything else is not ours to retry.
+		const wantsSession =
+			error instanceof PluginDispatchError &&
+			(error.status === 400 || error.status === 404);
+		if (!wantsSession) throw error;
+
+		const session = await initialize(target.url, target.headers);
+		return (
+			await rpc(target.url, { ...target.headers, ...session }, method, params)
+		).result;
+	}
 }
 
 function remoteTarget(
@@ -371,7 +459,7 @@ export async function listTools(
 		return Array.isArray(tools) ? (tools as ToolDefinition[]) : [];
 	}
 
-	const result = (await rpc(target.url, target.headers, "tools/list", {})) as {
+	const result = (await mcpCall(target, "tools/list", {})) as {
 		tools?: ToolDefinition[];
 	};
 	return result.tools ?? [];
@@ -393,7 +481,7 @@ export async function callTool(
 		});
 	}
 
-	return await rpc(target.url, target.headers, "tools/call", {
+	return await mcpCall(target, "tools/call", {
 		name: tool,
 		arguments: args,
 	});

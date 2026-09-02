@@ -367,8 +367,9 @@ export async function installById(
 }
 
 /**
- * The install backing a connection: by id where the connection records one,
- * by name otherwise, which is where ambiguity can still arise.
+ * The install backing a connection, which only an `installId` can name. A
+ * connection written before that column existed resolves to null rather than
+ * guessing by name, so it reads as not installed until it is reconnected.
  */
 export async function installForConnection(
 	userId: string,
