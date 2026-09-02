@@ -28,8 +28,6 @@ export default command({
 			[16, 9, 30, 38],
 		),
 	run: async ({ ctx, options }) => {
-		// The account is the source of truth, so a plugin installed on another
-		// machine appears here too; local disk only caches the content.
 		const { plugins } = await apiRequest<{ plugins: CatalogPlugin[] }>(
 			ctx.bearer,
 			"/api/plugins",
@@ -60,9 +58,6 @@ export default command({
 					connections: plugin.connections,
 					description: plugin.description,
 				};
-				// What `mcp tools` and `mcp call-tool` address a plugin by, so it
-				// has to be one id per row: joining them produced a value that
-				// answers "Connection not found" when pasted.
 				if (plugin.connections.length === 0) {
 					return [{ ...row, pluginId: "", account: null }];
 				}

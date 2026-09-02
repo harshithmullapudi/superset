@@ -36,7 +36,6 @@ export function parseMarketplaceSource(input: string): MarketplaceSource {
 			path: path.resolve(input.replace(/^~/, process.env.HOME ?? "~")),
 		};
 	}
-	// owner/repo, a GitHub URL, or either with #branch appended.
 	const [target, ref] = input.split("#");
 	const github = target?.match(
 		/^(?:https?:\/\/github\.com\/)?([\w.-]+\/[\w.-]+?)(?:\.git)?\/?$/,
@@ -80,8 +79,6 @@ export async function installMarketplace(
 		const ref = source.ref;
 
 		if (fs.existsSync(path.join(location, ".git"))) {
-			// Reset to FETCH_HEAD rather than origin/HEAD: with a single-branch
-			// shallow clone, origin/HEAD is not necessarily the branch we track.
 			await git("git", [
 				"-C",
 				location,
@@ -142,12 +139,6 @@ export async function installMarketplace(
 	};
 }
 
-/**
- * Registers the first-party marketplace on first use.
- *
- * SUPERSET_DEFAULT_MARKETPLACE_PATH overrides the source, which is how you
- * point at a working tree while developing a plugin.
- */
 export async function ensureDefaultMarketplace(): Promise<void> {
 	const known = readKnownMarketplaces();
 	if (known[DEFAULT_MARKETPLACE]) return;
@@ -214,9 +205,6 @@ function sourceDir(marketplace: string, entry: MarketplaceEntry): string {
 	}
 	const root = path.resolve(known.installLocation);
 	const dir = path.resolve(root, entry.source);
-	// The separator matters: without it "../foo-evil/payload" against root
-	// ".../foo" resolves to ".../foo-evil/payload", which string-prefixes the
-	// root and passes.
 	const contained = (a: string, b: string) =>
 		a === b || a.startsWith(`${b}${path.sep}`);
 	const realRoot = fs.existsSync(root) ? fs.realpathSync(root) : root;
@@ -234,8 +222,6 @@ function assertNotSymlink(target: string): void {
 	try {
 		stat = fs.lstatSync(target);
 	} catch (error) {
-		// Absent is fine; anything else means we could not establish that this
-		// path is safe, and installing the wrong payload is worse than failing.
 		if ((error as NodeJS.ErrnoException)?.code === "ENOENT") return;
 		throw error;
 	}
@@ -271,7 +257,6 @@ export interface InstallPluginResult {
 }
 
 export interface InstallPluginOptions {
-	/** Replace an existing install; without it, an installed plugin is an error. */
 	update?: boolean;
 }
 
@@ -306,10 +291,6 @@ export async function installPlugin(
 		throw new CLIError(`Plugin "${name}" has no plugin.json.`);
 	}
 
-	// An update rewrites the manifest, and the manifest is what decides where a
-	// connected credential gets sent. Replacing one silently on a plain install
-	// would move that destination without the user ever being told, so a second
-	// install is an error until they ask for the change by name.
 	const existing = readInstalledPlugins().find(
 		(p) => p.name === name && p.marketplace === found.marketplace,
 	);
@@ -425,7 +406,6 @@ export interface SyncResult {
 	entries: SkillEntry[];
 }
 
-/** Every provisioned skill directory, managed or hand-written. */
 function skillDirNames(): string[] {
 	const root = skillsRoot();
 	if (!fs.existsSync(root)) return [];
@@ -435,28 +415,11 @@ function skillDirNames(): string[] {
 		.map((item) => item.name);
 }
 
-/**
- * Reconciles installed plugins into the directories agents actually read.
- *
- * The provisioning belongs to agent-setup, which already writes Superset's own
- * skills to `~/.agents/skills` and mirrors them into `~/.claude/skills` as a
- * plugin directory — Claude does not read the shared convention and every
- * other agent does. Handing it installed plugins as extra sources gets them
- * both destinations, so a plugin skill reaches Claude, Codex, Vibe, and Kimi
- * without a second mechanism to keep in step with this one.
- */
 export async function syncPlugins(): Promise<SyncResult> {
 	const installed = readInstalledPlugins().filter((p) => p.enabled);
 	const before = new Set(skillDirNames());
 
-	// No pluginSources: createManagedSkills reads installed_plugins.json, which
-	// this call just wrote. Passing our own list would let this process and the
-	// desktop disagree about the desired set, and whoever ran last would reap
-	// the other's skills.
 	await createManagedSkills({
-		// Read from the machine-shared mirror, not left empty: provisioning is
-		// declarative, so a run that does not know what the user disabled in the
-		// desktop would put every one of those skills straight back.
 		disabledSkills: resolveDisabledSkillIds(),
 	});
 
@@ -471,15 +434,8 @@ export async function syncPlugins(): Promise<SyncResult> {
 	};
 }
 
-/**
- * The plugin-provisioned skills. The shared directory also holds Superset's
- * own bundled skills and anything the user hand-wrote, and this command is
- * about what a plugin brought.
- */
 export function listSkills(): SkillEntry[] {
 	const root = skillsRoot();
-	// Longest name first: "github" also prefixes "github-actions-<skill>", and
-	// the more specific plugin is the real owner.
 	const installed = [...readInstalledPlugins()].sort(
 		(a, b) => b.name.length - a.name.length,
 	);

@@ -20,7 +20,6 @@ export { assertSafeSegment } from "./marketplace";
 export interface MarketplaceSource {
 	kind: "github" | "path";
 	repo?: string;
-	/** Branch or tag. Omitted means the repo's default branch. */
 	ref?: string;
 	path?: string;
 }
@@ -40,12 +39,6 @@ export interface InstalledPlugin {
 	enabled: boolean;
 }
 
-/**
- * SUPERSET_HOME_DIR is the only variable that names this directory. SUPERSET_HOME
- * is the CLI's *install* prefix (see apps/marketing/public/cli/install.sh), so
- * reading it here sent anyone who set it to a plugins root that agent-setup —
- * the process that provisions from these records — never looks at.
- */
 export function supersetHome(): string {
 	return getSupersetHomeDir();
 }
@@ -54,12 +47,6 @@ export function pluginsRoot(): string {
 	return path.join(supersetHome(), "plugins");
 }
 
-/**
- * Where provisioned skills land. This is `~/.agents/skills`, not a Superset
- * directory: it is the path Codex, Vibe, and Kimi discover natively, and the
- * one agent-setup provisions into. A Superset-private directory would be read
- * by nothing.
- */
 export function skillsRoot(): string {
 	return path.join(os.homedir(), ".agents", "skills");
 }
@@ -76,11 +63,6 @@ function knownFile(): string {
 	return path.join(pluginsRoot(), "known_marketplaces.json");
 }
 
-/**
- * agent-setup owns this path: it reads the same file to decide which plugins to
- * provision skills from, and provisioning reaps whatever is absent. Two
- * spellings of it is two desired sets, and whoever ran last wins.
- */
 function installedFile(): string {
 	return installedPluginsFilePath();
 }

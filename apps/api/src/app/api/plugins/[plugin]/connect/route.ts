@@ -13,15 +13,6 @@ import {
 	resolveIdentity,
 } from "@/lib/plugins/oauth";
 
-/**
- * Starts an OAuth2 connection by redirecting to the provider.
- *
- * Inputs travel through the signed state so the callback can re-resolve
- * `${inputs.site}` when exchanging the code against a per-tenant token_url.
- * Only non-secret inputs belong here — a credential in a query string lands in
- * browser history, proxy access logs, and the Referer header, so api_key
- * connections go through POST instead.
- */
 export async function GET(
 	request: Request,
 	{ params }: { params: Promise<{ plugin: string }> },
@@ -119,11 +110,6 @@ export async function GET(
 	}
 }
 
-/**
- * Creates an api_key connection. POST with a JSON body of inputs, so the
- * credential never reaches a URL — and so a cross-site GET cannot plant a
- * connection backed by an attacker's credential in someone else's account.
- */
 export async function POST(
 	request: Request,
 	{ params }: { params: Promise<{ plugin: string }> },
@@ -137,8 +123,6 @@ export async function POST(
 	const organizationId =
 		new URL(request.url).searchParams.get("organizationId") ?? null;
 
-	// installedPlugin, not installedManifest: the connection records which
-	// install granted it, so dispatch never has to resolve by name again.
 	let install: Awaited<ReturnType<typeof installedPlugin>>;
 	try {
 		install = await installedPlugin(session.user.id, plugin);

@@ -29,7 +29,6 @@ export interface AuthMethod {
 export interface CatalogPlugin extends PluginCatalogEntry {
 	marketplace: string;
 	installed: boolean;
-	/** What installing again would move to; differs from `version` when stale. */
 	latestVersion: string | null;
 	updateAvailable: boolean;
 	enabled: boolean;
@@ -66,29 +65,11 @@ interface CatalogResponse {
 	}[];
 }
 
-/**
- * Install state lives on the account and nowhere else, so every mutation that
- * changes it has exactly one key to invalidate. It is a prefix: the cached
- * entry hangs off it per user, and React Query matches invalidation by prefix.
- */
 export const PLUGIN_CATALOG_KEY = ["plugin-catalog"] as const;
 
-/**
- * The catalog comes from the account, not from disk: a plugin installed on
- * another machine shows as installed here, and the built-in marketplace is
- * compiled into the API response so the page is populated before anything has
- * been cloned.
- */
 export function usePluginCatalog() {
-	// Subscribed, not read once: the token resolves after first render, and a
-	// query that fired without it would 401 and never retry — nothing in a
-	// static key changes when auth arrives.
 	const token = useAuthToken();
 
-	// The cache outlives a sign-out, so a global key would let the next account
-	// render the previous one's installs and connected accounts while its own
-	// request is still in flight. Keyed by user id, not by the token: the token
-	// rotates on refresh and would evict a still-valid catalog every time.
 	const { data: session } = authClient.useSession();
 	const userId = session?.user?.id ?? null;
 
@@ -139,7 +120,6 @@ export function usePluginCatalog() {
 
 	return {
 		plugins: query.data ?? [],
-		// A query waiting on the token is still loading, not empty.
 		isLoading: query.isLoading || !token,
 		error: query.error,
 	};

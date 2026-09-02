@@ -46,14 +46,6 @@ async function resolveInstall(
 	return { ok: true, install };
 }
 
-/**
- * Records that a user installed a plugin, storing the manifest the proxy and
- * OAuth flow read.
- *
- * The manifest is resolved here rather than accepted from the request: it
- * carries token_url and the proxy target, so a client-supplied one would let
- * a caller point our credential exchange anywhere.
- */
 export async function POST(
 	request: Request,
 	{ params }: { params: Promise<{ plugin: string }> },
@@ -119,17 +111,10 @@ export async function POST(
 			version: manifest.version,
 			marketplace: FIRST_PARTY_MARKETPLACE,
 		},
-		// The client shows a connect prompt when this is true and no connection
-		// exists yet; tools stay unavailable until one does.
 		needsConnection: Boolean(manifest.extensions?.superset?.auth),
 	});
 }
 
-/**
- * Enable or disable an install. The record stays; `enabled` is what the
- * catalog reports and what each machine reconciles its local materialization
- * against, so the account stays the source of truth for both.
- */
 export async function PATCH(
 	request: Request,
 	{ params }: { params: Promise<{ plugin: string }> },
@@ -140,8 +125,6 @@ export async function PATCH(
 	}
 
 	const { plugin } = await params;
-	// `JSON.parse("null")` succeeds and yields null, which then throws on
-	// property access — a 500 for what is a malformed request.
 	const body = ((await request.json().catch(() => ({}))) ?? {}) as {
 		enabled?: unknown;
 	};
@@ -175,7 +158,6 @@ export async function PATCH(
 	});
 }
 
-/** Uninstall, and disconnect anything authorized for the plugin. */
 export async function DELETE(
 	request: Request,
 	{ params }: { params: Promise<{ plugin: string }> },

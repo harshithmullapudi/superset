@@ -22,9 +22,6 @@ describe("resolveTemplate", () => {
 		);
 	});
 
-	// A manifest is public and its author is not necessarily trusted. If any
-	// other root expanded, `${env.X}` plus a manifest-controlled token_url
-	// would read a secret and post it anywhere.
 	test.each([
 		"${env.DATABASE_URL}",
 		"${process.env.SECRET}",
@@ -167,8 +164,6 @@ describe("readPath", () => {
 });
 
 describe("credentialFetch", () => {
-	// The manifest is remote data: the marketplace it came from is not always
-	// ours, and these requests carry a client secret or a bearer token.
 	test.each([
 		"http://linear.app/oauth/token",
 		"ftp://linear.app/token",

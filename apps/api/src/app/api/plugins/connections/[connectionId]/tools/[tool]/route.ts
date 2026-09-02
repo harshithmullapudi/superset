@@ -8,7 +8,6 @@ import {
 } from "@/lib/plugins/connections";
 import { callTool, PluginDispatchError } from "@/lib/plugins/dispatch";
 
-/** Invoke one tool. Body is the tool's arguments object. */
 export async function POST(
 	request: Request,
 	{ params }: { params: Promise<{ connectionId: string; tool: string }> },

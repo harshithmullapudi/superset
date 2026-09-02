@@ -30,9 +30,6 @@ describe("plugin oauth state", () => {
 		expect(state).toMatchObject(PAYLOAD);
 	});
 
-	// The state is what the callback checks the session against, so forging one
-	// is forging "who started this flow" — the callback would otherwise bind a
-	// provider account to whatever user id the attacker named.
 	test("rejects a tampered payload carrying a valid-looking signature", () => {
 		const [, signature] = createPluginState(PAYLOAD).split(".");
 		const forged = Buffer.from(
@@ -95,8 +92,6 @@ describe("clientCredentials", () => {
 		});
 	});
 
-	// A half-configured deployment must read as unconfigured, not send an
-	// authorization request missing its secret.
 	test("returns null when only one half is set", () => {
 		process.env.PLUGIN_LINEAR_CLIENT_ID = "id";
 		delete process.env.PLUGIN_LINEAR_CLIENT_SECRET;
@@ -144,7 +139,6 @@ describe("buildAuthorizationUrl", () => {
 		expect(url.searchParams.get("redirect_uri")).toBe(redirectUri("linear"));
 	});
 
-	// Linear rejects space-separated scopes; the separator is per-provider.
 	test("joins scopes with the manifest's separator", () => {
 		const url = new URL(
 			buildAuthorizationUrl("linear", auth, { inputs: {} }, "s"),

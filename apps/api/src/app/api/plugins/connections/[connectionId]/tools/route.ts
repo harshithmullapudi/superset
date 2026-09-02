@@ -8,7 +8,6 @@ import {
 } from "@/lib/plugins/connections";
 import { listTools, PluginDispatchError } from "@/lib/plugins/dispatch";
 
-/** The tools this connection's plugin exposes, called with its credential. */
 export async function GET(
 	request: Request,
 	{ params }: { params: Promise<{ connectionId: string }> },

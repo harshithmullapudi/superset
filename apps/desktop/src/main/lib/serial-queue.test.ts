@@ -10,9 +10,6 @@ function deferred(): { promise: Promise<void>; resolve: () => void } {
 }
 
 describe("createSerialQueue", () => {
-	// The case this exists for: install parks on a slow CLI run, remove is
-	// requested, and remove must not start until install has settled — or it
-	// finishes first and install re-provisions what remove just reaped.
 	test("a second job does not start until the first settles", async () => {
 		const queue = createSerialQueue();
 		const started: string[] = [];
@@ -49,8 +46,6 @@ describe("createSerialQueue", () => {
 		expect(finished).toEqual([0, 1, 2]);
 	});
 
-	// A CLI run that throws is logged, not fatal. The queue has to keep going,
-	// or one bad install would wedge every later remove.
 	test("a rejected job does not stall the queue", async () => {
 		const queue = createSerialQueue();
 		const ran: string[] = [];

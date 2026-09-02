@@ -58,15 +58,10 @@ export default command({
 			options.marketplace as string | undefined,
 		);
 
-		// Local first: skills on disk and agent config are what the machine
-		// needs, and they work whether or not the account call succeeds.
 		const local = await installPlugin(name, marketplace, {
 			update: Boolean(options.update),
 		});
 
-		// The local install already succeeded, so a failure here is partial, not
-		// total: report it rather than throwing away that fact. Same split the
-		// UI makes — on disk but not on your account, so tools will not work.
 		let account: InstallResponse | null = null;
 		let accountError: string | null = null;
 		try {
@@ -79,8 +74,6 @@ export default command({
 			accountError = error instanceof Error ? error.message : String(error);
 		}
 
-		// Only auto-connect when there is exactly one way in; a choice belongs to
-		// the user, surfaced by `superset plugins connect`.
 		const methods =
 			supersetExtension(
 				JSON.parse(
@@ -113,10 +106,6 @@ export default command({
 				if (missing.length) {
 					throw missingInputsError(name, missing, declared);
 				}
-				// POST with a JSON body, never a query string: these are credential
-				// values, and a URL reaches browser history, proxy logs, and the
-				// Referer header. The route rejects api_key over GET for the same
-				// reason, so this is also the only shape it accepts.
 				const created = await apiRequest<{ account: string | null }>(
 					ctx.bearer,
 					`/api/plugins/${encodeURIComponent(name)}/connect`,

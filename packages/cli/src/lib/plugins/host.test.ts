@@ -16,9 +16,6 @@ import {
 import { bumpVersion, compareVersions } from "./marketplace";
 
 describe("assertSafeSegment", () => {
-	// These values are marketplace-controlled and reach path.join, which
-	// normalizes `..`. The joined path is then rmSync'd recursively, so an
-	// escape here deletes an arbitrary directory.
 	test.each([
 		"1.0.0/../../../../../Documents",
 		"../../etc",
@@ -54,8 +51,6 @@ describe("assertSafeSegment", () => {
 });
 
 describe("containment", () => {
-	// A prefix check without the separator passes for a sibling directory whose
-	// name merely starts with the root: ".../foo" vs ".../foo-evil".
 	test("a sibling with a shared prefix is outside the root", () => {
 		const root = path.resolve("/tmp/marketplaces/foo");
 		const sibling = path.resolve(root, "../foo-evil/payload");
@@ -186,10 +181,6 @@ describe("findInstalled", () => {
 });
 
 describe("installed_plugins.json location", () => {
-	// Regression: host.ts resolved SUPERSET_HOME first, but that variable is the
-	// CLI's install prefix (apps/marketing/public/cli/install.sh), not the data
-	// home. Writing here while agent-setup read ~/.superset meant `plugins
-	// install` provisioned from an empty desired set — and provisioning reaps.
 	const vars = ["SUPERSET_HOME", "SUPERSET_HOME_DIR"] as const;
 	const saved = new Map(vars.map((name) => [name, process.env[name]]));
 	let root = "";

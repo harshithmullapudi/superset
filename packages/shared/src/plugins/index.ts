@@ -68,12 +68,6 @@ export interface PluginCatalogEntry {
 	mcpServers: Record<string, PluginMcpServerConfig>;
 	/** Names of skills the plugin bundles (Codex manifests point `skills` at a directory; a resolved entry lists them). */
 	skills?: readonly string[];
-	/**
-	 * What the user must connect before the plugin's tools work, mirrored from
-	 * the manifest's `extensions.superset.auth`. Absent means the plugin needs
-	 * no credential. Only the shape the UI renders — URLs and client ids stay
-	 * server-side.
-	 */
 	auth?: readonly {
 		type: "oauth2" | "api_key";
 		label?: string | null;

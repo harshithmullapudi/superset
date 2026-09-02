@@ -1,10 +1,6 @@
 import { CLIError } from "@superset/cli-framework";
 import { getApiUrl } from "../config";
 
-/**
- * Mirrors the header rule in api-client: better-auth's apiKey plugin reads
- * `sk_live_…` from x-api-key, and rejects it as an invalid bearer.
- */
 function authHeaders(bearer: string): Record<string, string> {
 	return bearer.startsWith("sk_live_")
 		? { "x-api-key": bearer }
@@ -38,11 +34,6 @@ export async function apiRequest<T>(
 	return payload as T;
 }
 
-/**
- * Both mcp commands address a plugin by connection id, and the id only comes
- * from one place — so a wrong or stale one should name that place rather than
- * leaving the caller to guess which of several ids the API meant.
- */
 export async function connectionRequest<T>(
 	bearer: string,
 	path: string,
@@ -72,11 +63,6 @@ export interface AuthInputSpec {
 	secret?: boolean;
 }
 
-/**
- * The message an agent reads when a plugin needs credentials it was not given.
- * It names each question to ask and the exact command to run with the answers,
- * so the agent can collect them and retry without guessing at the interface.
- */
 export function missingInputsError(
 	pluginName: string,
 	missing: AuthInputSpec[],

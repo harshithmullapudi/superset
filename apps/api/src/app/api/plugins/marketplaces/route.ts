@@ -7,9 +7,6 @@ import { z } from "zod";
 
 const FIRST_PARTY = "superset";
 
-// Discriminated, because the two kinds need different fields and a row missing
-// them is only discovered when something tries to resolve it — a github source
-// with no repo stores cleanly here and fails at the next sync or tool call.
 const addSchema = z.discriminatedUnion("sourceKind", [
 	z.object({
 		name: z.string().min(1),
@@ -27,11 +24,6 @@ const addSchema = z.discriminatedUnion("sourceKind", [
 	}),
 ]);
 
-/**
- * The marketplaces this user has. The first-party one is always present and is
- * not a row: it is compiled into the clients, so it exists before any request
- * succeeds and cannot be removed.
- */
 export async function GET(request: Request) {
 	const session = await auth.api.getSession({ headers: request.headers });
 	if (!session?.user) {
@@ -67,7 +59,6 @@ export async function GET(request: Request) {
 	});
 }
 
-/** Add a marketplace. Adding one that exists updates its source. */
 export async function POST(request: Request) {
 	const session = await auth.api.getSession({ headers: request.headers });
 	if (!session?.user) {

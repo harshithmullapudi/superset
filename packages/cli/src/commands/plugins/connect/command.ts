@@ -73,8 +73,6 @@ export default command({
 				? methods[0]
 				: undefined;
 
-		// A plugin offering several ways in is a question for the user, phrased
-		// so an agent can ask it and retry with the answer.
 		if (methods.length > 1 && !auth) {
 			throw new CLIError(
 				[
@@ -127,9 +125,6 @@ export default command({
 			};
 		}
 
-		// OAuth cannot complete headlessly: the user has to authorize in a
-		// browser. Return the URL so an agent can hand it over rather than
-		// pretending to have finished.
 		const secrets = declared.filter((input) => input.secret);
 		if (secrets.length) {
 			throw new CLIError(

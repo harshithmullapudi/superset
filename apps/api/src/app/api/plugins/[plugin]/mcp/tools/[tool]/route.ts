@@ -2,7 +2,6 @@ import { auth } from "@superset/auth/server";
 import { pluginContext } from "@/lib/plugins/connections";
 import { callTool, PluginDispatchError } from "@/lib/plugins/dispatch";
 
-/** Invoke one tool, addressed by plugin. Body is the tool's arguments object. */
 export async function POST(
 	request: Request,
 	{ params }: { params: Promise<{ plugin: string; tool: string }> },

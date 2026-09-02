@@ -24,8 +24,6 @@ export default command({
 	run: async ({ ctx, options }) => {
 		const pluginId = options.pluginId as string;
 
-		// The server is dialed by the API, which holds the credential. Nothing
-		// here ever sees the token, which is the point of the proxy.
 		const { plugin, tools } = await connectionRequest<ToolsResponse>(
 			ctx.bearer,
 			`/api/plugins/connections/${encodeURIComponent(pluginId)}/tools`,

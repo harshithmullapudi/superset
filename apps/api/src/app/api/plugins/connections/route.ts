@@ -1,7 +1,6 @@
 import { auth } from "@superset/auth/server";
 import { listConnections } from "@/lib/plugins/connections";
 
-/** Connections the caller holds. Tokens are never returned. */
 export async function GET(request: Request) {
 	const session = await auth.api.getSession({ headers: request.headers });
 	if (!session?.user) {

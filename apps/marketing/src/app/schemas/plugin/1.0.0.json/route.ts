@@ -1,15 +1,5 @@
 import { COMPANY } from "@superset/shared/constants";
 
-/**
- * The Superset plugin manifest schema. Describes `plugin.json` in full,
- * including the parts Agent Plugins deliberately leaves undefined — auth,
- * credential binding, and the MCP server — which live under
- * `extensions.superset`.
- *
- * Keeping them namespaced rather than at the top level means the same file is
- * also a valid Agent Plugins manifest, so a plugin published for Superset
- * loads in other conformant clients without a second file.
- */
 export function GET() {
 	const base = COMPANY.MARKETING_URL;
 
@@ -167,9 +157,6 @@ export function GET() {
 					superset: {
 						type: "object",
 						additionalProperties: false,
-						// Tools come from exactly one server, which `plugins publish`
-						// enforces too. Neither key is required — a skills-only plugin
-						// declares no server at all.
 						not: { required: ["mcp", "server"] },
 						properties: {
 							interface: {

@@ -34,24 +34,16 @@ const BUNDLED_SOURCE_NAME = "superset";
  */
 const COMMAND_SKILLS = ["feedback", "10x", "setup", "doctor"] as const;
 
-/**
- * A directory holding a `skills/` folder to provision from. The bundled
- * Superset plugin is one; every installed marketplace plugin is another.
- * `name` namespaces everything written for the source, so two plugins can
- * ship a skill of the same name without colliding.
- */
 export interface PluginSkillSource {
 	name: string;
 	dir: string;
 }
 
-/** A source paired with its skill names; null when it could not be read. */
 interface ResolvedSource {
 	source: PluginSkillSource;
 	skills: string[] | null;
 }
 
-/** A directory grafted into a subpath of a synced destination. */
 interface ExtraTree {
 	destRelative: string;
 	src: string;
@@ -61,20 +53,7 @@ interface ExtraTree {
 export interface ManagedSkillsOptions {
 	homeDir?: string;
 	templatesDir?: string;
-	/**
-	 * Skills to withhold provisioning for (and reap if already provisioned). A
-	 * bare name disables that skill of the bundled Superset plugin; a qualified
-	 * `<plugin>/<skill>` disables one plugin's copy, which is the only form
-	 * that can tell apart two plugins shipping the same skill name.
-	 */
 	disabledSkills?: readonly string[];
-	/**
-	 * Marketplace plugins to provision alongside the bundled one. Omitted reads
-	 * them from ~/.superset/plugins/installed_plugins.json, which is what every
-	 * caller should want: provisioning reaps whatever is not in the desired
-	 * set, so a caller that passed an incomplete list would delete another
-	 * provisioner's skills. Pass a list only to override that, as tests do.
-	 */
 	pluginSources?: readonly PluginSkillSource[];
 }
 
@@ -102,10 +81,6 @@ export function setFrontmatterName(content: string, name: string): string {
 	return rewritten + content.slice(frontmatterEnd);
 }
 
-/**
- * Bare names address the bundled plugin only. Qualifying with the source name
- * is what lets two plugins ship the same skill name and be disabled apart.
- */
 function isSkillDisabled(
 	disabled: ReadonlySet<string>,
 	sourceName: string,
@@ -115,11 +90,6 @@ function isSkillDisabled(
 	return sourceName === BUNDLED_SOURCE_NAME && disabled.has(skillName);
 }
 
-/**
- * The bundled plugin first, then marketplace plugins. Deduped with the bundled
- * one pinned: a marketplace plugin named "superset" must not be able to take
- * over the directory the bundled skills live in. Sources with no `skills/` are
- */
 function resolvePluginSources(
 	pluginSources: readonly PluginSkillSource[] = [],
 ): ResolvedSource[] {
@@ -254,8 +224,6 @@ function claudeSkillTrees(
 			trees.push({
 				destRelative: path.join("skills", dirName),
 				src: path.join(source.dir, "skills", skillName),
-				// The skill spec requires the frontmatter name to match the parent
-				// directory, and the prefix changed that directory's name.
 				transform: (relativePath, contents) =>
 					relativePath === "SKILL.md"
 						? setFrontmatterName(contents, dirName)
@@ -285,11 +253,6 @@ async function provisionClaudePlugin(
 		console.log(`[agent-setup] Skipping user-owned plugin dir at ${target}`);
 		return;
 	}
-	// A source we could not read keeps whatever it provisioned earlier: its
-	// skills are still installed, and rebuilding the tree without them would
-	// hand every one of them to the reaper. Disabling is the exception — that
-	// is a decision the user already made, and an unreadable source is no
-	// reason to hand a disabled skill back to the agent.
 	const unreadable = pluginSources
 		.filter((entry) => entry.skills === null)
 		.map((entry) => ({
@@ -338,11 +301,6 @@ function readPluginSkill(
  * set would hand every one of its directories to the reaper.
  */
 function listSourceSkills(sourceDir: string): string[] | null {
-	// A missing source directory is one we cannot see — the marketplace clone
-	// is gone, or was never fetched on this machine — and must not read as
-	// "ships nothing", which would reap skills that are still installed. A
-	// source that exists and has no skills/ genuinely ships none, so its stale
-	// directories should go.
 	if (!fs.existsSync(sourceDir)) return null;
 	const skillsDir = path.join(sourceDir, "skills");
 	if (!fs.existsSync(skillsDir)) return [];
@@ -376,7 +334,6 @@ async function copyBundledExtras(
 	}
 }
 
-/** Directories under `root` that this source provisioned on an earlier run. */
 function provisionedDirsFor(root: string, sourceName: string): string[] {
 	if (!fs.existsSync(root)) return [];
 	try {
@@ -488,8 +445,6 @@ export async function createManagedSkills(
 				agentsSkillsRoot,
 				source.name,
 			)) {
-				// `<source>-<skill>`; a skill the user disabled stays reaped even
-				// though we cannot re-enumerate the source to confirm it exists.
 				const skillName = existing.slice(source.name.length + 1);
 				if (isSkillDisabled(disabledSkills, source.name, skillName)) continue;
 				desiredAgentsDirs.add(existing);
@@ -499,9 +454,6 @@ export async function createManagedSkills(
 
 		for (const pluginSkill of skills) {
 			if (isSkillDisabled(disabledSkills, source.name, pluginSkill)) continue;
-			// Prefixed dir name carries the namespace for agents without plugin
-			// support; frontmatter `name` is rewritten to match because the skill
-			// spec requires name == parent directory.
 			const dirName = `${source.name}-${pluginSkill}`;
 			try {
 				const raw = readPluginSkill(source.dir, pluginSkill);
@@ -526,9 +478,6 @@ export async function createManagedSkills(
 					targetDir,
 				);
 			} catch (error) {
-				// Keep what is already on disk: the read failed, which says nothing
-				// about whether the skill belongs there. Leaving it out of the
-				// desired set would hand it to the reaper over a transient EACCES.
 				desiredAgentsDirs.add(dirName);
 				console.warn(
 					`[agent-setup] Failed to provision skill ${dirName}:`,
@@ -556,8 +505,6 @@ export async function createManagedSkills(
 			fs.mkdirSync(commandNamespaceDir, { recursive: true });
 			writeFileIfChanged(filePath, withManagedMarker(raw), 0o644);
 		} catch (error) {
-			// Same as the skill loop: a read that threw is not evidence the
-			// command should go away.
 			desiredCommandFiles.add(fileName);
 			console.warn(
 				`[agent-setup] Failed to provision command ${fileName}:`,

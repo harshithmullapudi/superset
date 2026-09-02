@@ -13,7 +13,6 @@ function writeJson(file: string, value: unknown): void {
 	fs.writeFileSync(file, `${JSON.stringify(value, null, "\t")}\n`);
 }
 
-/** What `publish` leaves behind for a bundled server: the bytes and their digest. */
 function stampServer(dir: string, version: string, source: string): void {
 	const target = path.join(dir, "versions", version);
 	fs.mkdirSync(path.join(target, "server"), { recursive: true });
@@ -36,11 +35,6 @@ function writeSkill(dir: string, name: string, body: string): void {
 	);
 }
 
-/**
- * A plugin whose versions/<version> snapshot is a faithful copy of its source,
- * which is the state `publish` leaves behind and the only state `check` should
- * accept.
- */
 function publishedPlugin(
 	name: string,
 	version: string,
@@ -63,7 +57,6 @@ function publishedPlugin(
 	for (const [skill, body] of Object.entries(skills))
 		writeSkill(dir, skill, body);
 
-	// What `publish` copies out: plugin.json plus the skills tree.
 	const target = path.join(dir, "versions", version);
 	fs.mkdirSync(target, { recursive: true });
 	fs.copyFileSync(
@@ -106,10 +99,6 @@ describe("checkPlugin", () => {
 		expect(checkPlugin(ctx, plugin)).toEqual([]);
 	});
 
-	// The gap this closes: a plugin with no server source passed every other
-	// check as long as versions/<v> merely existed, so editing a SKILL.md in
-	// place shipped a snapshot — and a bundled manifest, and every install —
-	// describing skills the repo no longer contained.
 	test("catches a skill edited in place after publishing", () => {
 		const { ctx, plugin } = publishedPlugin("linear", "1.3.0");
 		writeSkill(plugin.dir, "file-issue", "File an issue, but rewritten");
@@ -149,8 +138,6 @@ describe("checkPlugin", () => {
 		expect(checkPlugin(ctx, plugin)[0]?.problem).toContain("plugin.json");
 	});
 
-	// publish stamps the server digest into the published manifest *after*
-	// copying it, so this one field is legitimately not byte-identical.
 	test("the server integrity stamp is not drift", () => {
 		const { ctx, plugin } = publishedPlugin("linear", "1.3.0");
 		stampServer(plugin.dir, "1.3.0", "export const run = () => {};\n");

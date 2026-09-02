@@ -1,8 +1,3 @@
-/**
- * One section rule for the plugin detail page: label, optional count, hairline.
- * Extracted because three sections were hand-rolling the same flex row and had
- * already drifted — Information had no rule at all.
- */
 export function SectionHeader({
 	label,
 	count,

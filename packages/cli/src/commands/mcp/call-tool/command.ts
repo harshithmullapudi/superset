@@ -19,8 +19,6 @@ export default command({
 		const pluginId = options.pluginId as string;
 		const tool = args.tool as string;
 
-		// A bare `-` cannot mean stdin here: the framework parses a positional
-		// starting with `-` as a flag. Piping with the argument omitted does.
 		const raw = args.arguments as string | undefined;
 		const source = raw ?? (await readStdin()) ?? "{}";
 		let parsed: Record<string, unknown>;

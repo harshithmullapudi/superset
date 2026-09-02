@@ -31,8 +31,6 @@ export function PluginsView() {
 		error: catalogError,
 	} = usePluginCatalog();
 
-	// Installed is not the same as usable: a plugin that needs auth is only
-	// done once an account is connected, so the card should not claim otherwise.
 	const isConnected = (plugin: CatalogPlugin) =>
 		plugin.installed && (!plugin.auth || plugin.accounts.length > 0);
 
@@ -62,11 +60,7 @@ export function PluginsView() {
 		);
 	}, [query, catalog]);
 
-	// Search-filtered, because this drives the Installed row on the page.
 	const installedPlugins = visiblePlugins.filter((plugin) => plugin.installed);
-	// Unfiltered, because the manage dialog is reached from a button and has no
-	// search of its own: scoping it to the query would hide plugins the user is
-	// trying to disable and give them no way to reach them.
 	const allInstalled = catalog.filter((plugin) => plugin.installed);
 	const featured = visiblePlugins.filter((plugin) => plugin.featured);
 	// Featured plugins appear in their category section too — Featured is a

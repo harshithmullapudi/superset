@@ -9,9 +9,6 @@ import type { ResolvedPlugin } from "./marketplace";
 const run = promisify(execFile);
 
 export const SERVER_ENTRY = path.join("server", "index.mjs");
-// No leading dot: publish copies the server directory and skips dotfiles, and
-// the stamp has to travel with the bundle so `check` can verify the published
-// artifact against source once the working build is gitignored.
 export const SERVER_STAMP = path.join("server", "build-stamp.json");
 
 interface BuildStamp {
@@ -50,19 +47,12 @@ export function readStamp(plugin: ResolvedPlugin): BuildStamp | null {
 	}
 }
 
-/** Whether the working build in `server/` is up to date. Absent counts as not current. */
 export function isBuildCurrent(plugin: ResolvedPlugin): boolean {
 	if (!plugin.hasServerSource) return true;
 	if (!fs.existsSync(path.join(plugin.dir, SERVER_ENTRY))) return false;
 	return readStamp(plugin)?.sourceHash === hashSourceTree(plugin.dir);
 }
 
-/**
- * Whether the published bundle for `version` was built from the source that is
- * checked in now. This is the guarantee that matters: `server/` is gitignored,
- * so a fresh clone has no working build, but the published artifact is what
- * users install.
- */
 export function isPublishedBuildCurrent(
 	plugin: ResolvedPlugin,
 	versionPath: string,

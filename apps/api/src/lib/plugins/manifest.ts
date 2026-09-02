@@ -18,11 +18,6 @@ export interface AuthIdentity {
 	label?: string;
 }
 
-/**
- * One way to authenticate. A plugin may offer several, and they are not
- * interchangeable — Linear sends OAuth tokens as `Bearer <token>` and personal
- * API keys raw — so `identity` and `bind` belong to the method.
- */
 export interface PluginAuthMethod {
 	type: "oauth2" | "api_key";
 	label?: string;
@@ -42,7 +37,6 @@ export interface PluginAuthMethod {
 
 export type PluginAuth = PluginAuthMethod[];
 
-/** The declared method matching `type`, or the only one when unspecified. */
 export function authMethod(
 	auth: PluginAuth | undefined,
 	type?: string,
@@ -63,7 +57,6 @@ export interface PluginBind {
 	env?: Record<string, string>;
 }
 
-/** Stamped by `plugins publish`; addresses and pins the published artifact. */
 export interface PluginServer {
 	path?: string;
 	integrity?: string;
@@ -99,14 +92,8 @@ const TEMPLATE = /\$\{(config|inputs)\.([\w.-]+)\}/g;
 
 const URL_STRUCTURE = /[/\\?#@:[\]%\s]|^$/;
 
-/** What the connect route falls back to when a method names no credential_input. */
 export const DEFAULT_CREDENTIAL_INPUT = "api_key";
 
-/**
- * Resolves `${config.access_token}` and `${inputs.site}` in a manifest string.
- * Only these two roots expand; anything else stays literal, so a manifest can
- * never reach into process env.
- */
 export function resolveTemplate(value: string, scope: TemplateScope): string {
 	return value.replace(TEMPLATE, (whole, root: string, key: string) => {
 		const source =
@@ -176,11 +163,6 @@ export function resolveTemplateDeep<T>(value: T, scope: TemplateScope): T {
 	return value;
 }
 
-/**
- * JSONPath-lite: `$.a.b[0].c`. Deliberately not full JSONPath — filters and
- * wildcards would be a parser and a dependency for capability no manifest
- * needs.
- */
 export function readPath(source: unknown, path: string): unknown {
 	const trimmed = path.startsWith("$.") ? path.slice(2) : path;
 	let current: unknown = source;
@@ -204,17 +186,6 @@ export function readPath(source: unknown, path: string): unknown {
 	return current;
 }
 
-/**
- * A fetch for requests that carry a credential to a manifest-supplied URL.
- *
- * Two things the default does wrong here. It will happily dial `http://`, and
- * a manifest is remote data — the marketplace it came from is not always ours.
- * And it follows redirects, re-sending the Authorization header (or a client
- * secret in the body) to whatever host the 302 names, which turns any provider
- * with an open redirect into a credential exfiltration path.
- *
- * So: https only, and a redirect is an error rather than a second request.
- */
 export async function credentialFetch(
 	url: string,
 	init: RequestInit,

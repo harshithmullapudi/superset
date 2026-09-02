@@ -47,10 +47,8 @@ export function PluginConnections({
 }: {
 	pluginName: string;
 	displayName: string;
-	/** Empty or absent for a skills-only plugin, which has nothing to authenticate. */
 	auth?: readonly PluginAuthSpec[];
 	installed: boolean;
-	/** Installs here and on the account; resolves once the account row exists. */
 	onAdd: () => Promise<boolean>;
 	onRemove: () => void;
 	isBusy: boolean;
@@ -68,16 +66,11 @@ export function PluginConnections({
 	} = usePluginConnections(pluginName);
 	const [values, setValues] = useState<Record<string, string>>({});
 
-	// One method today: a manifest declares a single `auth`. The control is a
-	// select so offering a choice later needs no UI change — only a manifest
-	// that can list more than one.
 	const methods = auth ?? [];
 	const [method, setMethod] = useState<PluginAuthSpec["type"]>(
 		methods[0]?.type ?? "oauth2",
 	);
 
-	// Inputs belong to the chosen method: Linear's API key needs a field, its
-	// OAuth flow needs none.
 	const selected = methods.find((entry) => entry.type === method);
 	const inputs = selected?.inputs ?? [];
 	const missingRequired = inputs.some(
@@ -85,22 +78,10 @@ export function PluginConnections({
 	);
 	const connected = connections.length > 0;
 
-	// Inputs are collected before either flow starts: oauth2 templates
-	// ${inputs.site} into its authorize URL for per-tenant providers, so
-	// redirecting first would send an unresolved URL.
-	// Connecting is what marks a plugin added, so an unadded plugin installs on
-	// the way through rather than needing a separate Add step first — awaited,
-	// because connect resolves the manifest from the install row.
 	const authenticate = async () => {
-		// Always, not only when `installed` is false. That flag is the account's
-		// answer, and an account install done on another machine says nothing
-		// about whether this one has the skills and MCP config. Add is
-		// idempotent — a repeat install rewrites the record and re-provisions —
-		// so running it here is what converges the machine you are sitting at.
 		try {
 			if (!(await onAdd())) return;
 		} catch {
-			// The install mutation already surfaced why.
 			return;
 		}
 		if (method === "api_key") {
@@ -108,9 +89,6 @@ export function PluginConnections({
 			return;
 		}
 
-		// The authorization URL is a browser navigation: it reaches history, the
-		// Referer header, and any proxy in between. Only this method's declared
-		// non-secret inputs go in it, whatever the form is still holding.
 		connectOAuth(
 			Object.fromEntries(
 				inputs
@@ -234,9 +212,6 @@ export function PluginConnections({
 							<Select
 								value={method}
 								onValueChange={(next) => {
-									// Values belong to the method they were typed under. An
-									// API key left behind by a method switch would otherwise
-									// ride along into the oauth2 authorization URL.
 									setValues({});
 									setMethod(next as PluginAuthSpec["type"]);
 								}}

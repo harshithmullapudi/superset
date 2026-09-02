@@ -31,8 +31,6 @@ export default command({
 		const plugins = resolvePlugins(ctx, names);
 		const issues = plugins.flatMap((plugin) => checkPlugin(ctx, plugin));
 
-		// Only when checking the whole marketplace: the bundle is generated from
-		// every published plugin, so a subset can never say whether it is current.
 		if (!names?.length) issues.push(...generatedManifestDrift(ctx));
 
 		if (issues.length) {

@@ -22,7 +22,6 @@ function PluginDetailPage() {
 		if (isEnabled === undefined) return null;
 		if (!isEnabled) return <Redirect to="/v2-workspaces" />;
 	}
-	// Redirecting before the catalog resolves would bounce a valid deep link.
 	if (isLoading) return null;
 	if (!plugin) return <Redirect to="/plugins" />;
 

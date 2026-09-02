@@ -33,7 +33,6 @@ export interface UpsertConnectionInput {
 	userId: string;
 	organizationId: string | null;
 	pluginName: string;
-	/** The install this token is granted against; resolved by the caller. */
 	installId?: string | null;
 	authMethod: string;
 	accessToken: string;
@@ -46,10 +45,6 @@ export interface UpsertConnectionInput {
 	externalAccountLabel?: string | null;
 }
 
-/**
- * Secret input values are encrypted individually so a `config` blob can be
- * returned to the UI with them stripped rather than decrypted wholesale.
- */
 async function encryptInputs(
 	inputs: Record<string, unknown>,
 	secretNames: string[],
@@ -217,12 +212,6 @@ export async function templateScope(
 	};
 }
 
-/**
- * The manifest supplies the mcp url a credential gets sent to, so resolving it
- * must be deterministic. The unique index is (user, marketplace, plugin), so
- * filtering on user+plugin alone can match two rows; order by marketplace and
- * take the first rather than letting the database choose.
- */
 export interface InstalledPlugin {
 	id: string;
 	manifest: PluginManifest;
@@ -240,16 +229,6 @@ export class AmbiguousPluginError extends Error {
 	}
 }
 
-/**
- * The manifest to resolve a plugin against, for this user.
- *
- * Refuses rather than picks when a name is installed from several
- * marketplaces. The manifest decides the token_url and the proxy target, and a
- * connection is keyed by plugin *name* — so silently answering with the
- * alphabetically-first install is how a credential granted for one
- * marketplace's plugin ends up bound to another's URL. Callers that know which
- * one they mean pass `marketplace` and never see this.
- */
 export async function installedPlugin(
 	userId: string,
 	pluginName: string,
@@ -332,12 +311,6 @@ export async function installRecord(
 	return { id: row.id, marketplace: row.marketplace, siblings: count };
 }
 
-/**
- * The install a connection was granted against, by id.
- *
- * This is the path that cannot be ambiguous: the connection names one row, so
- * no marketplace has to be guessed from a plugin name.
- */
 export async function installById(
 	userId: string,
 	installId: string,
@@ -366,11 +339,6 @@ export async function installById(
 	};
 }
 
-/**
- * The install backing a connection, which only an `installId` can name. A
- * connection written before that column existed resolves to null rather than
- * guessing by name, so it reads as not installed until it is reconnected.
- */
 export async function installForConnection(
 	userId: string,
 	connection: Pick<SelectPluginConnection, "installId" | "pluginName">,
@@ -395,15 +363,6 @@ export interface BundledSource {
 	ref: string;
 }
 
-/**
- * Where to download a plugin's bundled server from.
- *
- * The marketplace the plugin was installed from decides this, so an install
- * always resolves against the repo it came from. A `path` marketplace is one
- * machine's working tree and is unreachable from here, so it yields null and
- * the caller reports that rather than silently falling back to a repo the user
- * never chose.
- */
 export async function bundledSource(
 	userId: string,
 	marketplace: string,
@@ -420,8 +379,6 @@ export async function bundledSource(
 		.limit(1);
 
 	if (!row) {
-		// The first-party marketplace ships with the app, so an account that
-		// never explicitly added one still resolves.
 		return marketplace === DEFAULT_MARKETPLACE
 			? { repo: DEFAULT_MARKETPLACE_REPO, ref: DEFAULT_MARKETPLACE_REF }
 			: null;
@@ -430,10 +387,6 @@ export async function bundledSource(
 	return { repo: row.repo, ref: row.ref ?? "HEAD" };
 }
 
-/**
- * Turns an ambiguous-plugin refusal into a response. Returns null for anything
- * else, so a route can rethrow what it does not own.
- */
 export function pluginErrorResponse(error: unknown): Response | null {
 	return error instanceof AmbiguousPluginError
 		? Response.json({ error: error.message }, { status: 409 })
@@ -446,22 +399,12 @@ export function manifestAuth(manifest: PluginManifest) {
 
 export interface PluginContext {
 	manifest: PluginManifest;
-	/** Where a bundled server is downloaded from; null for a local marketplace. */
 	bundled: BundledSource | null;
 	scope: TemplateScope;
 	connectionId: string | null;
-	/** Which declared method the held token came from; null when no auth. */
 	authMethod: string | null;
 }
 
-/**
- * Everything a tool call needs for one plugin, whether or not it has auth.
- *
- * A plugin with no `auth` never has a connection row, so keying dispatch on a
- * connection id alone left those plugins unreachable. Auth plugins resolve the
- * caller's single connection; more than one is ambiguous and must be addressed
- * by id instead.
- */
 export async function pluginContext(
 	userId: string,
 	pluginName: string,

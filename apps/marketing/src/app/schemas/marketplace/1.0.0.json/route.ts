@@ -1,13 +1,5 @@
 import { COMPANY } from "@superset/shared/constants";
 
-/**
- * The Superset marketplace schema. A marketplace is a git repo with
- * `.agent-marketplace.json` at its root listing the plugins it offers.
- *
- * Distribution is the layer packaging standards deliberately leave open, so
- * this is ours to define; the shape mirrors Claude Code's marketplace file so
- * one repo can be published into both ecosystems.
- */
 export function GET() {
 	const base = COMPANY.MARKETING_URL;
 

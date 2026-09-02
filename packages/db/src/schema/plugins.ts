@@ -11,25 +11,10 @@ import {
 } from "drizzle-orm/pg-core";
 import { organizations, users } from "./auth";
 
-/**
- * One plugin a user installed from a marketplace.
- *
- * `pluginName` and `marketplace` are text, never enums: adding a plugin is a
- * marketplace edit, not a migration. That is the whole point of the format,
- * and it is why these do not live in `integration_connections`, whose
- * `provider` enum costs a migration per provider.
- *
- * `manifest` is the resolved plugin.json. Storing it means a remote plugin's
- * tool calls need nothing on disk — the mcp url and the bind map are already
- * on the row.
- */
 export const pluginInstalls = pgTable(
 	"plugin_installs",
 	{
 		id: uuid().primaryKey().defaultRandom(),
-		// Nullable until org policy exists (phase 2). Present from the start so
-		// adding policy never needs a backfill that cannot answer "which org?"
-		// for someone in more than one.
 		organizationId: uuid("organization_id").references(() => organizations.id, {
 			onDelete: "cascade",
 		}),
@@ -63,26 +48,6 @@ export const pluginInstalls = pgTable(
 export type InsertPluginInstall = typeof pluginInstalls.$inferInsert;
 export type SelectPluginInstall = typeof pluginInstalls.$inferSelect;
 
-/**
- * One authorization of one plugin, by one user, for one external account.
- *
- * Tokens are encrypted at rest with better-auth's symmetricEncrypt keyed off
- * BETTER_AUTH_SECRET; `integration_connections` stores them in cleartext and
- * should not be copied here.
- *
- * `externalAccountId` comes from the manifest's `auth.identity` block, or is a
- * generated uuid when the plugin declares none. It is part of the unique index
- * so one user can hold several connections to the same plugin — two Gmail
- * accounts — without a migration when that ships.
- *
- * `installId` names the install this token was granted against. Without it a
- * connection identified its plugin by name alone, so a name carried by two
- * marketplaces left dispatch to guess which manifest to resolve — and the
- * manifest supplies the token_url and the proxy target, which is a credential
- * bound to the wrong host. It is nullable and clears rather than cascades:
- * uninstalling drops the install row, and a disconnected connection stays for
- * audit. A null here means the install is gone, which dispatch already refuses.
- */
 export const pluginConnections = pgTable(
 	"plugin_connections",
 	{
@@ -98,21 +63,13 @@ export const pluginConnections = pgTable(
 		installId: uuid("install_id").references(() => pluginInstalls.id, {
 			onDelete: "set null",
 		}),
-		/**
-		 * Which declared auth method produced this token. A plugin can offer
-		 * several and they are not interchangeable — Linear sends OAuth tokens as
-		 * `Bearer <token>` and personal API keys raw — so dispatch needs to know
-		 * which one it holds.
-		 */
 		authMethod: text("auth_method").notNull().default("oauth2"),
 
-		// Encrypted. Never select these into a response.
 		accessToken: text("access_token").notNull(),
 		refreshToken: text("refresh_token"),
 		tokenExpiresAt: timestamp("token_expires_at"),
 		scopes: text().array(),
 
-		/** Values for the manifest's `auth.inputs`; secret ones encrypted. */
 		config: jsonb(),
 
 		externalAccountId: text("external_account_id").notNull(),
@@ -128,8 +85,6 @@ export const pluginConnections = pgTable(
 			.$onUpdate(() => new Date()),
 	},
 	(table) => [
-		// Reconnecting the same account replaces the live row; a disconnected
-		// row stays for audit, so the index is partial rather than a constraint.
 		uniqueIndex("plugin_connections_account_active_unique")
 			.on(table.userId, table.installId, table.externalAccountId)
 			.where(sql`${table.disconnectedAt} IS NULL`),
@@ -144,14 +99,6 @@ export const pluginConnections = pgTable(
 export type InsertPluginConnection = typeof pluginConnections.$inferInsert;
 export type SelectPluginConnection = typeof pluginConnections.$inferSelect;
 
-/**
- * A marketplace a user has added. Held server-side rather than only in
- * ~/.superset so the set follows the user across machines: the CLI and the
- * desktop app both read it from here and reconcile local content to match.
- *
- * The first-party marketplace is not a row — it is compiled into the clients,
- * so it is present before any request succeeds and cannot be removed.
- */
 export const pluginMarketplaces = pgTable(
 	"plugin_marketplaces",
 	{
@@ -163,12 +110,9 @@ export const pluginMarketplaces = pgTable(
 			.notNull()
 			.references(() => users.id, { onDelete: "cascade" }),
 
-		/** Marketplace id, from its manifest. Plugins are addressed <plugin>@<name>. */
 		name: text().notNull(),
-		/** "github" or "path"; a path source is local to one machine. */
 		sourceKind: text("source_kind").notNull(),
 		repo: text(),
-		/** Branch or tag for a github source; null means its default branch. */
 		ref: text(),
 		path: text(),
 

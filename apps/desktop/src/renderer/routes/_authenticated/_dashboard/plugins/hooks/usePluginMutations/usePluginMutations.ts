@@ -23,19 +23,11 @@ export function usePluginMutations() {
 	const queryClient = useQueryClient();
 	const navigate = useNavigate();
 
-	// The account is the only place install state is read from, so every
-	// mutation ends by refetching it — the local install writes skills and
-	// agent config but is never queried back.
 	const invalidate = () => {
 		void queryClient.invalidateQueries({ queryKey: PLUGIN_CATALOG_KEY });
 		void queryClient.invalidateQueries({ queryKey: PLUGIN_CONNECTIONS_KEY });
 	};
 
-	// The local install materializes skills and agent config; the account
-	// install is what the proxy reads to resolve a manifest at tool-call time,
-	// and what the UI reads back. A failure here leaves the two out of step, so
-	// it is surfaced rather than swallowed — the plugin is on disk but its tools
-	// will not work and it will not show as installed.
 	const syncAccount = async (
 		name: string,
 		action: "install" | "uninstall",
@@ -107,8 +99,6 @@ export function usePluginMutations() {
 	});
 	const setEnabledMutation = electronTrpc.plugins.setEnabled.useMutation({
 		onSuccess: (_data, variables) => {
-			// `enabled` is reported by the catalog, so the account has to move
-			// too or the toggle snaps back on the next refetch.
 			void registerPluginEnabled(variables.name, variables.enabled)
 				.catch((error) =>
 					toast.warning(
@@ -155,8 +145,6 @@ export function usePluginMutations() {
 		},
 	});
 
-	// Same local write as install; only the toast differs, because "installed"
-	// is a confusing thing to read after asking for an update.
 	const updateMutation = electronTrpc.plugins.install.useMutation({
 		onSuccess: (_data, variables) => {
 			posthog.capture("plugin_updated", { plugin: variables.name });
@@ -184,25 +172,12 @@ export function usePluginMutations() {
 		},
 	});
 
-	/**
-	 * Add: install here and on the account, and land on the plugin's page.
-	 *
-	 * Resolves only once the account row exists, because that is what the
-	 * connect route resolves a manifest from — a caller that authenticates
-	 * straight after adding would otherwise race it and 404.
-	 */
 	const add = async (name: string): Promise<boolean> => {
 		navigate({ to: "/plugins/$pluginName", params: { pluginName: name } });
 		await installMutation.mutateAsync({ name });
 		return await syncAccount(name, "install");
 	};
 
-	/**
-	 * Update: the same two writes as an install, run against a plugin that is
-	 * already installed. Separated because the account upsert always lands on
-	 * the marketplace's current version, so this is the only path that moves
-	 * one — and it is worth the user having asked for it by name.
-	 */
 	const update = async (name: string): Promise<boolean> => {
 		await updateMutation.mutateAsync({ name });
 		return await syncAccount(name, "install");

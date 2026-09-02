@@ -22,11 +22,6 @@ export default command({
 			options.marketplace as string | undefined,
 		);
 
-		// The account first, because it holds the credential: removing the
-		// install also disconnects anything authorized for the plugin. Deleting
-		// local files first would, on a failed request, leave a plugin the user
-		// believes is gone still holding a live token. The reverse failure only
-		// leaves stale files, which the next sync reaps.
 		const query = marketplace
 			? `?marketplace=${encodeURIComponent(marketplace)}`
 			: "";

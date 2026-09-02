@@ -56,10 +56,6 @@ export function verifyPluginState(token: string): PluginState | null {
 	return parsed.data;
 }
 
-/**
- * Per-deployment client credentials, keyed by plugin name. Deliberately not in
- * the manifest: a marketplace is public, these are not.
- */
 export function clientCredentials(pluginName: string): {
 	clientId: string;
 	clientSecret: string;
@@ -70,13 +66,6 @@ export function clientCredentials(pluginName: string): {
 	return clientId && clientSecret ? { clientId, clientSecret } : null;
 }
 
-/**
- * Every plugin's callback sits under one prefix so a provider OAuth app can
- * register `/api/plugins/callback` once and cover every plugin backed by it —
- * GitHub matches a redirect URL when its path is a subdirectory of the
- * registered callback. Apps with wildcard matching disabled register the exact
- * per-plugin URL instead.
- */
 export function redirectUri(pluginName: string): string {
 	return `${env.NEXT_PUBLIC_API_URL}/api/plugins/callback/${pluginName}`;
 }
@@ -203,17 +192,6 @@ export interface ResolvedIdentity {
 	label: string | null;
 }
 
-/**
- * Runs the manifest's identity request to learn which external account this
- * connection belongs to.
- *
- * A plugin that declares none gets `fallbackId` and no label. That fallback has
- * to be stable per caller: the active-connection index is (user, plugin,
- * externalAccountId), so a fresh id each time would insert a second row instead
- * of replacing the first, and a plugin with two live connections is refused as
- * ambiguous at dispatch. One id per auth method means reconnecting replaces,
- * which is the only behaviour a plugin that cannot name an account can support.
- */
 export async function resolveIdentity(
 	identity: AuthIdentity | undefined,
 	scope: TemplateScope,

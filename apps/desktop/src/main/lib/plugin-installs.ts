@@ -32,34 +32,12 @@ import { createSerialQueue } from "main/lib/serial-queue";
 
 const execFileAsync = promisify(execFile);
 
-/**
- * One CLI run at a time, in call order.
- *
- * install and remove both provision declaratively — each writes the desired set
- * and reaps the rest — so two overlapping runs race on the same directories. A
- * remove that starts while an install is still reading its source finishes
- * first, and the install then re-provisions the skills the remove just took
- * away. Serializing is what makes the last call the one that wins.
- */
 const pluginCliQueue = createSerialQueue();
 
 function queuePluginCli(args: string[]): Promise<void> {
 	return pluginCliQueue(() => runPluginCli(args));
 }
 
-/**
- * Materializes a plugin's content and skills by running the bundled CLI.
- *
- * The CLI already resolves a plugin from its marketplace, caches the published
- * version, and provisions its skills out to every directory an agent reads —
- * reaping the ones whose plugin is gone. Reimplementing that here is how the two
- * paths drifted in the first place: the app wrote MCP config and nothing else,
- * so a plugin installed from the UI never got its skills at all.
- *
- * Failure is reported, not thrown. The install record and MCP config are already
- * written by then, and a plugin whose servers work but whose skills are missing
- * is worth surfacing rather than rolling back.
- */
 async function runPluginCli(args: string[]): Promise<void> {
 	const cli = resolveBundledCliPath();
 	if (!cli) {
@@ -120,9 +98,6 @@ export function installPlugin(name: string): InstalledPlugin[] | null {
 	const plugin = getPluginByName(name);
 	if (!plugin) return null;
 
-	// Re-running over an existing install is an update, not a no-op: it is how
-	// the version moves and how a plugin's new skills arrive. Keeping the
-	// original installedAt keeps "when did I add this" answerable.
 	const installed = getInstalledPlugins();
 	const existing = installed.find((entry) => entry.name === name);
 	const record: InstalledPlugin = {
@@ -137,8 +112,6 @@ export function installPlugin(name: string): InstalledPlugin[] | null {
 
 	saveInstalledPlugins(next);
 	syncInstalledPluginMcpServers();
-	// --update because the CLI refuses a second install otherwise, which is the
-	// gate that exists so a manifest change is asked for rather than applied.
 	void queuePluginCli(["install", name, "--update"]);
 	return next;
 }
@@ -147,8 +120,6 @@ export function uninstallPlugin(name: string): InstalledPlugin[] {
 	const next = getInstalledPlugins().filter((entry) => entry.name !== name);
 	saveInstalledPlugins(next);
 	syncInstalledPluginMcpServers();
-	// Reaps the skill folders this plugin provisioned, leaving hand-written
-	// ones alone — the same removal the CLI does.
 	void queuePluginCli(["remove", name]);
 	return next;
 }

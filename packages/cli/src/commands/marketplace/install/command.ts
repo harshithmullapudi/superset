@@ -26,9 +26,6 @@ export default command({
 	run: async ({ ctx, args, options }) => {
 		const source = parseMarketplaceSource(args.source as string);
 
-		// Fetch first: the account should only record a marketplace that
-		// resolved to a real manifest, so a typo fails here rather than
-		// leaving an entry that never works on any machine.
 		const local = await installMarketplace(source, {
 			name: options.name as string | undefined,
 		});

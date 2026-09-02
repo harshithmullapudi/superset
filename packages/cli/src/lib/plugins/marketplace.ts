@@ -5,12 +5,6 @@ import { CLIError } from "@superset/cli-framework";
 export const MARKETPLACE_FILE = ".agent-marketplace.json";
 export const SUPERSET_EXTENSION = "superset";
 
-/**
- * Names that are safe to join into a filesystem path. Marketplace-controlled
- * values reach path.join, and path.join normalizes `..`, so an unvalidated
- * version like "1.0.0/../../../.." escapes the cache root — which then gets
- * rmSync'd recursively. Validate before joining, not after.
- */
 const SAFE_SEGMENT = /^[a-zA-Z0-9][a-zA-Z0-9._+-]*$/;
 
 export function assertSafeSegment(value: string, label: string): string {
@@ -53,35 +47,20 @@ export interface AuthInput {
 	secret?: boolean;
 }
 
-/**
- * How to resolve which external account a connection belongs to, right after
- * auth completes. Optional: without it a connection gets a generated id and no
- * label, which is fine until one user needs two connections to one plugin.
- */
 export interface AuthIdentity {
 	url: string;
 	method?: "GET" | "POST";
 	headers?: Record<string, string>;
 	body?: unknown;
-	/** JSONPath-lite ($.a.b[0].c) to the stable account id. */
 	id: string;
-	/** JSONPath-lite to a human-readable name. */
 	label?: string;
 }
 
-/**
- * One way to authenticate a plugin. A plugin may offer several — Linear takes
- * both an OAuth token and a personal API key — and they are not
- * interchangeable: Linear sends OAuth tokens as `Bearer <token>` and API keys
- * raw, so `identity` and `bind` belong to the method, not the plugin.
- */
 export interface PluginAuthMethod {
 	type: "oauth2" | "api_key";
-	/** Shown in the picker when a plugin offers more than one method. */
 	label?: string;
 	provider?: string;
 	inputs?: AuthInput[];
-	/** api_key only: which input becomes the connection's access token. */
 	credential_input?: string;
 	authorization_url?: string;
 	token_url?: string;
@@ -89,13 +68,6 @@ export interface PluginAuthMethod {
 	scope_separator?: string;
 	token_request_auth_method?: string;
 	token_expiration_buffer?: number;
-	/**
-	 * Documentation only: the deployment-level variables an operator must set
-	 * before this plugin's OAuth flow can run. Never read to resolve a value —
-	 * the host derives variable names from the plugin name, so a manifest can
-	 * never point the credential lookup at an unrelated secret. `check`
-	 * verifies these match what the host would derive.
-	 */
 	requires_env?: string[];
 	identity?: AuthIdentity;
 	bind?: PluginBind;
@@ -103,7 +75,6 @@ export interface PluginAuthMethod {
 
 export type PluginAuth = PluginAuthMethod[];
 
-/** The variables a deployment must set for `name`'s OAuth flow. */
 export function requiredEnvFor(name: string): string[] {
 	const slug = name.toUpperCase().replace(/[.-]/g, "_");
 	return [`PLUGIN_${slug}_CLIENT_ID`, `PLUGIN_${slug}_CLIENT_SECRET`];
@@ -123,7 +94,6 @@ export interface PluginBind {
 export interface SupersetExtension {
 	interface?: { displayName: string; category?: string; icon?: string };
 	auth?: PluginAuth;
-	/** Fallback when a method declares no bind of its own. */
 	bind?: PluginBind;
 	mcp?: PluginMcp;
 }

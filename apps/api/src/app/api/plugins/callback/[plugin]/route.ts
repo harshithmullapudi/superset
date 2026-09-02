@@ -42,15 +42,11 @@ export async function GET(
 		return settingsRedirect(plugin, { error: "invalid_state" });
 	}
 
-	// The state proves who started the flow; re-check the session so a leaked
-	// state cannot connect an account on someone else's behalf.
 	const session = await auth.api.getSession({ headers: request.headers });
 	if (!session?.user || session.user.id !== state.userId) {
 		return settingsRedirect(plugin, { error: "unauthorized" });
 	}
 
-	// A name installed from two marketplaces cannot be resolved here: the
-	// callback knows the plugin, not which install started the flow.
 	let install: Awaited<ReturnType<typeof installedPlugin>>;
 	try {
 		install = await installedPlugin(state.userId, plugin);

@@ -20,9 +20,6 @@ export interface ToolDefinition {
 	annotations?: Record<string, unknown>;
 }
 
-// Every call is one request/response round trip, so a fixed id is enough —
-// and it is what identifies our response among frames that may also carry
-// notifications.
 const REQUEST_ID = 1;
 
 export class PluginDispatchError extends Error {
@@ -39,8 +36,6 @@ async function post(
 	headers: Record<string, string>,
 	body: unknown,
 ): Promise<Response> {
-	// `headers` carries the connection's bound credential, so this is https-only
-	// and does not follow a redirect to a host the manifest did not name.
 	return await credentialFetch(
 		url,
 		{
@@ -75,9 +70,6 @@ async function rpc(
 			401,
 		);
 	}
-	// A streamable-HTTP server answers 404 once its session has expired, and
-	// 400 when it wants an initialize it has not seen. Both are recoverable by
-	// opening a new session, so they carry their own status out of here.
 	if (response.status === 404 || response.status === 400) {
 		throw new PluginDispatchError(
 			`Upstream returned ${response.status} ${response.statusText}`,
@@ -91,11 +83,6 @@ async function rpc(
 		);
 	}
 
-	// Streamable HTTP answers either as application/json or as an SSE-framed
-	// stream — GitHub's server does the latter, and 400s unless text/event-stream
-	// is in Accept. A stream can carry progress notifications before the result,
-	// and notifications have no `id`, so match the response by request id rather
-	// than taking the last line.
 	const text = await response.text();
 	const frames = text
 		.split("\n")
@@ -130,18 +117,6 @@ async function rpc(
 
 const PROTOCOL_VERSION = "2025-06-18";
 
-/**
- * Opens an MCP session, for the one case that needs one.
- *
- * The proxy is stateless: a tool call is one HTTP request and nothing here
- * outlives it, so there is no session to keep. Holding one in memory would
- * only be a session this instance leaks upstream the moment the next request
- * lands on another. Both first-party servers answer an uninitialized
- * `tools/call` outright — mcp.linear.app does not even issue an
- * `mcp-session-id` — so this exists for a third-party marketplace plugin
- * pointing at a spec-strict server, and what it returns is used by the one
- * retry below and then dropped.
- */
 async function initialize(
 	url: string,
 	headers: Record<string, string>,
@@ -168,7 +143,6 @@ async function initialize(
 	return session;
 }
 
-/** One MCP request, handshaking only if the server turns the first one down. */
 async function mcpCall(
 	target: { url: string; headers: Record<string, string> },
 	method: string,
@@ -177,8 +151,6 @@ async function mcpCall(
 	try {
 		return (await rpc(target.url, target.headers, method, params)).result;
 	} catch (error) {
-		// 400 is what a server wanting an initialize it never saw answers, and 404
-		// a session it does not recognise. Anything else is not ours to retry.
 		const wantsSession =
 			error instanceof PluginDispatchError &&
 			(error.status === 400 || error.status === 404);
@@ -200,9 +172,6 @@ function remoteTarget(
 	const mcp = extension?.mcp;
 	if (!mcp?.url) return null;
 
-	// The method's own bind wins: two methods on one plugin can need different
-	// headers — Linear sends OAuth tokens as `Bearer <token>` and personal API
-	// keys raw, so using the wrong one fails authentication outright.
 	const authMethod = method
 		? extension?.auth?.find((entry) => entry.type === method)
 		: undefined;
@@ -212,8 +181,6 @@ function remoteTarget(
 		...resolveTemplateDeep(mcp.headers ?? {}, scope),
 		...resolveTemplateDeep(methodBind ?? extension?.bind ?? {}, scope).headers,
 	};
-	// Resolved like the auth URLs are: a per-tenant server such as
-	// https://${inputs.site}/mcp would otherwise be fetched literally.
 	return {
 		url: resolveUrlTemplate(mcp.url, scope, authMethod, "mcp.url"),
 		headers,
@@ -227,27 +194,17 @@ type BundledRun = (event: {
 }) => Promise<unknown> | unknown;
 
 interface ServerRef {
-	/** Repo-root relative, stamped by `plugins publish` and version-pinned. */
 	path: string;
-	/** `sha256-<base64>` of the published artifact. */
 	integrity: string;
 }
 
-// Keyed by integrity, so a republished server is a different entry rather than
-// a stale module the ESM loader would keep serving, and two plugins that ship
-// byte-identical servers share one load.
 const loaded = new Map<string, Promise<BundledRun>>();
 
-// The specifier is a path that only exists at runtime, so it has to stay opaque
-// to the build: a bare `import(file)` is rewritten by the bundler into a lookup
-// in its own module map, which then fails to resolve a temp file it never saw.
 const importAtRuntime = new Function(
 	"specifier",
 	"return import(specifier)",
 ) as (specifier: string) => Promise<{ run?: BundledRun }>;
 
-// A plugin server is a bundle, not an application; anything this size is a
-// mistake or an attack, and /tmp is small on the runtimes this deploys to.
 const MAX_SERVER_BYTES = 8 * 1024 * 1024;
 
 function serverRef(manifest: PluginManifest): ServerRef | null {
@@ -281,16 +238,6 @@ function cacheDir(): string {
 	return serverCacheDir;
 }
 
-/**
- * Downloads the exact artifact the installed version published.
- *
- * The digest comes from the manifest the account already trusts, so the
- * download is only a byte source: a force-pushed branch, a swapped CDN
- * response, or a truncated body all fail the comparison instead of reaching
- * `import()`. That check is what makes fetching remote code at request time
- * defensible at all — this runs in the API's own process, with its database
- * handle and every provider secret in scope.
- */
 async function fetchServer(
 	pluginName: string,
 	source: BundledSource,
@@ -339,16 +286,6 @@ async function fetchServer(
 	return body;
 }
 
-/**
- * Resolves the plugin's server to a module, downloading it once per version.
- *
- * `import()` needs a real path and the deployed bundle is read-only, so the
- * verified bytes are written to the temp dir. A file already there was written
- * by this deployment under its own digest, so it is reused without a round
- * trip; a runtime that recycles that directory just downloads again on the next
- * cold start. That is the whole cache: first call per version pays the fetch,
- * every later one is a map hit.
- */
 async function bundledRun(
 	pluginName: string,
 	manifest: PluginManifest,
@@ -372,8 +309,6 @@ async function bundledRun(
 	if (cached) return await cached;
 
 	const load = (async () => {
-		// Base64url of the digest: it is the cache key, and it cannot contain a
-		// path separator the way the raw base64 can.
 		const key = Buffer.from(ref.integrity).toString("base64url");
 		const dir = cacheDir();
 		const file = path.join(dir, `${key}.mjs`);
@@ -387,8 +322,6 @@ async function bundledRun(
 
 		if (!usable) {
 			const body = await fetchServer(pluginName, source, ref);
-			// Written then renamed: two concurrent requests on a cold start would
-			// otherwise let one import a half-written module.
 			const staging = `${file}.${process.pid}.partial`;
 			await fs.promises.writeFile(staging, body);
 			await fs.promises.rename(staging, file);
@@ -408,13 +341,11 @@ async function bundledRun(
 	try {
 		return await load;
 	} catch (error) {
-		// A failed load must not be cached, or every later request inherits it.
 		loaded.delete(ref.integrity);
 		throw error;
 	}
 }
 
-/** The plugin's own config shape: inputs alongside the resolved credential. */
 function bundledConfig(scope: TemplateScope): Record<string, unknown> {
 	return { ...(scope.inputs ?? {}), ...(scope.config ?? {}) };
 }

@@ -257,9 +257,6 @@ export function scaffoldPlugin(
 	};
 
 	if (options.auth) {
-		// A list, not one method: the manifest schema and every consumer read
-		// `auth` as an array, so scaffolding an object emits a plugin that fails
-		// its own `plugins check`.
 		const method: Record<string, unknown> = {
 			type: "oauth2",
 			provider: name,

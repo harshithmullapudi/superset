@@ -11,13 +11,6 @@ import { supersetExtension } from "@/lib/plugins/manifest";
 
 const FIRST_PARTY = "superset";
 
-/**
- * What this user has installed, and what the built-in marketplace offers.
- *
- * Both the CLI and the desktop app read the catalog from here so a plugin
- * installed on one machine is installed everywhere; local disk holds only the
- * content, reconciled to match this.
- */
 export async function GET(request: Request) {
 	const session = await auth.api.getSession({ headers: request.headers });
 	if (!session?.user) {
@@ -45,8 +38,6 @@ export async function GET(request: Request) {
 			),
 	]);
 
-	// The id travels with the label: it is what addresses a tool call, so a
-	// client that lists plugins can call one without a second round trip.
 	const held = new Map<string, { id: string; account: string | null }[]>();
 	for (const row of connections) {
 		const list = held.get(row.pluginName) ?? [];
@@ -69,8 +60,6 @@ export async function GET(request: Request) {
 			displayName: extension?.interface?.displayName ?? manifest.name,
 			category: extension?.interface?.category ?? "Developer tools",
 			icon: extension?.interface?.icon,
-			// The full list: a plugin can offer several, and the picker needs
-			// every one plus its own inputs.
 			authMethods: (extension?.auth ?? []).map((method) => ({
 				type: method.type,
 				label: method.label ?? null,
@@ -86,10 +75,6 @@ export async function GET(request: Request) {
 
 	const installed = installs.map((row) => {
 		const connections = held.get(row.pluginName) ?? [];
-		// The row's manifest is the version this account is pinned to; the
-		// marketplace's is what installing again would move it to. Both are
-		// returned because a client cannot offer an update it cannot see, and
-		// the version alone does not say one exists.
 		const published =
 			row.marketplace === FIRST_PARTY
 				? firstPartyManifest(row.pluginName)?.version
@@ -111,8 +96,6 @@ export async function GET(request: Request) {
 		installs.map((row) => `${row.marketplace}/${row.pluginName}`),
 	);
 
-	// The built-in marketplace ships compiled in, so the catalog is populated
-	// before anything has been cloned or installed.
 	const available = Object.values(FIRST_PARTY_MANIFESTS)
 		.filter((manifest) => !installedKeys.has(`${FIRST_PARTY}/${manifest.name}`))
 		.map((manifest) => ({

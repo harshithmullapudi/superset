@@ -20,9 +20,7 @@ import type { CatalogPlugin } from "renderer/routes/_authenticated/_dashboard/pl
 
 interface PluginCardProps {
 	plugin: CatalogPlugin;
-	/** Installed on the account, which is the only place it is read from. */
 	isInstalled: boolean;
-	/** Installed AND usable: a plugin needing auth is not done until connected. */
 	isConnected: boolean;
 	/** Installed but disabled: record kept, nothing materialized. */
 	isDisabled: boolean;
@@ -88,8 +86,6 @@ export function PluginCard({
 						<LuCheck className="size-3.5 shrink-0 text-muted-foreground" />
 					) : null}
 					{plugin.updateAvailable && !isDisabled && (
-						// A button, not a label: the update is the point of saying
-						// so, and the ··· menu keeps the same action for discovery.
 						<Button
 							variant="outline"
 							size="xs"

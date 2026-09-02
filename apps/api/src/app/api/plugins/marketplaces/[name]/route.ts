@@ -22,8 +22,6 @@ export async function DELETE(
 		);
 	}
 
-	// Removing a marketplace whose plugins are still installed would leave
-	// installs that can never be resolved again.
 	const dependents = await db
 		.select({ pluginName: pluginInstalls.pluginName })
 		.from(pluginInstalls)

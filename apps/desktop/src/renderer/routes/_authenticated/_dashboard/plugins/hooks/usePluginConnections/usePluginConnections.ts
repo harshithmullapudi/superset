@@ -38,11 +38,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 	return payload as T;
 }
 
-/**
- * Records the install against the caller's account. The local install writes
- * skills and agent config; this is what lets the proxy resolve the plugin's
- * manifest when an agent calls a tool, so both have to happen.
- */
 export async function registerPluginInstall(
 	pluginName: string,
 ): Promise<{ needsConnection: boolean }> {
@@ -52,7 +47,6 @@ export async function registerPluginInstall(
 	);
 }
 
-/** Enables or disables the account-side install, which the catalog reports. */
 export async function registerPluginEnabled(
 	pluginName: string,
 	enabled: boolean,
@@ -64,7 +58,6 @@ export async function registerPluginEnabled(
 	});
 }
 
-/** Removes the install and disconnects anything authorized for the plugin. */
 export async function registerPluginUninstall(
 	pluginName: string,
 ): Promise<void> {
@@ -76,10 +69,6 @@ export interface PluginConnectResult {
 	account: string | null;
 }
 
-/**
- * api_key credentials POST with a JSON body: a secret in a query string lands
- * in browser history and proxy logs.
- */
 export async function connectPluginApiKey(
 	pluginName: string,
 	inputs: Record<string, string>,
@@ -95,7 +84,6 @@ export async function connectPluginApiKey(
 	);
 }
 
-/** OAuth needs a real browser navigation, and carries no secret. */
 export function openPluginOAuth(
 	apiUrl: string,
 	pluginName: string,
@@ -116,8 +104,6 @@ export function usePluginConnections(pluginName: string) {
 	const { data: session } = authClient.useSession();
 	const userId = session?.user?.id ?? null;
 	const queryKey = [...PLUGIN_CONNECTIONS_KEY, userId, pluginName];
-	// The catalog carries each plugin's connected accounts, so the cards on the
-	// list page go stale on the same events this list does.
 	const refresh = () => {
 		void queryClient.invalidateQueries({ queryKey });
 		void queryClient.invalidateQueries({ queryKey: PLUGIN_CATALOG_KEY });
@@ -125,8 +111,6 @@ export function usePluginConnections(pluginName: string) {
 
 	const connections = useQuery({
 		queryKey,
-		// Same reason as the catalog: without this the list fires before auth
-		// resolves, 401s, and never retries.
 		enabled: Boolean(token) && Boolean(userId),
 		queryFn: async () => {
 			const { connections } = await request<{
@@ -142,8 +126,6 @@ export function usePluginConnections(pluginName: string) {
 				method: "DELETE",
 			});
 		},
-		// The row disappears immediately; a failure restores it via the refetch
-		// in onSettled rather than leaving stale state on screen.
 		onMutate: async (connectionId) => {
 			await queryClient.cancelQueries({ queryKey });
 			const previous = queryClient.getQueryData<PluginConnection[]>(queryKey);
