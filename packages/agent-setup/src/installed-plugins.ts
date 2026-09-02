@@ -31,11 +31,21 @@ interface InstalledPluginRecord {
  */
 export function readInstalledPluginSources(): PluginSkillSource[] | null {
 	const file = installedPluginsFilePath();
-	if (!fs.existsSync(file)) return [];
+
+	let raw: string;
+	try {
+		raw = fs.readFileSync(file, "utf-8");
+	} catch (error) {
+		// Only a genuinely absent file means "no plugins". Anything else — an
+		// unreadable file, a directory we cannot traverse — has to reach the
+		// caller as null, or provisioning treats it as an empty desired set and
+		// reaps every plugin skill on the machine.
+		return (error as NodeJS.ErrnoException)?.code === "ENOENT" ? [] : null;
+	}
 
 	let parsed: unknown;
 	try {
-		parsed = JSON.parse(fs.readFileSync(file, "utf-8"));
+		parsed = JSON.parse(raw);
 	} catch {
 		return null;
 	}
