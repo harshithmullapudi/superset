@@ -99,6 +99,9 @@ const TEMPLATE = /\$\{(config|inputs)\.([\w.-]+)\}/g;
 
 const URL_STRUCTURE = /[/\\?#@:[\]%\s]|^$/;
 
+/** What the connect route falls back to when a method names no credential_input. */
+export const DEFAULT_CREDENTIAL_INPUT = "api_key";
+
 /**
  * Resolves `${config.access_token}` and `${inputs.site}` in a manifest string.
  * Only these two roots expand; anything else stays literal, so a manifest can
@@ -128,8 +131,8 @@ export function resolveUrlTemplate(
 			.filter((input) => input.secret)
 			.map((input) => input.name),
 	);
-	if (auth?.type === "api_key" && auth.credential_input) {
-		secrets.add(auth.credential_input);
+	if (auth?.type === "api_key") {
+		secrets.add(auth.credential_input ?? DEFAULT_CREDENTIAL_INPUT);
 	}
 	return value.replace(TEMPLATE, (whole, root: string, key: string) => {
 		if (root === "config") {

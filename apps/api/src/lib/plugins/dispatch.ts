@@ -163,11 +163,8 @@ async function initialize(
 	await post(
 		url,
 		{ ...headers, ...session },
-		{
-			jsonrpc: "2.0",
-			method: "notifications/initialized",
-		},
-	).catch(() => undefined);
+		{ jsonrpc: "2.0", method: "notifications/initialized" },
+	);
 	return session;
 }
 

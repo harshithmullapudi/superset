@@ -110,6 +110,16 @@ describe("resolveUrlTemplate", () => {
 		).toThrow(/secret/);
 	});
 
+	test("refuses the default api_key input when the method names none", () => {
+		expect(() =>
+			resolveUrlTemplate(
+				"https://x/?k=${inputs.api_key}",
+				{ inputs: { api_key: "raw" } },
+				{ type: "api_key", inputs: [{ name: "api_key" }] },
+			),
+		).toThrow(/secret/);
+	});
+
 	test("refuses an input value that would rewrite the URL's host", () => {
 		expect(() =>
 			resolveUrlTemplate(

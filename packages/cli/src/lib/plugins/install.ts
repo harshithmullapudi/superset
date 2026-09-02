@@ -233,8 +233,11 @@ function assertNotSymlink(target: string): void {
 	let stat: fs.Stats;
 	try {
 		stat = fs.lstatSync(target);
-	} catch {
-		return;
+	} catch (error) {
+		// Absent is fine; anything else means we could not establish that this
+		// path is safe, and installing the wrong payload is worse than failing.
+		if ((error as NodeJS.ErrnoException)?.code === "ENOENT") return;
+		throw error;
 	}
 	if (stat.isSymbolicLink()) {
 		throw new CLIError(

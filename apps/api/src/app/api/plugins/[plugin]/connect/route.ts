@@ -6,7 +6,7 @@ import {
 	pluginErrorResponse,
 	upsertConnection,
 } from "@/lib/plugins/connections";
-import { authMethod } from "@/lib/plugins/manifest";
+import { authMethod, DEFAULT_CREDENTIAL_INPUT } from "@/lib/plugins/manifest";
 import {
 	buildAuthorizationUrl,
 	createPluginState,
@@ -181,7 +181,7 @@ export async function POST(
 		}
 	}
 
-	const credentialName = authSpec.credential_input ?? "api_key";
+	const credentialName = authSpec.credential_input ?? DEFAULT_CREDENTIAL_INPUT;
 	const credential = inputs[credentialName];
 	if (!credential) {
 		return Response.json(

@@ -167,6 +167,10 @@ export function GET() {
 					superset: {
 						type: "object",
 						additionalProperties: false,
+						// Tools come from exactly one server, which `plugins publish`
+						// enforces too. Neither key is required — a skills-only plugin
+						// declares no server at all.
+						not: { required: ["mcp", "server"] },
 						properties: {
 							interface: {
 								type: "object",

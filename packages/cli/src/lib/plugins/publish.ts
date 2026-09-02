@@ -285,12 +285,16 @@ function snapshotDrift(plugin: ResolvedPlugin, version: string): string[] {
 					?.superset?.server as { integrity?: string } | undefined
 			)?.integrity
 		: undefined;
-	if (stamped) {
-		const bundle = path.join(target, SERVER_ENTRY);
-		const actual = fs.existsSync(bundle)
+	const bundle = path.join(target, SERVER_ENTRY);
+	const hasBundle = fs.existsSync(bundle);
+	// A bundled plugin with no stamped digest is the dangerous case, not an
+	// exempt one: nothing else pins the published bytes, so dropping the field
+	// would let an altered server/index.mjs through.
+	if (plugin.hasServerSource || hasBundle || stamped) {
+		const actual = hasBundle
 			? `sha256-${createHash("sha256").update(fs.readFileSync(bundle)).digest("base64")}`
 			: null;
-		if (actual !== stamped) drifted.push(SERVER_ENTRY);
+		if (!stamped || actual !== stamped) drifted.push(SERVER_ENTRY);
 	}
 
 	return drifted.sort();
