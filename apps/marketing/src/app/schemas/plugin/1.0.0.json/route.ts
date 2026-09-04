@@ -30,7 +30,7 @@ export function GET() {
 		required: ["url", "id"],
 		additionalProperties: false,
 		description:
-			"How to learn which external account a connection belongs to, run once after auth completes. Omit and the connection gets a generated id and no label.",
+			"How to learn which external account a connection belongs to, run once after auth completes. Omit and the connection gets a generated id and no label. Honoured only for first-party plugins: the probe sends the credential to the URL named here, so a manifest from another marketplace is connected without it.",
 		properties: {
 			url: { type: "string" },
 			method: { enum: ["GET", "POST"], default: "GET" },

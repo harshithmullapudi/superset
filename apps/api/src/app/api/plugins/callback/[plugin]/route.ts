@@ -5,6 +5,7 @@ import {
 	installedPlugin,
 	manifestAuth,
 	resolveIdentity,
+	trustedManifest,
 	upsertConnection,
 } from "@superset/trpc/integrations/plugins";
 import { env } from "@/env";
@@ -67,7 +68,7 @@ export async function GET(
 		);
 
 		const identity = await resolveIdentity(
-			authSpec.identity,
+			trustedManifest(install.marketplace) ? authSpec.identity : undefined,
 			{ config: { access_token: token.accessToken }, inputs: state.inputs },
 			authSpec.type,
 			authSpec,

@@ -37,6 +37,19 @@ import { resolveIdentity } from "./oauth";
 
 const FIRST_PARTY = "superset";
 
+/**
+ * Whether a manifest may be trusted to name where a credential is sent.
+ *
+ * The identity probe posts the user's token to a URL the manifest chooses. For
+ * a first-party plugin that URL is ours to review; for anything else it is an
+ * exfiltration path, so the probe is skipped and the connection falls back to a
+ * generated id with no label. Multi-account and reconnect still work — the
+ * fallback is stable per auth method — the account just has no display name.
+ */
+export function trustedManifest(marketplace: string): boolean {
+	return marketplace === FIRST_PARTY;
+}
+
 function dispatchError(error: unknown): never {
 	if (error instanceof PluginDispatchError) {
 		const code =
@@ -608,7 +621,7 @@ export const pluginsRouter = createTRPCRouter({
 			let identity: { id: string; label: string | null };
 			try {
 				identity = await resolveIdentity(
-					authSpec.identity,
+					trustedManifest(install.marketplace) ? authSpec.identity : undefined,
 					{ config: { access_token: credential }, inputs },
 					authSpec.type,
 					authSpec,

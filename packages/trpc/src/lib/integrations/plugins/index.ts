@@ -14,3 +14,4 @@ export {
 	exchangeCode,
 	resolveIdentity,
 } from "../../../router/plugins/oauth";
+export { trustedManifest } from "../../../router/plugins/plugins";
