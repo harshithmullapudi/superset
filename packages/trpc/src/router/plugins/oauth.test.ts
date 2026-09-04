@@ -15,6 +15,9 @@ describe("clientCredentials", () => {
 	const vars = [
 		"PLUGIN_LINEAR_CLIENT_ID",
 		"PLUGIN_LINEAR_CLIENT_SECRET",
+		"PLUGIN_GITHUB_CLIENT_SECRET",
+		"ADMIN_CLIENT_ID",
+		"ADMIN_CLIENT_SECRET",
 		"BETTER_AUTH_SECRET",
 	];
 	const saved = new Map(vars.map((name) => [name, process.env[name]]));
@@ -73,15 +76,29 @@ describe("clientCredentials", () => {
 
 	// The exchange POSTs whatever this reads to a manifest-supplied token_url,
 	// so a name outside the client namespace would leak an unrelated secret.
+	// Each case names a pair that is shaped like a client but sits outside
+	// PLUGIN_*, so only the namespace guard can reject it.
 	test.each([
-		["BETTER_AUTH_SECRET"],
-		["DATABASE_URL"],
-		["PLUGIN_LINEAR_TOKEN"],
-		["plugin_linear_client_id"],
-	])("refuses to read %s", (name) => {
-		process.env.BETTER_AUTH_SECRET = "server-secret";
+		["ADMIN_CLIENT_ID", "ADMIN_CLIENT_SECRET"],
+		["plugin_linear_client_id", "plugin_linear_client_secret"],
+	])("refuses to read %s", (id, secret) => {
+		process.env[id] = "id";
+		process.env[secret] = "server-secret";
+
+		expect(clientCredentials(method([id, secret]))).toBeNull();
+	});
+
+	// Both halves are real client variables and both are set, so only the
+	// same-service pairing keeps GitHub's secret out of Linear's exchange.
+	test("refuses a pair split across two services", () => {
+		process.env.PLUGIN_LINEAR_CLIENT_ID = "linear-id";
+		process.env.PLUGIN_GITHUB_CLIENT_SECRET = "github-secret";
+		delete process.env.PLUGIN_LINEAR_CLIENT_SECRET;
+
 		expect(
-			clientCredentials(method([name, "PLUGIN_LINEAR_CLIENT_SECRET"])),
+			clientCredentials(
+				method(["PLUGIN_LINEAR_CLIENT_ID", "PLUGIN_GITHUB_CLIENT_SECRET"]),
+			),
 		).toBeNull();
 	});
 });

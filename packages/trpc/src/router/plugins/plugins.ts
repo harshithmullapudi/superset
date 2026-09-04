@@ -466,7 +466,10 @@ export const pluginsRouter = createTRPCRouter({
 						pluginInstalls.marketplace,
 						pluginInstalls.pluginName,
 					],
-					set: { version: manifest.version, manifest, enabled: true },
+					// An install over an existing row is an update, so it carries the
+					// new manifest and leaves `enabled` alone: re-enabling here
+					// would turn a plugin the user disabled back on behind them.
+					set: { version: manifest.version, manifest },
 				})
 				.returning();
 

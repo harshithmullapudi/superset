@@ -26,9 +26,13 @@ export function clientCredentials(auth: PluginAuthMethod): {
 	const declared = (auth.requires_env ?? []).filter((name) =>
 		CLIENT_ENV.test(name),
 	);
+	// The pair has to name one service. Taking the first id and the first
+	// secret independently would post one product's client secret to another
+	// product's token_url the moment a manifest named two.
 	const clientId = declared.find((name) => name.endsWith("_CLIENT_ID"));
-	const clientSecret = declared.find((name) => name.endsWith("_CLIENT_SECRET"));
-	if (!clientId || !clientSecret) return null;
+	if (!clientId) return null;
+	const clientSecret = clientId.replace(/_CLIENT_ID$/, "_CLIENT_SECRET");
+	if (!declared.includes(clientSecret)) return null;
 
 	const id = process.env[clientId];
 	const secret = process.env[clientSecret];
