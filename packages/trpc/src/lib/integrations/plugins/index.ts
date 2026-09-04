@@ -8,10 +8,10 @@ export {
 export {
 	authMethod,
 	DEFAULT_CREDENTIAL_INPUT,
+	trustedManifest,
 } from "../../../router/plugins/manifest";
 export {
 	buildAuthorizationUrl,
 	exchangeCode,
 	resolveIdentity,
 } from "../../../router/plugins/oauth";
-export { trustedManifest } from "../../../router/plugins/plugins";

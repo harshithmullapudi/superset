@@ -1,5 +1,8 @@
 export const SUPERSET_EXTENSION = "superset";
 
+/** The marketplace whose manifests we ship and review. */
+export const FIRST_PARTY_MARKETPLACE = "superset";
+
 export interface AuthInput {
 	name: string;
 	label?: string;
@@ -211,4 +214,17 @@ export async function credentialFetch(
 		);
 	}
 	return response;
+}
+
+/**
+ * Whether a manifest may be trusted to name where a credential is sent.
+ *
+ * The identity probe posts the user's token to a URL the manifest chooses. For
+ * a first-party plugin that URL is ours to review; for anything else it is an
+ * exfiltration path, so the probe is skipped and the connection falls back to a
+ * generated id with no label. Multi-account and reconnect still work — the
+ * fallback is stable per auth method — the account just has no display name.
+ */
+export function trustedManifest(marketplace: string): boolean {
+	return marketplace === FIRST_PARTY_MARKETPLACE;
 }

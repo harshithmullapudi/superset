@@ -54,12 +54,10 @@ export function usePluginMutations() {
 			posthog.capture("plugin_installed", { plugin: variables.name });
 			toast.success(
 				t({
-					id: "dashboard.plugins.mutations.installed",
 					message: `${displayName(variables.name)} installed`,
 				}),
 				{
 					description: t({
-						id: "dashboard.plugins.mutations.takesEffectNewSessions",
 						message: "Takes effect in new agent sessions.",
 					}),
 				},
@@ -68,7 +66,6 @@ export function usePluginMutations() {
 		onError: (error) => {
 			toast.error(
 				t({
-					id: "dashboard.plugins.mutations.installFailed",
 					message: "Install failed",
 				}),
 				{ description: errorMessage(error) },
@@ -81,7 +78,6 @@ export function usePluginMutations() {
 			posthog.capture("plugin_uninstalled", { plugin: variables.name });
 			toast.success(
 				t({
-					id: "dashboard.plugins.mutations.uninstalled",
 					message: `${displayName(variables.name)} uninstalled`,
 				}),
 			);
@@ -89,7 +85,6 @@ export function usePluginMutations() {
 		onError: (error) => {
 			toast.error(
 				t({
-					id: "dashboard.plugins.mutations.uninstallFailed",
 					message: "Uninstall failed",
 				}),
 				{ description: errorMessage(error) },
@@ -121,16 +116,13 @@ export function usePluginMutations() {
 			toast.success(
 				variables.enabled
 					? t({
-							id: "dashboard.plugins.mutations.enabled",
 							message: `${displayName(variables.name)} enabled`,
 						})
 					: t({
-							id: "dashboard.plugins.mutations.disabled",
 							message: `${displayName(variables.name)} disabled`,
 						}),
 				{
 					description: t({
-						id: "dashboard.plugins.mutations.takesEffectNewSessions",
 						message: "Takes effect in new agent sessions.",
 					}),
 				},
@@ -139,7 +131,6 @@ export function usePluginMutations() {
 		onError: (error) => {
 			toast.error(
 				t({
-					id: "dashboard.plugins.mutations.updateFailed",
 					message: "Could not update plugin",
 				}),
 				{

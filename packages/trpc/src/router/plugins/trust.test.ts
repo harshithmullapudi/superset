@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
-
-const { trustedManifest } = await import("./plugins");
+import { trustedManifest } from "./manifest";
 
 // The identity probe posts the user's credential to a URL the manifest names.
 // Only a manifest we ship may do that; anything else would be a way to harvest
