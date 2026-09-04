@@ -38,7 +38,6 @@ export function usePluginMutations() {
 		} catch (error) {
 			toast.warning(
 				t({
-					id: "dashboard.plugins.mutations.accountSyncFailed",
 					message: `${displayName(name)} is set up on this machine, but not on your account`,
 				}),
 				{ description: errorMessage(error) },
@@ -101,7 +100,6 @@ export function usePluginMutations() {
 			} catch (error) {
 				toast.warning(
 					t({
-						id: "dashboard.plugins.mutations.accountSyncFailed",
 						message: `${displayName(variables.name)} is set up on this machine, but not on your account`,
 					}),
 					{ description: errorMessage(error) },
@@ -145,12 +143,10 @@ export function usePluginMutations() {
 			posthog.capture("plugin_updated", { plugin: variables.name });
 			toast.success(
 				t({
-					id: "dashboard.plugins.mutations.updated",
 					message: `${displayName(variables.name)} updated`,
 				}),
 				{
 					description: t({
-						id: "dashboard.plugins.mutations.takesEffectNewSessions",
 						message: "Takes effect in new agent sessions.",
 					}),
 				},
@@ -159,7 +155,6 @@ export function usePluginMutations() {
 		onError: (error) => {
 			toast.error(
 				t({
-					id: "dashboard.plugins.mutations.updateFailed",
 					message: "Could not update plugin",
 				}),
 				{ description: errorMessage(error) },

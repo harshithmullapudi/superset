@@ -74,13 +74,11 @@ export function PluginCard({
 					    run-on string, which is what they did. */}
 					{isDisabled ? (
 						<span className="shrink-0 text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
-							<Trans id="dashboard.plugins.card.disabled">Disabled</Trans>
+							<Trans>Disabled</Trans>
 						</span>
 					) : isInstalled && !isConnected ? (
 						<span className="shrink-0 text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
-							<Trans id="dashboard.plugins.card.needsConnection">
-								Not connected
-							</Trans>
+							<Trans>Not connected</Trans>
 						</span>
 					) : isConnected ? (
 						<LuCheck className="size-3.5 shrink-0 text-muted-foreground" />
@@ -97,7 +95,7 @@ export function PluginCard({
 							}}
 						>
 							<LuArrowUp className="size-2.5" />
-							<Trans id="dashboard.plugins.card.update">Update</Trans>
+							<Trans>Update</Trans>
 						</Button>
 					)}
 				</div>
@@ -113,7 +111,6 @@ export function PluginCard({
 							size="icon-xs"
 							className="shrink-0 text-muted-foreground"
 							aria-label={t({
-								id: "dashboard.plugins.card.pluginOptionsLabel",
 								message: `${plugin.interface.displayName} options`,
 							})}
 							onClick={(event) => event.stopPropagation()}
@@ -128,7 +125,7 @@ export function PluginCard({
 								onSelect={() => onUpdate(plugin.name)}
 							>
 								<LuArrowUp className="size-4" />
-								<Trans id="dashboard.plugins.update">Update</Trans>
+								<Trans>Update</Trans>
 							</DropdownMenuItem>
 						)}
 						<DropdownMenuItem
@@ -140,11 +137,7 @@ export function PluginCard({
 							) : (
 								<LuPause className="size-4" />
 							)}
-							{isDisabled ? (
-								<Trans id="dashboard.plugins.card.enable">Enable</Trans>
-							) : (
-								<Trans id="dashboard.plugins.card.disable">Disable</Trans>
-							)}
+							{isDisabled ? <Trans>Enable</Trans> : <Trans>Disable</Trans>}
 						</DropdownMenuItem>
 						<DropdownMenuItem
 							variant="destructive"
@@ -152,7 +145,7 @@ export function PluginCard({
 							onSelect={() => onUninstall(plugin)}
 						>
 							<LuTrash2 className="size-4" />
-							<Trans id="dashboard.plugins.card.remove">Remove</Trans>
+							<Trans>Remove</Trans>
 						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>

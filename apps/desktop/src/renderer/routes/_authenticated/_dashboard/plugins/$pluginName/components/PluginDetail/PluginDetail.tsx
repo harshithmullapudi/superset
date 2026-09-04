@@ -7,26 +7,14 @@ import { PluginIcon } from "renderer/routes/_authenticated/_dashboard/plugins/co
 import { SkillIcon } from "renderer/routes/_authenticated/_dashboard/plugins/components/SkillIcon";
 import type { CatalogPlugin } from "renderer/routes/_authenticated/_dashboard/plugins/hooks/usePluginCatalog";
 import { usePluginMutations } from "renderer/routes/_authenticated/_dashboard/plugins/hooks/usePluginMutations";
+import { InfoRow } from "./components/InfoRow";
 import { PluginConnections } from "./components/PluginConnections";
 import { SectionHeader } from "./components/SectionHeader";
-
-function InfoRow({
-	label,
-	children,
-}: {
-	label: React.ReactNode;
-	children: React.ReactNode;
-}) {
-	return (
-		<div className="grid grid-cols-[8rem_1fr] items-start gap-4 py-2.5">
-			<span className="text-sm text-muted-foreground">{label}</span>
-			<span className="min-w-0 text-sm text-foreground">{children}</span>
-		</div>
-	);
-}
+import { useAuthMethodLabel } from "./hooks/useAuthMethodLabel";
 
 export function PluginDetail({ plugin }: { plugin: CatalogPlugin }) {
 	const { t } = useLingui();
+	const authMethodLabel = useAuthMethodLabel();
 	const navigate = useNavigate();
 	const { add, uninstall, setEnabled, update, isBusy } = usePluginMutations();
 
@@ -41,7 +29,7 @@ export function PluginDetail({ plugin }: { plugin: CatalogPlugin }) {
 				onClick={() => navigate({ to: "/plugins" })}
 			>
 				<LuArrowLeft className="size-4" />
-				<Trans id="dashboard.plugins.detail.backToPlugins">Plugins</Trans>
+				<Trans>Plugins</Trans>
 			</Button>
 
 			<div className="flex flex-col gap-4">
@@ -68,7 +56,7 @@ export function PluginDetail({ plugin }: { plugin: CatalogPlugin }) {
 								onClick={() => void update(plugin.name)}
 							>
 								<LuArrowUp className="size-4" />
-								<Trans id="dashboard.plugins.update">Update</Trans>
+								<Trans>Update</Trans>
 							</Button>
 						)}
 						{plugin.installed && (
@@ -76,7 +64,6 @@ export function PluginDetail({ plugin }: { plugin: CatalogPlugin }) {
 								checked={plugin.enabled}
 								disabled={isBusy}
 								aria-label={t({
-									id: "dashboard.plugins.detail.pluginEnabledLabel",
 									message: `${plugin.interface.displayName} enabled`,
 								})}
 								onCheckedChange={(checked) => setEnabled(plugin.name, checked)}
@@ -98,12 +85,7 @@ export function PluginDetail({ plugin }: { plugin: CatalogPlugin }) {
 
 			{skills.length > 0 && (
 				<section className="mt-10">
-					<SectionHeader
-						label={
-							<Trans id="dashboard.plugins.detail.skillsHeading">Skills</Trans>
-						}
-						count={skills.length}
-					/>
+					<SectionHeader label={<Trans>Skills</Trans>} count={skills.length} />
 					<div className="divide-y divide-border/40">
 						{skills.map((skill) => (
 							<div key={skill.name} className="flex items-center gap-3 py-3.5">
@@ -123,88 +105,41 @@ export function PluginDetail({ plugin }: { plugin: CatalogPlugin }) {
 			)}
 
 			<section className="mt-10">
-				<SectionHeader
-					label={
-						<Trans id="dashboard.plugins.detail.informationHeading">
-							Information
-						</Trans>
-					}
-				/>
+				<SectionHeader label={<Trans>Information</Trans>} />
 				<div className="pt-1">
 					{plugin.author && (
-						<InfoRow
-							label={
-								<Trans id="dashboard.plugins.detail.infoDeveloper">
-									Developer
-								</Trans>
-							}
-						>
-							{plugin.author}
-						</InfoRow>
+						<InfoRow label={<Trans>Developer</Trans>}>{plugin.author}</InfoRow>
 					)}
-					<InfoRow
-						label={
-							<Trans id="dashboard.plugins.detail.infoCategory">Category</Trans>
-						}
-					>
+					<InfoRow label={<Trans>Category</Trans>}>
 						{plugin.interface.category}
 					</InfoRow>
 					{plugin.auth?.length ? (
-						<InfoRow
-							label={
-								<Trans id="dashboard.plugins.detail.authentication">
-									Authentication
-								</Trans>
-							}
-						>
+						<InfoRow label={<Trans>Authentication</Trans>}>
 							{plugin.auth
-								.map((method) =>
-									method.type === "api_key" ? "API key" : "OAuth 2.0",
-								)
+								.map((method) => authMethodLabel(method.type))
 								.join(", ")}
 						</InfoRow>
 					) : null}
-					<InfoRow
-						label={
-							<Trans id="dashboard.plugins.detail.infoVersion">Version</Trans>
-						}
-					>
+					<InfoRow label={<Trans>Version</Trans>}>
 						{plugin.version}
 						{plugin.updateAvailable && plugin.latestVersion
 							? ` → ${plugin.latestVersion}`
 							: ""}
 					</InfoRow>
-					<InfoRow
-						label={
-							<Trans id="dashboard.plugins.detail.infoMarketplace">
-								Marketplace
-							</Trans>
-						}
-					>
+					<InfoRow label={<Trans>Marketplace</Trans>}>
 						{plugin.marketplace}
 					</InfoRow>
 					{plugin.license && (
-						<InfoRow
-							label={
-								<Trans id="dashboard.plugins.detail.infoLicense">License</Trans>
-							}
-						>
-							{plugin.license}
-						</InfoRow>
+						<InfoRow label={<Trans>License</Trans>}>{plugin.license}</InfoRow>
 					)}
 					{plugin.homepage && (
-						<InfoRow
-							label={
-								<Trans id="dashboard.plugins.detail.infoWebsite">Website</Trans>
-							}
-						>
+						<InfoRow label={<Trans>Website</Trans>}>
 							<a
 								href={plugin.homepage}
 								target="_blank"
 								rel="noopener noreferrer"
 								className="inline-flex items-center text-muted-foreground transition-colors hover:text-foreground"
 								aria-label={t({
-									id: "dashboard.plugins.detail.openWebsite",
 									message: `Open ${plugin.interface.displayName} website`,
 								})}
 							>

@@ -16,6 +16,7 @@ import { LuGlobe, LuKeyRound, LuPlus, LuTrash2 } from "react-icons/lu";
 import { PluginIcon } from "renderer/routes/_authenticated/_dashboard/plugins/components/PluginIcon";
 import type { AuthMethod } from "renderer/routes/_authenticated/_dashboard/plugins/hooks/usePluginCatalog";
 import { usePluginConnections } from "renderer/routes/_authenticated/_dashboard/plugins/hooks/usePluginConnections";
+import { useAuthMethodLabel } from "../../hooks/useAuthMethodLabel";
 import { SectionHeader } from "../SectionHeader";
 
 export function PluginConnections({
@@ -36,21 +37,7 @@ export function PluginConnections({
 	isBusy: boolean;
 }) {
 	const { t } = useLingui();
-	const methodLabel = (type: string) => {
-		if (type === "oauth2") {
-			return t({
-				id: "dashboard.plugins.connections.methodOauth2",
-				message: "OAuth 2.0",
-			});
-		}
-		if (type === "api_key") {
-			return t({
-				id: "dashboard.plugins.connections.methodApiKey",
-				message: "API key",
-			});
-		}
-		return type;
-	};
+	const methodLabel = useAuthMethodLabel();
 	const {
 		connections,
 		isLoading,
@@ -99,11 +86,7 @@ export function PluginConnections({
 	return (
 		<section className="mt-10 flex flex-col">
 			<SectionHeader
-				label={
-					<Trans id="dashboard.plugins.detail.connectionsHeading">
-						Connections
-					</Trans>
-				}
+				label={<Trans>Connections</Trans>}
 				count={connections.length}
 			/>
 
@@ -115,14 +98,14 @@ export function PluginConnections({
 							{connection.account ?? displayName}
 						</div>
 						<p className="text-xs text-muted-foreground">
-							<Trans id="dashboard.plugins.detail.connectedOn">
+							<Trans>
 								connected {formatDate(new Date(connection.createdAt))}
 							</Trans>
 						</p>
 					</div>
 					<Badge variant="outline" className="gap-1.5">
 						<span className="size-1.5 rounded-full bg-emerald-500" />
-						<Trans id="dashboard.plugins.detail.connected">Connected</Trans>
+						<Trans>Connected</Trans>
 					</Badge>
 					<Button
 						variant="ghost"
@@ -130,7 +113,6 @@ export function PluginConnections({
 						className="text-destructive"
 						disabled={isDisconnecting}
 						aria-label={t({
-							id: "dashboard.plugins.detail.disconnectLabel",
 							message: `Disconnect ${connection.account ?? displayName}`,
 						})}
 						onClick={() => disconnect(connection.id)}
@@ -144,7 +126,7 @@ export function PluginConnections({
 				<div className="mt-4 rounded-lg border border-border/60 p-4">
 					<div className="flex items-center justify-between gap-4">
 						<p className="text-sm text-muted-foreground">
-							<Trans id="dashboard.plugins.detail.noAuthNeeded">
+							<Trans>
 								This plugin needs no account — its skills are ready to use.
 							</Trans>
 						</p>
@@ -157,7 +139,7 @@ export function PluginConnections({
 								onClick={onRemove}
 							>
 								<LuTrash2 className="size-4" />
-								<Trans id="dashboard.plugins.detail.remove">Remove</Trans>
+								<Trans>Remove</Trans>
 							</Button>
 						) : (
 							<Button
@@ -167,9 +149,7 @@ export function PluginConnections({
 								onClick={() => void onAdd()}
 							>
 								<LuPlus className="size-4" />
-								<Trans id="dashboard.plugins.detail.addPlugin">
-									Add plugin
-								</Trans>
+								<Trans>Add plugin</Trans>
 							</Button>
 						)}
 					</div>
@@ -186,7 +166,7 @@ export function PluginConnections({
 						onClick={onRemove}
 					>
 						<LuTrash2 className="size-4" />
-						<Trans id="dashboard.plugins.detail.remove">Remove</Trans>
+						<Trans>Remove</Trans>
 					</Button>
 				</div>
 			)}
@@ -202,9 +182,7 @@ export function PluginConnections({
 								htmlFor={`${pluginName}-auth-method`}
 								className="text-sm text-foreground"
 							>
-								<Trans id="dashboard.plugins.detail.authentication">
-									Authentication
-								</Trans>
+								<Trans>Authentication</Trans>
 							</label>
 							<Select
 								value={method}
@@ -271,9 +249,7 @@ export function PluginConnections({
 							) : (
 								<LuGlobe className="size-4" />
 							)}
-							<Trans id="dashboard.plugins.detail.authenticateAccount">
-								Authenticate your {displayName} account
-							</Trans>
+							<Trans>Authenticate your {displayName} account</Trans>
 						</Button>
 					</div>
 

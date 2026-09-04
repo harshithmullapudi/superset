@@ -232,7 +232,7 @@ export function PluginsView() {
 
 					{catalogError && (
 						<p className="py-8 text-center text-sm text-muted-foreground">
-							<Trans id="dashboard.plugins.catalogUnavailable">
+							<Trans>
 								Could not load plugins. Check your connection and try again.
 							</Trans>
 						</p>
@@ -243,9 +243,7 @@ export function PluginsView() {
 						catalog.length === 0 &&
 						query === "" && (
 							<p className="py-8 text-center text-sm text-muted-foreground">
-								<Trans id="dashboard.plugins.catalogEmpty">
-									No plugins available yet.
-								</Trans>
+								<Trans>No plugins available yet.</Trans>
 							</p>
 						)}
 

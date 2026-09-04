@@ -35,12 +35,10 @@ export function ManageInstalledDialog({
 			<DialogContent className="max-w-lg">
 				<DialogHeader>
 					<DialogTitle>
-						<Trans id="dashboard.plugins.manageDialog.title">
-							Manage plugins
-						</Trans>
+						<Trans>Manage plugins</Trans>
 					</DialogTitle>
 					<DialogDescription>
-						<Trans id="dashboard.plugins.manageDialog.description">
+						<Trans>
 							Disabling keeps a plugin installed but removes its servers from
 							your agents. Changes take effect in new agent sessions.
 						</Trans>
@@ -48,9 +46,7 @@ export function ManageInstalledDialog({
 				</DialogHeader>
 				{installed.length === 0 ? (
 					<p className="py-4 text-sm text-muted-foreground">
-						<Trans id="dashboard.plugins.manageDialog.empty">
-							Nothing installed yet.
-						</Trans>
+						<Trans>Nothing installed yet.</Trans>
 					</p>
 				) : (
 					<div className="flex flex-col divide-y divide-border/60">
@@ -72,7 +68,6 @@ export function ManageInstalledDialog({
 										checked={plugin.enabled}
 										disabled={isBusy}
 										aria-label={t({
-											id: "dashboard.plugins.manageInstalled.pluginEnabledLabel",
 											message: `${plugin.interface.displayName} enabled`,
 										})}
 										onCheckedChange={(checked) =>
@@ -85,7 +80,6 @@ export function ManageInstalledDialog({
 										className="shrink-0 text-muted-foreground hover:text-destructive"
 										disabled={isBusy}
 										aria-label={t({
-											id: "dashboard.plugins.manageInstalled.uninstallLabel",
 											message: `Uninstall ${plugin.interface.displayName}`,
 										})}
 										onClick={() => onUninstall(plugin.name)}
