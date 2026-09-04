@@ -55,6 +55,8 @@ export interface ManagedSkillsOptions {
 	templatesDir?: string;
 	disabledSkills?: readonly string[];
 	pluginSources?: readonly PluginSkillSource[];
+	/** Overrides the ledger path; defaults to the one every provisioner reads. */
+	installedPluginsFile?: string;
 }
 
 /**
@@ -402,7 +404,9 @@ export async function createManagedSkills(
 		MANAGED_COMMAND_NAMESPACE,
 	);
 
-	const installed = options.pluginSources ?? readInstalledPluginSources();
+	const installed =
+		options.pluginSources ??
+		readInstalledPluginSources(options.installedPluginsFile);
 	if (installed === null) {
 		console.warn(
 			"[agent-setup] Skipping skill provisioning and reaping — installed_plugins.json is unreadable",
@@ -548,7 +552,9 @@ export async function provisionManagedClaudePluginAt(
 		);
 		return;
 	}
-	const installed = options.pluginSources ?? readInstalledPluginSources();
+	const installed =
+		options.pluginSources ??
+		readInstalledPluginSources(options.installedPluginsFile);
 	if (installed === null) {
 		console.warn(
 			`[agent-setup] Skipping plugin provisioning for ${claudeDir} — installed_plugins.json is unreadable`,

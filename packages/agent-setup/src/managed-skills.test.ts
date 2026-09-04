@@ -95,19 +95,20 @@ function seedMarketplacePlugin(
 }
 
 /**
- * Re-points SUPERSET_HOME_DIR at this file's root from inside the test body.
- * A sibling file's top-level hook can leave it aimed elsewhere in CI (see the
- * same note in disabled-agent-hooks.test.ts), and beforeEach is too early to
- * defend against that ordering.
+ * The ledger this file writes and reads. Named explicitly rather than resolved
+ * from SUPERSET_HOME_DIR: sibling files in the same process move that variable
+ * in their own hooks, and one landing between this write and the read under
+ * test sends the reader to a home with no ledger in it.
  */
-function useTestSupersetHome(): void {
-	process.env.SUPERSET_HOME_DIR = SUPERSET_HOME;
-}
+const INSTALLED_PLUGINS_FILE = path.join(
+	SUPERSET_HOME,
+	"plugins",
+	"installed_plugins.json",
+);
 
 function writeInstalledPlugins(
 	plugins: readonly Record<string, unknown>[],
 ): void {
-	useTestSupersetHome();
 	const dir = path.join(SUPERSET_HOME, "plugins");
 	mkdirSync(dir, { recursive: true });
 	writeFileSync(
@@ -457,6 +458,7 @@ describe("createManagedSkills without an explicit source list", () => {
 		await createManagedSkills({
 			homeDir: HOME_DIR,
 			templatesDir: TEMPLATES_DIR,
+			installedPluginsFile: INSTALLED_PLUGINS_FILE,
 		});
 
 		expect(existsSync(path.join(agentsSkills, "github-issue-triage"))).toBe(
@@ -476,6 +478,7 @@ describe("createManagedSkills without an explicit source list", () => {
 		await createManagedSkills({
 			homeDir: HOME_DIR,
 			templatesDir: TEMPLATES_DIR,
+			installedPluginsFile: INSTALLED_PLUGINS_FILE,
 		});
 
 		expect(existsSync(path.join(agentsSkills, "github-issue-triage"))).toBe(
@@ -485,10 +488,10 @@ describe("createManagedSkills without an explicit source list", () => {
 	});
 
 	it("provisions the bundled plugin when the file is absent", async () => {
-		useTestSupersetHome();
 		await createManagedSkills({
 			homeDir: HOME_DIR,
 			templatesDir: TEMPLATES_DIR,
+			installedPluginsFile: INSTALLED_PLUGINS_FILE,
 		});
 
 		expect(existsSync(path.join(agentsSkills, "superset-feedback"))).toBe(true);

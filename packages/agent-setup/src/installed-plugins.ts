@@ -18,9 +18,14 @@ interface InstalledPluginRecord {
 	enabled?: unknown;
 }
 
-export function readInstalledPluginSources(): PluginSkillSource[] | null {
-	const file = installedPluginsFilePath();
-
+/**
+ * `file` defaults to the one ledger every provisioner reads. Callers pass it
+ * explicitly when they cannot rely on the ambient SUPERSET_HOME_DIR — a test
+ * sharing a process with siblings that move the variable, most of all.
+ */
+export function readInstalledPluginSources(
+	file: string = installedPluginsFilePath(),
+): PluginSkillSource[] | null {
 	let raw: string;
 	try {
 		raw = fs.readFileSync(file, "utf-8");
