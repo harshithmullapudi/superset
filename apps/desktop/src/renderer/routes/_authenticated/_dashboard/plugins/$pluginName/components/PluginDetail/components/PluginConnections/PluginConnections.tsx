@@ -153,7 +153,7 @@ export function PluginConnections({
 								variant="outline"
 								size="sm"
 								className="shrink-0 text-destructive"
-								disabled={isBusy}
+								disabled={isBusy || isConnecting || isDisconnecting}
 								onClick={onRemove}
 							>
 								<LuTrash2 className="size-4" />
@@ -182,7 +182,7 @@ export function PluginConnections({
 						variant="outline"
 						size="sm"
 						className="shrink-0 text-destructive"
-						disabled={isBusy}
+						disabled={isBusy || isConnecting || isDisconnecting}
 						onClick={onRemove}
 					>
 						<LuTrash2 className="size-4" />

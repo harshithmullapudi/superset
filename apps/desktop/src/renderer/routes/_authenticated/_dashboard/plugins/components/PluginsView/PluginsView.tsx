@@ -32,7 +32,7 @@ export function PluginsView() {
 	} = usePluginCatalog();
 
 	const isConnected = (plugin: CatalogPlugin) =>
-		plugin.installed && (!plugin.auth || plugin.accounts.length > 0);
+		plugin.installed && (!plugin.auth || plugin.connections.length > 0);
 
 	const { uninstall, setEnabled, update, isBusy } = usePluginMutations();
 
