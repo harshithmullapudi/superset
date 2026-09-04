@@ -40,7 +40,7 @@ export default command({
 		return {
 			data: { name: removed.name, marketplace: removed.marketplace },
 			message: accountError
-				? `Removed ${removed.name}@${removed.version} (${removed.marketplace}) from this machine, but the account still lists it: ${accountError}`
+				? `Removed ${removed.name}@${removed.version} (${removed.marketplace}) from this machine, but the account removal could not be confirmed: ${accountError}`
 				: `Removed ${removed.name}@${removed.version} (${removed.marketplace}).`,
 		};
 	},

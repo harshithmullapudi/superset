@@ -27,7 +27,7 @@ export default command({
 		try {
 			await ctx.api.plugins.setEnabled.mutate({
 				name,
-				marketplace,
+				marketplace: updated.marketplace,
 				enabled: true,
 			});
 		} catch (error) {

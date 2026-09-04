@@ -37,6 +37,35 @@ const git = promisify(execFile);
 // along without being named here.
 const SPARSE_PATHS = ["plugins"];
 
+/**
+ * The manifest is only readable once something is checked out, so the first
+ * checkout takes the conventional directory and this widens it to whatever
+ * the entries actually name. A marketplace that keeps its plugins elsewhere
+ * would otherwise clone to a tree with no plugin.json in it.
+ */
+function sparsePaths(location: string): string[] {
+	const file = path.join(location, MARKETPLACE_FILE);
+	if (!fs.existsSync(file)) return SPARSE_PATHS;
+	let entries: MarketplaceEntry[];
+	try {
+		entries =
+			(
+				JSON.parse(fs.readFileSync(file, "utf8")) as {
+					plugins?: MarketplaceEntry[];
+				}
+			).plugins ?? [];
+	} catch {
+		return SPARSE_PATHS;
+	}
+	const dirs = new Set(SPARSE_PATHS);
+	for (const entry of entries) {
+		if (typeof entry.source !== "string") continue;
+		const top = entry.source.replace(/^\.\//, "").split("/")[0];
+		if (top && top !== "." && top !== "..") dirs.add(top);
+	}
+	return [...dirs];
+}
+
 export function parseMarketplaceSource(input: string): MarketplaceSource {
 	if (input.startsWith(".") || input.startsWith("/") || input.startsWith("~")) {
 		return {
@@ -45,9 +74,11 @@ export function parseMarketplaceSource(input: string): MarketplaceSource {
 		};
 	}
 	// owner/repo@ref, matching how a ref is named everywhere else. `#branch` is
-	// still read so an existing invocation does not break.
-	const separator = input.includes("@") ? "@" : "#";
-	const [target, ref] = input.split(separator);
+	// still read so an existing invocation does not break. Only the first
+	// separator splits: a ref may itself contain an `@`, as release tags do.
+	const split = input.match(/^(.*?)[@#](.*)$/);
+	const target = split?.[1] ?? input;
+	const ref = split?.[2] || undefined;
 	const github = target?.match(
 		/^(?:https?:\/\/github\.com\/)?([\w.-]+\/[\w.-]+?)(?:\.git)?\/?$/,
 	);
@@ -138,6 +169,12 @@ export async function installMarketplace(
 			throw new CLIError(
 				`${repo} has no ${MARKETPLACE_FILE} at its root; it is not a marketplace.`,
 			);
+		}
+
+		const paths = sparsePaths(location);
+		if (paths.length > SPARSE_PATHS.length) {
+			await git("git", ["-C", location, "sparse-checkout", "set", ...paths]);
+			await git("git", ["-C", location, "checkout"]);
 		}
 	}
 
@@ -292,6 +329,11 @@ async function extractTag(
 	]);
 	const files = listed.stdout.split("\0").filter(Boolean);
 	if (!files.length) return false;
+	if (!files.some((file) => path.relative(prefix, file) === "plugin.json")) {
+		throw new CLIError(
+			`Release ${tag} has no plugin.json at ${prefix}; the tag is not a usable release.`,
+		);
+	}
 
 	for (const file of files) {
 		const relative = path.relative(prefix, file);

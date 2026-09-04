@@ -41,8 +41,8 @@ export default command({
 	display: (data) =>
 		table(
 			(data ?? []) as Record<string, unknown>[],
-			["name", "version", "files", "dir"],
-			["PLUGIN", "VERSION", "FILES", "LOCATION"],
+			["name", "version", "files", "tag"],
+			["PLUGIN", "VERSION", "FILES", "TAG"],
 			[20, 12, 8, 44],
 		),
 	run: async ({ args, options }) => {

@@ -26,10 +26,27 @@ async function git(root: string, args: string[]): Promise<string | null> {
 }
 
 export async function tagExists(root: string, tag: string): Promise<boolean> {
-	return (
-		(await git(root, ["rev-parse", "-q", "--verify", `refs/tags/${tag}`])) !==
-		null
-	);
+	// `rev-parse -q --verify` exits 1 and says nothing for a ref that is merely
+	// absent. Every other failure — not a repository, no git on PATH — would
+	// otherwise read as "nothing published yet" and let a publish claim a
+	// release it never validated.
+	try {
+		await run("git", [
+			"-C",
+			root,
+			"rev-parse",
+			"-q",
+			"--verify",
+			`refs/tags/${tag}`,
+		]);
+		return true;
+	} catch (error) {
+		const failure = error as { code?: number; stderr?: string };
+		if (failure.code === 1 && !failure.stderr?.trim()) return false;
+		throw new CLIError(
+			`Could not read the tags in ${root}: ${failure.stderr?.trim() || (error instanceof Error ? error.message : String(error))}`,
+		);
+	}
 }
 
 /**

@@ -45,7 +45,9 @@ export default command({
 		const single =
 			from && fs.existsSync(path.join(from, "plugin.json"))
 				? ctx.marketplace.plugins.find(
-						(entry) => path.resolve(ctx.root, entry.source) === from,
+						(entry) =>
+							typeof entry.source === "string" &&
+							path.resolve(ctx.root, entry.source) === from,
 					)
 				: undefined;
 		if (from && fs.existsSync(path.join(from, "plugin.json")) && !single) {
