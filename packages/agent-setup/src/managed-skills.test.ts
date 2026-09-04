@@ -94,9 +94,20 @@ function seedMarketplacePlugin(
 	return { name, dir };
 }
 
+/**
+ * Re-points SUPERSET_HOME_DIR at this file's root from inside the test body.
+ * A sibling file's top-level hook can leave it aimed elsewhere in CI (see the
+ * same note in disabled-agent-hooks.test.ts), and beforeEach is too early to
+ * defend against that ordering.
+ */
+function useTestSupersetHome(): void {
+	process.env.SUPERSET_HOME_DIR = SUPERSET_HOME;
+}
+
 function writeInstalledPlugins(
 	plugins: readonly Record<string, unknown>[],
 ): void {
+	useTestSupersetHome();
 	const dir = path.join(SUPERSET_HOME, "plugins");
 	mkdirSync(dir, { recursive: true });
 	writeFileSync(
@@ -474,6 +485,7 @@ describe("createManagedSkills without an explicit source list", () => {
 	});
 
 	it("provisions the bundled plugin when the file is absent", async () => {
+		useTestSupersetHome();
 		await createManagedSkills({
 			homeDir: HOME_DIR,
 			templatesDir: TEMPLATES_DIR,
