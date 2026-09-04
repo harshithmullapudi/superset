@@ -1,9 +1,9 @@
 import {
-	type ControlPing,
 	DIAL_TIMEOUT_MS,
+	type HostControlMessage,
 	RELAY_CLOSE,
 	type StreamDial,
-} from "@superset/shared/tunnel-v2-protocol";
+} from "@superset/shared/tunnel-protocol";
 import { type Connection, type ConnectionContext, Server } from "partyserver";
 import {
 	type HttpExchangeRequest,
@@ -31,7 +31,11 @@ type ConnState =
 	| { kind: "client"; ticket: string; peer?: string }
 	| { kind: "dial"; ticket: string; peer?: string };
 
-export type PrepareStreamResult = "ready" | "no-host" | "timeout";
+export type PrepareStreamResult =
+	| "ready"
+	| "no-host"
+	| "timeout"
+	| "dial-failed";
 
 // One Durable Object per hostId: the host's control channel plus every
 // spliced stream terminate here. Stream traffic is never parsed. The Worker
@@ -41,7 +45,10 @@ export type PrepareStreamResult = "ready" | "no-host" | "timeout";
 export class HostTunnel extends Server<RelayEnv> {
 	static options = { hibernate: true };
 
-	private readonly pendingDials = new Map<string, (ok: boolean) => void>();
+	private readonly pendingDials = new Map<
+		string,
+		(result: PrepareStreamResult) => void
+	>();
 	private readonly earlyFrames = new Map<
 		string,
 		(string | ArrayBuffer | ArrayBufferView)[]
@@ -81,11 +88,10 @@ export class HostTunnel extends Server<RelayEnv> {
 	): Promise<PrepareStreamResult> {
 		const host = this.hostConn();
 		if (!host) return "no-host";
-		const arrived = new Promise<boolean>((resolve) => {
+		const arrived = new Promise<PrepareStreamResult>((resolve) => {
 			this.pendingDials.set(ticket, resolve);
 			setTimeout(() => {
-				this.pendingDials.delete(ticket);
-				resolve(false);
+				if (this.pendingDials.delete(ticket)) resolve("timeout");
 			}, DIAL_TIMEOUT_MS);
 		});
 		this.sendDial(host, {
@@ -95,7 +101,7 @@ export class HostTunnel extends Server<RelayEnv> {
 			path,
 			query,
 		});
-		return (await arrived) ? "ready" : "timeout";
+		return arrived;
 	}
 
 	async proxyHttp(request: HttpExchangeRequest): Promise<HttpExchangeResult> {
@@ -139,7 +145,7 @@ export class HostTunnel extends Server<RelayEnv> {
 			}
 			await this.ctx.storage.put("lastHostSeenAt", Date.now());
 			await this.ctx.storage.setAlarm(Date.now() + LIVENESS_SWEEP_MS);
-			console.log(`[relay2] host connected: ${hostId}`);
+			console.log(`[relay] host connected: ${hostId}`);
 			return;
 		}
 
@@ -171,7 +177,7 @@ export class HostTunnel extends Server<RelayEnv> {
 					);
 				}, UNPAIRED_DIAL_TIMEOUT_MS),
 			);
-			waiting(true);
+			waiting("ready");
 			return;
 		}
 
@@ -220,13 +226,17 @@ export class HostTunnel extends Server<RelayEnv> {
 		// tunneled bytes that happen to equal it.
 		if (state.kind === "host") {
 			if (typeof message !== "string") return;
-			let ping: ControlPing;
+			let control: HostControlMessage;
 			try {
-				ping = JSON.parse(message) as ControlPing;
+				control = JSON.parse(message) as HostControlMessage;
 			} catch {
 				return;
 			}
-			if (ping.type !== "ping") return;
+			if (control.type === "stream:dial-failed") {
+				this.failDial(control.ticket);
+				return;
+			}
+			if (control.type !== "ping") return;
 			// Only the live host refreshes liveness: a ping in flight from a
 			// just-replaced socket must not extend the stale window.
 			if (this.hostConn()?.id === conn.id) {
@@ -281,7 +291,7 @@ export class HostTunnel extends Server<RelayEnv> {
 			this.httpExchanges.abortAll();
 			// A replaced socket's close lands after the new one registered.
 			if (!this.hostConn()) {
-				console.log(`[relay2] host disconnected: ${state.hostId}`);
+				console.log(`[relay] host disconnected: ${state.hostId}`);
 			}
 			return;
 		}
@@ -313,7 +323,7 @@ export class HostTunnel extends Server<RelayEnv> {
 			// flips this object's socket state — and the socket *is* presence.
 			const state = host.state as ConnState | undefined;
 			console.log(
-				`[relay2] host stale, closing: ${state?.kind === "host" ? state.hostId : this.name}`,
+				`[relay] host stale, closing: ${state?.kind === "host" ? state.hostId : this.name}`,
 			);
 			closeQuietly(host, RELAY_CLOSE.staleHost, "No keepalive from host");
 			return;
@@ -329,6 +339,18 @@ export class HostTunnel extends Server<RelayEnv> {
 	}
 
 	// ── Internals ─────────────────────────────────────────────────────
+
+	// The host gave up dialing this ticket: answer the waiting client now
+	// instead of at the deadline.
+	private failDial(ticket: string): void {
+		const waiting = this.pendingDials.get(ticket);
+		if (waiting) {
+			this.pendingDials.delete(ticket);
+			waiting("dial-failed");
+			return;
+		}
+		this.httpExchanges.fail(ticket);
+	}
 
 	private hostConn(): Connection | null {
 		for (const conn of this.getConnections(HOST_TAG)) {

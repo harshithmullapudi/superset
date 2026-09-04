@@ -1,7 +1,7 @@
 import type {
 	HttpDialFrame,
 	HttpResponseHeader,
-} from "@superset/shared/tunnel-v2-protocol";
+} from "@superset/shared/tunnel-protocol";
 
 const EXCHANGE_TIMEOUT_MS = 30_000;
 // Chunked below the Durable Object's per-message ceiling.
@@ -21,7 +21,7 @@ export type HttpExchangeResult =
 			headers: Record<string, string>;
 			body: Uint8Array<ArrayBuffer>;
 	  }
-	| { ok: false; reason: "timeout" };
+	| { ok: false; reason: "timeout" | "dial-failed" };
 
 interface Exchange {
 	request: HttpExchangeRequest;
@@ -129,6 +129,15 @@ export class HttpExchanges {
 			});
 			dial.close(1000, "Exchange complete");
 		}
+	}
+
+	/** The host reported it could not dial back: fail now, not at the deadline. */
+	fail(ticket: string): void {
+		const exchange = this.exchanges.get(ticket);
+		if (!exchange) return;
+		clearTimeout(exchange.timer);
+		this.exchanges.delete(ticket);
+		exchange.resolve({ ok: false, reason: "dial-failed" });
 	}
 
 	abortAll(): void {
