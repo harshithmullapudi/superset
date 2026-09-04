@@ -196,6 +196,8 @@ type BundledRun = (event: {
 interface ServerRef {
 	path: string;
 	integrity: string;
+	/** The release tag the bytes were published at, when the manifest pins one. */
+	ref?: string;
 }
 
 const loaded = new Map<string, Promise<BundledRun>>();
@@ -210,7 +212,11 @@ const MAX_SERVER_BYTES = 8 * 1024 * 1024;
 function serverRef(manifest: PluginManifest): ServerRef | null {
 	const server = supersetExtension(manifest)?.server;
 	if (!server?.path || !server.integrity) return null;
-	return { path: server.path, integrity: server.integrity };
+	return {
+		path: server.path,
+		integrity: server.integrity,
+		...(server.ref ? { ref: server.ref } : {}),
+	};
 }
 
 function digestOf(source: Buffer): string {
@@ -243,7 +249,10 @@ async function fetchServer(
 	source: BundledSource,
 	ref: ServerRef,
 ): Promise<Buffer> {
-	const url = `https://raw.githubusercontent.com/${source.repo}/${source.ref}/${ref.path}`;
+	// The manifest's own ref pins the bytes to the release they were published
+	// at; the marketplace's ref is a branch that has moved on since.
+	const at = ref.ref ?? source.ref;
+	const url = `https://raw.githubusercontent.com/${source.repo}/${at}/${ref.path}`;
 	const response = await fetch(url);
 	if (!response.ok) {
 		throw new PluginDispatchError(

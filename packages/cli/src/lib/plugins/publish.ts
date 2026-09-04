@@ -1,46 +1,69 @@
+import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { promisify } from "node:util";
 import { CLIError } from "@superset/cli-framework";
-import {
-	buildPlugin,
-	isBuildCurrent,
-	isPublishedBuildCurrent,
-	SERVER_ENTRY,
-} from "./build";
+import { buildPlugin, isBuildCurrent, SERVER_ENTRY } from "./build";
 import {
 	type MarketplaceContext,
-	publishedVersions,
 	type ResolvedPlugin,
+	releaseTag,
 	requiredEnvFor,
 	supersetExtension,
-	versionDir,
 	writeJson,
 } from "./marketplace";
 
-const VERSIONED_FILES = ["plugin.json"];
-const VERSIONED_DIRS = ["skills", "server"];
+const run = promisify(execFile);
 
-function copyTree(from: string, to: string): number {
-	let count = 0;
-	fs.mkdirSync(to, { recursive: true });
-	for (const entry of fs.readdirSync(from, { withFileTypes: true })) {
-		if (entry.name.startsWith(".")) continue;
-		const src = path.join(from, entry.name);
-		const dest = path.join(to, entry.name);
-		if (entry.isDirectory()) count += copyTree(src, dest);
-		else {
-			fs.copyFileSync(src, dest);
-			count++;
-		}
+async function git(root: string, args: string[]): Promise<string | null> {
+	try {
+		const { stdout } = await run("git", ["-C", root, ...args]);
+		return stdout;
+	} catch {
+		return null;
 	}
-	return count;
+}
+
+export async function tagExists(root: string, tag: string): Promise<boolean> {
+	return (
+		(await git(root, ["rev-parse", "-q", "--verify", `refs/tags/${tag}`])) !==
+		null
+	);
+}
+
+/**
+ * Paths under `dir` that differ between the working tree and `tag`.
+ *
+ * Untracked files are asked for separately: `git diff` compares what git knows
+ * about, so a skill added and never committed would otherwise read as a tree
+ * that still matches its release.
+ */
+export async function changedSinceTag(
+	root: string,
+	tag: string,
+	dir: string,
+): Promise<string[] | null> {
+	const tracked = await git(root, ["diff", "--name-only", tag, "--", dir]);
+	if (tracked === null) return null;
+	const untracked =
+		(await git(root, [
+			"ls-files",
+			"--others",
+			"--exclude-standard",
+			"--",
+			dir,
+		])) ?? "";
+	const lines = [...tracked.split("\n"), ...untracked.split("\n")]
+		.map((line) => line.trim())
+		.filter(Boolean);
+	return [...new Set(lines)].sort();
 }
 
 export interface PublishResult {
 	name: string;
 	version: string;
-	dir: string;
+	tag: string;
 	files: number;
 	rebuilt: boolean;
 }
@@ -50,69 +73,45 @@ export async function publishPlugin(
 	plugin: ResolvedPlugin,
 	options: { force?: boolean } = {},
 ): Promise<PublishResult> {
+	const name = plugin.manifest.name;
 	const version = plugin.manifest.version;
-	if (!version) {
-		throw new CLIError(`Plugin "${plugin.manifest.name}" has no version.`);
+	if (!version) throw new CLIError(`Plugin "${name}" has no version.`);
+
+	const entry = ctx.marketplace.plugins.find((p) => p.name === name);
+	if (!entry) {
+		throw new CLIError(`"${name}" is not listed in the marketplace.`);
 	}
 
-	const target = versionDir(plugin, version);
-	if (fs.existsSync(target) && !options.force) {
+	const tag = releaseTag(name, version);
+	if ((await tagExists(ctx.root, tag)) && !options.force) {
 		throw new CLIError(
-			`Version ${version} of "${plugin.manifest.name}" is already published. ` +
-				`Bump the version (--bump patch) or pass --force to overwrite.`,
+			`Version ${version} of "${name}" is already tagged as ${tag}. ` +
+				`Bump the version (--bump patch) or pass --force to re-stamp it.`,
 		);
 	}
 
 	const build = await buildPlugin(plugin, { force: options.force });
 	if (plugin.hasServerSource && !isBuildCurrent(plugin)) {
 		throw new CLIError(
-			`Build for "${plugin.manifest.name}" is stale after rebuilding; refusing to publish.`,
+			`Build for "${name}" is stale after rebuilding; refusing to publish.`,
 		);
 	}
-
-	if (fs.existsSync(target)) fs.rmSync(target, { recursive: true });
-	fs.mkdirSync(target, { recursive: true });
-
-	let files = 0;
-	for (const file of VERSIONED_FILES) {
-		const src = path.join(plugin.dir, file);
-		if (!fs.existsSync(src)) continue;
-		fs.copyFileSync(src, path.join(target, file));
-		files++;
-	}
-	for (const dir of VERSIONED_DIRS) {
-		const src = path.join(plugin.dir, dir);
-		if (!fs.existsSync(src)) continue;
-		files += copyTree(src, path.join(target, dir));
-	}
-
 	if (
 		plugin.hasServerSource &&
-		!fs.existsSync(path.join(target, SERVER_ENTRY))
+		!fs.existsSync(path.join(plugin.dir, SERVER_ENTRY))
 	) {
-		throw new CLIError(
-			`Published ${plugin.manifest.name}@${version} is missing ${SERVER_ENTRY}.`,
-		);
+		throw new CLIError(`${name}@${version} is missing ${SERVER_ENTRY}.`);
 	}
-
-	const entry = ctx.marketplace.plugins.find(
-		(p) => p.name === plugin.manifest.name,
-	);
-	if (!entry) {
-		throw new CLIError(
-			`"${plugin.manifest.name}" is not listed in the marketplace.`,
-		);
-	}
-	stampServerIntegrity(target, entry.source, version);
 
 	entry.version = version;
 	writeJson(ctx.file, ctx.marketplace);
+	writeGeneratedManifests(ctx);
 
 	return {
-		name: plugin.manifest.name,
+		name,
 		version,
-		dir: path.relative(ctx.root, target),
-		files,
+		tag,
+		files: treeFiles(path.join(plugin.dir, "skills")).length + 1,
 		rebuilt: build.built,
 	};
 }
@@ -226,65 +225,15 @@ function treeFiles(dir: string, prefix = ""): string[] {
 	return files.sort();
 }
 
-function withoutServerStamp(file: string): string {
-	const manifest = JSON.parse(fs.readFileSync(file, "utf8"));
-	if (manifest?.extensions?.superset)
-		delete manifest.extensions.superset.server;
-	return JSON.stringify(manifest);
-}
-
-function snapshotDrift(plugin: ResolvedPlugin, version: string): string[] {
-	const target = versionDir(plugin, version);
-	const drifted: string[] = [];
-
-	const sourceManifest = path.join(plugin.dir, "plugin.json");
-	const publishedManifest = path.join(target, "plugin.json");
-	if (!fs.existsSync(publishedManifest)) drifted.push("plugin.json");
-	else if (
-		fs.existsSync(sourceManifest) &&
-		withoutServerStamp(sourceManifest) !== withoutServerStamp(publishedManifest)
-	) {
-		drifted.push("plugin.json");
-	}
-
-	const source = treeFiles(path.join(plugin.dir, "skills"));
-	const published = treeFiles(path.join(target, "skills"));
-	for (const rel of new Set([...source, ...published])) {
-		const a = path.join(plugin.dir, "skills", rel);
-		const b = path.join(target, "skills", rel);
-		if (!fs.existsSync(a) || !fs.existsSync(b)) drifted.push(`skills/${rel}`);
-		else if (!fs.readFileSync(a).equals(fs.readFileSync(b))) {
-			drifted.push(`skills/${rel}`);
-		}
-	}
-
-	const stamped = fs.existsSync(publishedManifest)
-		? (
-				JSON.parse(fs.readFileSync(publishedManifest, "utf8"))?.extensions
-					?.superset?.server as { integrity?: string } | undefined
-			)?.integrity
-		: undefined;
-	const bundle = path.join(target, SERVER_ENTRY);
-	const hasBundle = fs.existsSync(bundle);
-	if (plugin.hasServerSource || hasBundle || stamped !== undefined) {
-		const actual = hasBundle
-			? `sha256-${createHash("sha256").update(fs.readFileSync(bundle)).digest("base64")}`
-			: null;
-		if (!stamped || actual !== stamped) drifted.push(SERVER_ENTRY);
-	}
-
-	return drifted.sort();
-}
-
 export interface CheckIssue {
 	name: string;
 	problem: string;
 }
 
-export function checkPlugin(
+export async function checkPlugin(
 	ctx: MarketplaceContext,
 	plugin: ResolvedPlugin,
-): CheckIssue[] {
+): Promise<CheckIssue[]> {
 	const issues: CheckIssue[] = [];
 	const name = plugin.manifest.name;
 	const version = plugin.manifest.version;
@@ -302,35 +251,26 @@ export function checkPlugin(
 		});
 	}
 
-	if (!fs.existsSync(versionDir(plugin, version))) {
+	if (plugin.hasServerSource && !isBuildCurrent(plugin)) {
 		issues.push({
 			name,
-			problem: `version ${version} is not published (no versions/${version})`,
+			problem: `src/ has changed since ${SERVER_ENTRY} was built; run \`superset plugins build ${name}\``,
 		});
-	} else {
-		const drifted = snapshotDrift(plugin, version);
-		if (drifted.length) {
-			issues.push({
-				name,
-				problem: `versions/${version} no longer matches source (${drifted.join(", ")}); bump and publish, or republish with --force`,
-			});
-		}
 	}
 
-	if (plugin.hasServerSource) {
-		const published = isPublishedBuildCurrent(
-			plugin,
-			versionDir(plugin, version),
+	// A tag is immutable, so a release that exists and no longer matches the
+	// tree means the change was never published, not that the tag went stale.
+	const tag = releaseTag(name, version);
+	if (await tagExists(ctx.root, tag)) {
+		const changed = await changedSinceTag(
+			ctx.root,
+			tag,
+			path.relative(ctx.root, plugin.dir),
 		);
-		if (published === null) {
+		if (changed?.length) {
 			issues.push({
 				name,
-				problem: `versions/${version} has no build stamp; run \`superset plugins publish ${name} --force\``,
-			});
-		} else if (!published) {
-			issues.push({
-				name,
-				problem: `src/ has changed since ${version} was published; bump and publish, or republish with --force`,
+				problem: `${tag} does not match the working tree (${changed.slice(0, 4).join(", ")}${changed.length > 4 ? ", …" : ""}); bump the version and publish`,
 			});
 		}
 	}
@@ -351,22 +291,13 @@ export function checkPlugin(
 	}
 
 	issues.push(...checkAuth(plugin));
-
-	const published = publishedVersions(plugin);
-	if (published.length && published[published.length - 1] !== version) {
-		issues.push({
-			name,
-			problem: `plugin.json says ${version} but ${published[published.length - 1]} is the newest published version`,
-		});
-	}
-
 	return issues;
 }
 
 function publishedSkills(
-	versionPath: string,
+	pluginDir: string,
 ): { name: string; description: string }[] {
-	const dir = path.join(versionPath, "skills");
+	const dir = path.join(pluginDir, "skills");
 	if (!fs.existsSync(dir)) return [];
 
 	const skills: { name: string; description: string }[] = [];
@@ -383,30 +314,31 @@ function publishedSkills(
 	return skills;
 }
 
-function stampServerIntegrity(
-	target: string,
+/**
+ * Where the host downloads a plugin's bundled server from, and what it must
+ * hash to. `ref` is the release tag rather than the marketplace's branch, so
+ * the bytes are pinned to the version that was published even after the branch
+ * moves on. Stamped into the generated bundle, never into the hand-authored
+ * plugin.json.
+ */
+function serverStamp(
+	pluginDir: string,
 	source: string,
+	name: string,
 	version: string,
-): void {
-	const serverPath = path.join(target, SERVER_ENTRY);
-	if (!fs.existsSync(serverPath)) return;
-
-	const manifestPath = path.join(target, "plugin.json");
-	if (!fs.existsSync(manifestPath)) return;
+): { path: string; integrity: string; ref: string } | null {
+	const bundle = path.join(pluginDir, SERVER_ENTRY);
+	if (!fs.existsSync(bundle)) return null;
 
 	const digest = createHash("sha256")
-		.update(fs.readFileSync(serverPath))
+		.update(fs.readFileSync(bundle))
 		.digest("base64");
-
-	const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-	manifest.extensions ??= {};
-	manifest.extensions.superset ??= {};
 	const dir = source.replace(/^\.\//, "").replace(/\/$/, "");
-	manifest.extensions.superset.server = {
-		path: `${dir}/versions/${version}/${SERVER_ENTRY}`,
+	return {
+		path: `${dir}/${SERVER_ENTRY}`,
 		integrity: `sha256-${digest}`,
+		ref: releaseTag(name, version),
 	};
-	fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, "\t")}\n`);
 }
 
 const GENERATED_HEADER = `// Generated by \`superset plugins publish\`. Do not edit.
@@ -434,18 +366,17 @@ export function renderGeneratedManifests(
 	for (const entry of ctx.marketplace.plugins) {
 		const version = entry.version;
 		if (!version) continue;
-		const manifestPath = path.join(
-			ctx.root,
-			entry.source,
-			"versions",
-			version,
-			"plugin.json",
-		);
+		const pluginDir = path.join(ctx.root, entry.source);
+		const manifestPath = path.join(pluginDir, "plugin.json");
 		if (!fs.existsSync(manifestPath)) continue;
 		const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-		manifest.skills = publishedSkills(
-			path.join(ctx.root, entry.source, "versions", version),
-		);
+		manifest.skills = publishedSkills(pluginDir);
+		const stamp = serverStamp(pluginDir, entry.source, entry.name, version);
+		if (stamp) {
+			manifest.extensions ??= {};
+			manifest.extensions.superset ??= {};
+			manifest.extensions.superset.server = stamp;
+		}
 		entries.push(
 			`\t${JSON.stringify(entry.name)}: ${JSON.stringify(manifest, null, "\t")
 				.split("\n")

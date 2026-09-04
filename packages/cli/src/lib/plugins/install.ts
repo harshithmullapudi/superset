@@ -25,7 +25,11 @@ import {
 	writeInstalledPlugins,
 	writeKnownMarketplaces,
 } from "./host";
-import { MARKETPLACE_FILE, type MarketplaceEntry } from "./marketplace";
+import {
+	MARKETPLACE_FILE,
+	type MarketplaceEntry,
+	releaseTag,
+} from "./marketplace";
 
 const git = promisify(execFile);
 
@@ -217,6 +221,81 @@ function sourceDir(marketplace: string, entry: MarketplaceEntry): string {
 	return dir;
 }
 
+/**
+ * Writes the plugin's tree at `tag` into `target`, fetching the tag if the
+ * shallow clone does not have it yet. Returns false when the marketplace has
+ * no such release, so the caller can fall back to the working tree.
+ *
+ * ls-tree plus show rather than `git archive`: it needs no tar reader, and
+ * reading each blob as a Buffer keeps a bundled server byte-identical, which
+ * is what its published digest is taken over.
+ */
+async function extractTag(
+	location: string,
+	tag: string,
+	source: string,
+	target: string,
+): Promise<boolean> {
+	const ref = `refs/tags/${tag}`;
+	const has = async () =>
+		await git("git", ["-C", location, "rev-parse", "-q", "--verify", ref]).then(
+			() => true,
+			() => false,
+		);
+
+	if (!(await has())) {
+		await git("git", [
+			"-C",
+			location,
+			"fetch",
+			"--depth",
+			"1",
+			"origin",
+			`${ref}:${ref}`,
+		]).catch(() => undefined);
+		if (!(await has())) return false;
+	}
+
+	const prefix = source.replace(/^\.\//, "").replace(/\/$/, "");
+	const listed = await git("git", [
+		"-C",
+		location,
+		"ls-tree",
+		"-r",
+		"--name-only",
+		"-z",
+		tag,
+		"--",
+		prefix,
+	]);
+	const files = listed.stdout.split("\0").filter(Boolean);
+	if (!files.length) return false;
+
+	for (const file of files) {
+		const relative = path.relative(prefix, file);
+		assertSafeRelative(relative, file);
+		const destination = path.join(target, relative);
+		fs.mkdirSync(path.dirname(destination), { recursive: true });
+		const { stdout } = await git(
+			"git",
+			["-C", location, "show", `${tag}:${file}`],
+			{
+				encoding: "buffer",
+				maxBuffer: 64 * 1024 * 1024,
+			},
+		);
+		fs.writeFileSync(destination, stdout as unknown as Buffer);
+	}
+	return true;
+}
+
+/** A tree entry must stay inside the plugin directory it was listed under. */
+function assertSafeRelative(relative: string, file: string): void {
+	if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) {
+		throw new CLIError(`Refusing to extract "${file}": it escapes the plugin.`);
+	}
+}
+
 function assertNotSymlink(target: string): void {
 	let stat: fs.Stats;
 	try {
@@ -324,26 +403,34 @@ export async function installPlugin(
 	);
 
 	assertNotSymlink(path.join(dir, "versions"));
-	const versioned = path.join(dir, "versions", version);
-	assertNotSymlink(versioned);
-	const payload = fs.existsSync(versioned) ? versioned : dir;
-
 	const target = pluginCachePath(found.marketplace, name, version);
 	if (fs.existsSync(target)) fs.rmSync(target, { recursive: true });
 	fs.mkdirSync(path.dirname(target), { recursive: true });
 
-	if (payload === dir) {
+	// A release is the plugin's tree at its tag. A `path` marketplace is one
+	// machine's working tree with no releases in it, so it installs what is
+	// there — which is what makes local authoring work.
+	const known = readKnownMarketplaces()[found.marketplace];
+	const tag = releaseTag(name, version);
+	const fromTag =
+		known?.source.kind === "github" &&
+		(await extractTag(
+			path.resolve(known.installLocation),
+			tag,
+			entry.source,
+			target,
+		));
+
+	if (!fromTag) {
 		fs.mkdirSync(target, { recursive: true });
-		for (const item of ["plugin.json"]) {
-			const src = path.join(dir, item);
-			if (fs.existsSync(src)) fs.copyFileSync(src, path.join(target, item));
+		const manifestSrc = path.join(dir, "plugin.json");
+		if (fs.existsSync(manifestSrc)) {
+			fs.copyFileSync(manifestSrc, path.join(target, "plugin.json"));
 		}
 		for (const item of ["skills", "server"]) {
 			const src = path.join(dir, item);
 			if (fs.existsSync(src)) copyTree(src, path.join(target, item));
 		}
-	} else {
-		copyTree(payload, target);
 	}
 
 	const plugins = readInstalledPlugins().filter(

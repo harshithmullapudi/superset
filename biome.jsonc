@@ -14,9 +14,6 @@
 			"!**/*.template.ts",
 			"!**/plans",
 			"!**/*.generated.ts",
-			// Published version snapshots are written by `superset plugins publish`;
-			// never hand-edited, never formatted.
-			"!plugins/*/versions",
 			// Lingui catalogs: .po plus compiled messages.ts (lingui compile output).
 			"!packages/i18n/locales",
 			"!apps/mobile/uniwind-types.d.ts",

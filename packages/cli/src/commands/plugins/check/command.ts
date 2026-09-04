@@ -29,7 +29,9 @@ export default command({
 		const ctx = findMarketplace();
 		const names = args.names as string[] | undefined;
 		const plugins = resolvePlugins(ctx, names);
-		const issues = plugins.flatMap((plugin) => checkPlugin(ctx, plugin));
+		const issues = (
+			await Promise.all(plugins.map((plugin) => checkPlugin(ctx, plugin)))
+		).flat();
 
 		if (!names?.length) issues.push(...generatedManifestDrift(ctx));
 

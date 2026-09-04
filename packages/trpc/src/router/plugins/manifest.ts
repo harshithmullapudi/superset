@@ -60,6 +60,7 @@ export interface PluginBind {
 export interface PluginServer {
 	path?: string;
 	integrity?: string;
+	ref?: string;
 }
 
 export interface SupersetExtension {

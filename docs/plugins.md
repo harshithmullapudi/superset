@@ -13,33 +13,37 @@ Only three things in a plugin directory are hand-written:
 | `plugins/<name>/plugin.json` | you |
 | `plugins/<name>/skills/*/SKILL.md` | you |
 | `plugins/<name>/src/index.ts` | you (optional MCP server) |
-| `plugins/<name>/server/` | `superset plugins build` |
-| `plugins/<name>/versions/<v>/` | `superset plugins publish` |
+| `plugins/<name>/server/` | `superset plugins build` (committed: it is what a release ships) |
 | `.agent-marketplace.json` | `superset plugins create` / `publish` |
 | `packages/shared/src/plugins/manifests.generated.ts` | `superset plugins publish` |
 
-The generated four are excluded from biome (`biome.jsonc`) precisely because nothing should be
-formatting them by hand. Editing them directly is the one way to get a marketplace that disagrees
-with itself.
+`manifests.generated.ts` is generated; editing it by hand is the one way to get a marketplace that
+disagrees with itself. It exists because the API must resolve `token_url` and the proxy target
+*without* trusting anything client-supplied; a manifest posted in a request would be an
+exfiltration path.
 
-`versions/<v>/` exists because a host resolving a plugin at tool-call time has a marketplace repo and
-a ref, not a git history — it fetches a path. `manifests.generated.ts` exists because the API must
-resolve `token_url` and the proxy target *without* trusting anything client-supplied; a manifest
-posted in a request would be an exfiltration path.
+**A release is a git tag, not a folder.** `<name>@<version>` on the marketplace repo is the version:
+`plugins install` fetches that tag and takes the plugin's tree at it, and the generated manifest
+pins a bundled server by `path` + `ref` + `integrity`, so the bytes a host downloads belong to the
+version rather than to whatever the branch holds now. A `path:` marketplace has no releases in it
+and installs the working tree, which is what makes local authoring work.
 
 ## Changing a plugin
 
 ```bash
-superset plugins publish <name> --bump patch   # rewrites versions/, the marketplace entry, and the bundle
+superset plugins publish <name> --bump patch   # rewrites the marketplace entry and the bundle
+git commit -am "publish <name>@<version>"
+git tag <name>@<version> && git push --tags    # the tag is the release
 bun run check:plugins                          # what CI runs; catches a change that skipped publish
 ```
 
-`check:plugins` fails on a `versions/<v>/` that no longer matches the source it was published from, a
-marketplace entry whose version disagrees with `plugin.json`, a `server/` build that is stale against
-`src/`, and a `manifests.generated.ts` that a publish would rewrite. Run it before pushing.
+`check:plugins` fails on a marketplace entry whose version disagrees with `plugin.json`, a `server/`
+build that is stale against `src/`, a `manifests.generated.ts` that a publish would rewrite, and a
+tag whose tree no longer matches the working tree — which is how an edit that skipped publish gets
+caught. An unreleased version has no tag yet and is not an error.
 
-Bump the version rather than republishing over one that shipped: `--force` overwrites a snapshot
-someone's account may already be pinned to.
+Bump the version rather than moving a tag: a tag someone's account is pinned to is the one thing
+that must not change under them.
 
 ## Manifest shape
 

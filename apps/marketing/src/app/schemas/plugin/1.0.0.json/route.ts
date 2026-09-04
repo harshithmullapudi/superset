@@ -204,6 +204,11 @@ export function GET() {
 										type: "string",
 										pattern: "^sha256-[A-Za-z0-9+/]+=*$",
 									},
+									ref: {
+										type: "string",
+										description:
+											"The release tag the bytes were published at, so the download is pinned to the version rather than the marketplace's branch.",
+									},
 								},
 							},
 							mcp: {

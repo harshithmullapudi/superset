@@ -93,11 +93,11 @@ Desktop, host-service, and cli share one version; cut releases on a dedicated br
 ## Plugins
 
 First-party plugins live in `plugins/<name>/`: a `plugin.json` manifest, `skills/`, and optionally
-an MCP server. Everything else in that tree is a build artifact of it. `plugins/<name>/versions/<v>/`
-is the published snapshot a host downloads, and `packages/shared/src/plugins/manifests.generated.ts`
-is the bundle the API resolves against — never hand-edit either. Change the source, then
-`superset plugins publish <name> --bump patch`, which rewrites the snapshot, the marketplace entry in
-`.agent-marketplace.json`, and the generated manifests together. `bun run check:plugins` is what CI
+an MCP server. A release is the git tag `<name>@<version>` on this repo — that tree is what a host
+downloads — and `packages/shared/src/plugins/manifests.generated.ts` is the bundle the API resolves
+against, which is generated and must never be hand-edited. Change the source, then
+`superset plugins publish <name> --bump patch`, which rewrites the marketplace entry in
+`.agent-marketplace.json` and the generated manifests; commit and tag to publish it. `bun run check:plugins` is what CI
 runs to catch a change that skipped that step; run it before pushing.
 
 Installed plugins are recorded once per machine in

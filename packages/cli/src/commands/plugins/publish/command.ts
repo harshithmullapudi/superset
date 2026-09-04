@@ -23,7 +23,7 @@ const LEVELS = new Set(["major", "minor", "patch"]);
 
 export default command({
 	description:
-		"Cut a version of a plugin: build, snapshot skills and server into versions/<version>, and record it in the marketplace",
+		"Cut a version of a plugin: build, record it in the marketplace and the generated bundle, and name the tag to publish it at",
 	args: [
 		positional("names")
 			.variadic()
@@ -85,9 +85,9 @@ export default command({
 				name: r.name,
 				version: r.version,
 				files: r.files,
-				dir: r.dir,
+				tag: r.tag,
 			})),
-			message: `Published ${results.map((r) => `${r.name}@${r.version}`).join(", ")}.`,
+			message: `Published ${results.map((r) => `${r.name}@${r.version}`).join(", ")}. Commit, then tag: ${results.map((r) => `git tag ${r.tag}`).join(" && ")}`,
 		};
 	},
 });

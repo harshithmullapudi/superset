@@ -10,7 +10,11 @@ import {
 
 const ctx = findMarketplace();
 const issues = [
-	...resolvePlugins(ctx).flatMap((plugin) => checkPlugin(ctx, plugin)),
+	...(
+		await Promise.all(
+			resolvePlugins(ctx).map((plugin) => checkPlugin(ctx, plugin)),
+		)
+	).flat(),
 	...generatedManifestDrift(ctx),
 ];
 

@@ -227,22 +227,9 @@ export function resolvePlugins(
 		.map((entry) => resolvePlugin(ctx, entry));
 }
 
-export function versionDir(plugin: ResolvedPlugin, version: string): string {
-	return path.join(
-		plugin.dir,
-		"versions",
-		assertSafeSegment(version, "version"),
-	);
-}
-
-export function publishedVersions(plugin: ResolvedPlugin): string[] {
-	const dir = path.join(plugin.dir, "versions");
-	if (!fs.existsSync(dir)) return [];
-	return fs
-		.readdirSync(dir, { withFileTypes: true })
-		.filter((e) => e.isDirectory())
-		.map((e) => e.name)
-		.sort(compareVersions);
+/** The git tag a published version lives at. */
+export function releaseTag(name: string, version: string): string {
+	return `${assertSafeSegment(name, "plugin name")}@${assertSafeSegment(version, "version")}`;
 }
 
 export function compareVersions(a: string, b: string): number {
