@@ -102,3 +102,4 @@ export {
 	type PluginSkillSource,
 } from "./managed-skills";
 export { getBinDir, resolveSupersetHomeDir } from "./paths";
+export { writeFileIfChanged } from "./write-file-if-changed";

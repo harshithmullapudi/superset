@@ -7,7 +7,6 @@ import {
 	type AuthInputSpec,
 	missingInputsError,
 	parseInputs,
-	readStdin,
 } from "../../../lib/plugins/inputs";
 import {
 	ensureDefaultMarketplace,
@@ -86,9 +85,8 @@ export default command({
 				connection = `connected as ${connections[0]?.account ?? "unknown"}`;
 			} else if (auth.type === "api_key") {
 				const declared = (auth.inputs ?? []) as AuthInputSpec[];
-				const provided = parseInputs(
+				const provided = await parseInputs(
 					options.inputs as string | undefined,
-					await readStdin(),
 				);
 				const missing = declared.filter(
 					(input) => input.required !== false && !provided[input.name],

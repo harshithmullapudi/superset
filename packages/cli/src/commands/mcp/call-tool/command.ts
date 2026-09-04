@@ -9,7 +9,7 @@ export default command({
 		positional("plugin").desc("Plugin name, when it has one connection"),
 		positional("tool").required().desc("Tool name"),
 		positional("arguments").desc(
-			"Tool arguments as JSON (default: {}, or piped on stdin)",
+			'Tool arguments as JSON (default: {}; "-" reads them from stdin)',
 		),
 	],
 	options: {
@@ -26,7 +26,7 @@ export default command({
 		});
 
 		const raw = args.arguments as string | undefined;
-		const source = raw ?? (await readStdin()) ?? "{}";
+		const source = (raw === "-" ? await readStdin() : raw) ?? "{}";
 		let parsed: Record<string, unknown>;
 		try {
 			parsed = JSON.parse(source) as Record<string, unknown>;

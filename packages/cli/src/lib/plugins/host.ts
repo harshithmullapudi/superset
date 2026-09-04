@@ -1,7 +1,10 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { installedPluginsFilePath } from "@superset/agent-setup";
+import {
+	installedPluginsFilePath,
+	writeFileIfChanged,
+} from "@superset/agent-setup";
 import { CLIError } from "@superset/cli-framework";
 import { getSupersetHomeDir } from "../settings/paths";
 import {
@@ -67,18 +70,27 @@ function installedFile(): string {
 	return installedPluginsFilePath();
 }
 
+/**
+ * A missing file is an empty ledger; an unreadable one is not. Returning the
+ * fallback for a parse failure would let the next write replace a whole
+ * machine's install list with the one entry that happened to be in hand.
+ */
 function readJsonFile<T>(file: string, fallback: T): T {
 	if (!fs.existsSync(file)) return fallback;
 	try {
 		return JSON.parse(fs.readFileSync(file, "utf8")) as T;
-	} catch {
-		return fallback;
+	} catch (error) {
+		throw new CLIError(
+			`${file} is not readable JSON, so it cannot be safely rewritten: ${error instanceof Error ? error.message : String(error)}`,
+		);
 	}
 }
 
 function writeJsonFile(file: string, value: unknown): void {
 	fs.mkdirSync(path.dirname(file), { recursive: true });
-	fs.writeFileSync(file, `${JSON.stringify(value, null, "\t")}\n`);
+	// Temp-and-rename: the desktop, `plugins sync`, and one host-service per
+	// organization all write this file, and a torn one reaps every skill.
+	writeFileIfChanged(file, `${JSON.stringify(value, null, "\t")}\n`, 0o644);
 }
 
 export function readKnownMarketplaces(): Record<string, KnownMarketplace> {

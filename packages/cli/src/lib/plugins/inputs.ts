@@ -41,11 +41,12 @@ export function missingInputsError(
 	);
 }
 
-export function parseInputs(
+export async function parseInputs(
 	raw: string | undefined,
-	stdin: string | null,
-): Record<string, string> {
-	const source = raw === "-" ? stdin : raw;
+): Promise<Record<string, string>> {
+	// Only `-` reads stdin. Reading it unconditionally hangs until the timeout
+	// under any harness that holds the pipe open without writing to it.
+	const source = raw === "-" ? await readStdin() : raw;
 	if (!source) return {};
 	try {
 		const parsed = JSON.parse(source) as Record<string, unknown>;

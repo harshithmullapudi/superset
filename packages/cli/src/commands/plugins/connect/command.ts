@@ -12,7 +12,6 @@ import {
 	type AuthInputSpec,
 	missingInputsError,
 	parseInputs,
-	readStdin,
 } from "../../../lib/plugins/inputs";
 import { supersetExtension } from "../../../lib/plugins/marketplace";
 
@@ -93,10 +92,7 @@ export default command({
 		}
 
 		const declared = (auth.inputs ?? []) as AuthInputSpec[];
-		const provided = parseInputs(
-			options.inputs as string | undefined,
-			await readStdin(),
-		);
+		const provided = await parseInputs(options.inputs as string | undefined);
 
 		if (auth.type === "api_key") {
 			const missing = declared.filter(
