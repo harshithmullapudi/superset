@@ -94,9 +94,12 @@ export function GET() {
 			},
 			requires_env: {
 				type: "array",
-				items: { type: "string", pattern: "^PLUGIN_[A-Z0-9_]+$" },
+				items: {
+					type: "string",
+					pattern: "^PLUGIN_[A-Z0-9_]+_CLIENT_(ID|SECRET)$",
+				},
 				description:
-					"Documentation only: the deployment variables an operator must set. Never read to resolve a value — the host derives variable names from the plugin name, so a manifest cannot point the credential lookup at an unrelated secret.",
+					"The deployment variables holding this method's OAuth client. Named here rather than derived from the plugin name, so two plugins for one service can share one registered client. Confined to PLUGIN_<SERVICE>_CLIENT_ID and _CLIENT_SECRET: the token exchange sends what it reads to a manifest-supplied token_url, so an unbounded name would leak unrelated secrets.",
 			},
 			identity,
 			bind: {

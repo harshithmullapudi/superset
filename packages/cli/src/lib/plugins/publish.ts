@@ -6,10 +6,10 @@ import { promisify } from "node:util";
 import { CLIError } from "@superset/cli-framework";
 import { buildPlugin, isBuildCurrent, SERVER_ENTRY } from "./build";
 import {
+	CLIENT_ENV_PATTERN,
 	type MarketplaceContext,
 	type ResolvedPlugin,
 	releaseTag,
-	requiredEnvFor,
 	supersetExtension,
 	writeJson,
 } from "./marketplace";
@@ -152,20 +152,28 @@ function checkAuth(plugin: ResolvedPlugin): CheckIssue[] {
 				});
 			}
 
-			const expected = requiredEnvFor(name);
 			const declared = auth.requires_env ?? [];
 			const foreign = declared.filter(
-				(variable) => !variable.startsWith("PLUGIN_"),
+				(variable) => !CLIENT_ENV_PATTERN.test(variable),
 			);
 			if (foreign.length) {
 				issues.push({
 					name,
-					problem: `requires_env may only name PLUGIN_* variables; found ${foreign.join(", ")}`,
+					problem: `requires_env may only name PLUGIN_<SERVICE>_CLIENT_ID and PLUGIN_<SERVICE>_CLIENT_SECRET; found ${foreign.join(", ")}`,
 				});
-			} else if (declared.join(",") !== expected.join(",")) {
+			}
+			if (!declared.some((variable) => variable.endsWith("_CLIENT_ID"))) {
 				issues.push({
 					name,
-					problem: `requires_env must be exactly ${expected.join(", ")}; it documents deployment setup and is never read to resolve a value`,
+					problem:
+						"oauth2 auth must name its client id in requires_env; it is what the host reads to start the flow",
+				});
+			}
+			if (!declared.some((variable) => variable.endsWith("_CLIENT_SECRET"))) {
+				issues.push({
+					name,
+					problem:
+						"oauth2 auth must name its client secret in requires_env; it is what the host reads to exchange the code",
 				});
 			}
 		} else if (auth.type === "api_key") {

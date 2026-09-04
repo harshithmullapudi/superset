@@ -3,8 +3,8 @@ import path from "node:path";
 import { CLIError } from "@superset/cli-framework";
 import {
 	type MarketplaceContext,
-	requiredEnvFor,
 	SUPERSET_EXTENSION,
+	suggestedEnvFor,
 	writeJson,
 } from "./marketplace";
 
@@ -265,7 +265,7 @@ export function scaffoldPlugin(
 			scopes: ["read"],
 			scope_separator: " ",
 			token_request_auth_method: "client_secret_post",
-			requires_env: requiredEnvFor(name),
+			requires_env: suggestedEnvFor(name),
 		};
 		extension.auth = [method];
 		if (kind === "url") {

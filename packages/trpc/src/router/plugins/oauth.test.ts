@@ -12,7 +12,11 @@ const { buildAuthorizationUrl, clientCredentials, redirectUri } = await import(
 );
 
 describe("clientCredentials", () => {
-	const vars = ["PLUGIN_LINEAR_CLIENT_ID", "PLUGIN_LINEAR_CLIENT_SECRET"];
+	const vars = [
+		"PLUGIN_LINEAR_CLIENT_ID",
+		"PLUGIN_LINEAR_CLIENT_SECRET",
+		"BETTER_AUTH_SECRET",
+	];
 	const saved = new Map(vars.map((name) => [name, process.env[name]]));
 
 	afterEach(() => {
@@ -23,31 +27,62 @@ describe("clientCredentials", () => {
 		}
 	});
 
-	test("reads the per-plugin env pair", () => {
+	const method = (requires_env: string[]) => ({
+		type: "oauth2" as const,
+		requires_env,
+	});
+
+	test("reads the pair the manifest names", () => {
 		process.env.PLUGIN_LINEAR_CLIENT_ID = "id";
 		process.env.PLUGIN_LINEAR_CLIENT_SECRET = "secret";
 
-		expect(clientCredentials("linear")).toEqual({
-			clientId: "id",
-			clientSecret: "secret",
-		});
+		expect(
+			clientCredentials(
+				method(["PLUGIN_LINEAR_CLIENT_ID", "PLUGIN_LINEAR_CLIENT_SECRET"]),
+			),
+		).toEqual({ clientId: "id", clientSecret: "secret" });
+	});
+
+	// The point of naming them: an OAuth client belongs to the service, so a
+	// second plugin for it shares the pair rather than needing its own app.
+	test("lets a differently named plugin share one service's client", () => {
+		process.env.PLUGIN_LINEAR_CLIENT_ID = "id";
+		process.env.PLUGIN_LINEAR_CLIENT_SECRET = "secret";
+
+		expect(
+			clientCredentials(
+				method(["PLUGIN_LINEAR_CLIENT_ID", "PLUGIN_LINEAR_CLIENT_SECRET"]),
+			),
+		).not.toBeNull();
 	});
 
 	test("returns null when only one half is set", () => {
 		process.env.PLUGIN_LINEAR_CLIENT_ID = "id";
 		delete process.env.PLUGIN_LINEAR_CLIENT_SECRET;
 
-		expect(clientCredentials("linear")).toBeNull();
+		expect(
+			clientCredentials(
+				method(["PLUGIN_LINEAR_CLIENT_ID", "PLUGIN_LINEAR_CLIENT_SECRET"]),
+			),
+		).toBeNull();
 	});
 
-	test("maps dots and dashes in a plugin name to underscores", () => {
-		process.env.PLUGIN_CHROME_DEVTOOLS_CLIENT_ID = "id";
-		process.env.PLUGIN_CHROME_DEVTOOLS_CLIENT_SECRET = "secret";
+	test("returns null when the manifest names nothing", () => {
+		expect(clientCredentials(method([]))).toBeNull();
+	});
 
-		expect(clientCredentials("chrome-devtools")).not.toBeNull();
-
-		delete process.env.PLUGIN_CHROME_DEVTOOLS_CLIENT_ID;
-		delete process.env.PLUGIN_CHROME_DEVTOOLS_CLIENT_SECRET;
+	// The exchange POSTs whatever this reads to a manifest-supplied token_url,
+	// so a name outside the client namespace would leak an unrelated secret.
+	test.each([
+		["BETTER_AUTH_SECRET"],
+		["DATABASE_URL"],
+		["PLUGIN_LINEAR_TOKEN"],
+		["plugin_linear_client_id"],
+	])("refuses to read %s", (name) => {
+		process.env.BETTER_AUTH_SECRET = "server-secret";
+		expect(
+			clientCredentials(method([name, "PLUGIN_LINEAR_CLIENT_SECRET"])),
+		).toBeNull();
 	});
 });
 
@@ -67,6 +102,7 @@ describe("buildAuthorizationUrl", () => {
 		authorization_url: "https://linear.app/oauth/authorize",
 		scopes: ["read", "write"],
 		scope_separator: ",",
+		requires_env: ["PLUGIN_LINEAR_CLIENT_ID", "PLUGIN_LINEAR_CLIENT_SECRET"],
 	};
 
 	test("carries the client id, redirect, and state", () => {

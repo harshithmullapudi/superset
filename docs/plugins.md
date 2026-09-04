@@ -54,7 +54,9 @@ that must not change under them.
   `packages/shared/src/plugins/index.ts`), and `icon`.
 - `auth` — an array of methods, each `oauth2` or `api_key`. OAuth entries carry
   `authorization_url`, `token_url`, `scopes`, `requires_env` (the client id/secret env names the API
-  reads), an `identity` probe that names the connected account, and `bind`, which says how the
+  reads — name the service's pair, not the plugin's, so two plugins for one service share one
+  registered OAuth app; only `PLUGIN_<SERVICE>_CLIENT_ID`/`_SECRET` may be named), an `identity`
+  probe that names the connected account, and `bind`, which says how the
   credential is attached to outbound calls. `${config.access_token}` and `${inputs.<name>}`
   placeholders are resolved server-side by `apps/api/src/lib/plugins/manifest.ts`.
 - `mcpServers` — server name → config, the same shape as an `.mcp.json` value. The name lands

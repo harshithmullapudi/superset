@@ -9,14 +9,30 @@ import {
 	type TemplateScope,
 } from "./manifest";
 
-export function clientCredentials(pluginName: string): {
+/**
+ * The variables a manifest may name. An OAuth client is a property of the
+ * upstream product, not of the plugin, so a manifest has to be able to point
+ * at a pair a sibling plugin already uses. It must not be able to point at an
+ * unrelated secret: the token exchange POSTs whatever it reads to a
+ * manifest-supplied token_url, so an unbounded name here would send our own
+ * server secrets to a host the manifest chose.
+ */
+const CLIENT_ENV = /^PLUGIN_[A-Z0-9_]+_CLIENT_(ID|SECRET)$/;
+
+export function clientCredentials(auth: PluginAuthMethod): {
 	clientId: string;
 	clientSecret: string;
 } | null {
-	const slug = pluginName.toUpperCase().replace(/[.-]/g, "_");
-	const clientId = process.env[`PLUGIN_${slug}_CLIENT_ID`];
-	const clientSecret = process.env[`PLUGIN_${slug}_CLIENT_SECRET`];
-	return clientId && clientSecret ? { clientId, clientSecret } : null;
+	const declared = (auth.requires_env ?? []).filter((name) =>
+		CLIENT_ENV.test(name),
+	);
+	const clientId = declared.find((name) => name.endsWith("_CLIENT_ID"));
+	const clientSecret = declared.find((name) => name.endsWith("_CLIENT_SECRET"));
+	if (!clientId || !clientSecret) return null;
+
+	const id = process.env[clientId];
+	const secret = process.env[clientSecret];
+	return id && secret ? { clientId: id, clientSecret: secret } : null;
 }
 
 export function redirectUri(pluginName: string): string {
@@ -29,7 +45,7 @@ export function buildAuthorizationUrl(
 	scope: TemplateScope,
 	state: string,
 ): string {
-	const credentials = clientCredentials(pluginName);
+	const credentials = clientCredentials(auth);
 	if (!credentials) {
 		throw new Error(`No OAuth client configured for plugin "${pluginName}".`);
 	}
@@ -71,7 +87,7 @@ export async function exchangeCode(
 	scope: TemplateScope,
 	code: string,
 ): Promise<ExchangedToken> {
-	const credentials = clientCredentials(pluginName);
+	const credentials = clientCredentials(auth);
 	if (!credentials) {
 		throw new Error(`No OAuth client configured for plugin "${pluginName}".`);
 	}

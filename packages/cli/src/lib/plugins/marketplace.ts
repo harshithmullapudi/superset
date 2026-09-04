@@ -75,10 +75,12 @@ export interface PluginAuthMethod {
 
 export type PluginAuth = PluginAuthMethod[];
 
-export function requiredEnvFor(name: string): string[] {
+export function suggestedEnvFor(name: string): string[] {
 	const slug = name.toUpperCase().replace(/[.-]/g, "_");
 	return [`PLUGIN_${slug}_CLIENT_ID`, `PLUGIN_${slug}_CLIENT_SECRET`];
 }
+
+export const CLIENT_ENV_PATTERN = /^PLUGIN_[A-Z0-9_]+_CLIENT_(ID|SECRET)$/;
 
 export interface PluginMcp {
 	type: "streamable-http";
