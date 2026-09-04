@@ -5,6 +5,7 @@ import { removePlugin } from "../../../lib/plugins/install";
 
 export default command({
 	description: "Uninstall a plugin and drop its skills",
+	aliases: ["remove"],
 	args: [
 		positional("plugin")
 			.required()

@@ -1,16 +1,16 @@
 import { positional, string, table } from "@superset/cli-framework";
-import { command } from "../../../lib/command";
+import { command } from "../../../../lib/command";
 import {
 	installMarketplace,
 	parseMarketplaceSource,
-} from "../../../lib/plugins/install";
+} from "../../../../lib/plugins/install";
 
 export default command({
 	description: "Add a marketplace from a GitHub repo or local path",
 	args: [
 		positional("source")
 			.required()
-			.desc("owner/repo, owner/repo#branch, a GitHub URL, or a local path"),
+			.desc("owner/repo, owner/repo@ref, a GitHub URL, or a local path"),
 	],
 	options: {
 		name: string().desc("Register under this name instead of the manifest's"),

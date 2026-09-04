@@ -1,5 +1,5 @@
 import { positional } from "@superset/cli-framework";
-import { command } from "../../../lib/command";
+import { command } from "../../../../lib/command";
 
 export default command({
 	description: "Remove a marketplace from your account",

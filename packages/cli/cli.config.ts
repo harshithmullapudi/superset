@@ -43,7 +43,7 @@ export default defineConfig({
 			{ title: "Pages", commands: ["pages"] },
 			{
 				title: "Plugins",
-				commands: ["plugins", "mcp", "marketplace", "skills"],
+				commands: ["plugins", "mcp", "skills"],
 			},
 			{
 				title: "Hosts & projects",

@@ -241,6 +241,7 @@ export interface CheckIssue {
 export async function checkPlugin(
 	ctx: MarketplaceContext,
 	plugin: ResolvedPlugin,
+	options: { strict?: boolean } = {},
 ): Promise<CheckIssue[]> {
 	const issues: CheckIssue[] = [];
 	const name = plugin.manifest.name;
@@ -269,7 +270,11 @@ export async function checkPlugin(
 	// A tag is immutable, so a release that exists and no longer matches the
 	// tree means the change was never published, not that the tag went stale.
 	const tag = releaseTag(name, version);
-	if (await tagExists(ctx.root, tag)) {
+	const released = await tagExists(ctx.root, tag);
+	if (options.strict && !released) {
+		issues.push({ name, problem: `${version} has no ${tag} tag yet` });
+	}
+	if (released) {
 		const changed = await changedSinceTag(
 			ctx.root,
 			tag,

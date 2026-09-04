@@ -107,7 +107,7 @@ export function marketplaceManifest(name: string): Marketplace {
 	const known = readKnownMarketplaces()[name];
 	if (!known) {
 		throw new CLIError(
-			`Marketplace "${name}" is not installed. Run: superset marketplace install <github-url>`,
+			`Marketplace "${name}" is not installed. Run: superset plugins marketplace add <owner/repo>`,
 		);
 	}
 	const file = path.join(known.installLocation, MARKETPLACE_FILE);

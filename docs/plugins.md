@@ -84,10 +84,11 @@ Skills land in `~/.agents/skills` (what Codex, Vibe, and Kimi read natively) and
 ## Command surface
 
 ```
-superset plugins create|build|check|publish     # authoring
-superset plugins install|remove|list|sync       # this machine
+superset plugins create|build|validate|publish  # authoring
+superset plugins install|uninstall|list|sync    # this machine
+superset plugins enable|disable <name>          # without dropping its skills
 superset plugins connect|connections            # credentials
-superset marketplace list|install|remove        # marketplace sources
+superset plugins marketplace list|add|remove    # marketplace sources
 superset mcp tools|call-tool                    # call a plugin's tools through the proxy
 superset skills list
 ```

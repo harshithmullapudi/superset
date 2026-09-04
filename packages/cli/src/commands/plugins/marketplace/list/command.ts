@@ -1,6 +1,6 @@
 import { table } from "@superset/cli-framework";
 import type { RouterOutputs } from "@superset/trpc";
-import { command } from "../../../lib/command";
+import { command } from "../../../../lib/command";
 
 type Marketplace = RouterOutputs["plugins"]["marketplaces"]["list"][number];
 

@@ -302,11 +302,11 @@ export function scaffoldPlugin(
 				? {
 						build: `superset plugins build ${name}`,
 						publish: `superset plugins publish ${name}`,
-						check: `superset plugins check ${name}`,
+						check: `superset plugins validate plugins/${name}`,
 					}
 				: {
 						publish: `superset plugins publish ${name}`,
-						check: `superset plugins check ${name}`,
+						check: `superset plugins validate plugins/${name}`,
 					},
 	};
 	writeJson(path.join(dir, "package.json"), pkg);

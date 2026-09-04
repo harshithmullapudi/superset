@@ -120,7 +120,7 @@ export function uninstallPlugin(name: string): InstalledPlugin[] {
 	const next = getInstalledPlugins().filter((entry) => entry.name !== name);
 	saveInstalledPlugins(next);
 	syncInstalledPluginMcpServers();
-	void queuePluginCli(["remove", name]);
+	void queuePluginCli(["uninstall", name]);
 	return next;
 }
 
@@ -221,6 +221,10 @@ export function setPluginEnabled(
 			: installed;
 	saveInstalledPlugins(next);
 	syncInstalledPluginMcpServers();
+	// installed_plugins.json is the only `enabled` flag provisioning reads, and
+	// local-db is not it: without this the skills stay materialized while the
+	// MCP servers are reaped, leaving the plugin half on.
+	void queuePluginCli([enabled ? "enable" : "disable", name]);
 	return next;
 }
 

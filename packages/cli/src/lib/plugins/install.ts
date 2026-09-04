@@ -33,6 +33,10 @@ import {
 
 const git = promisify(execFile);
 
+// Cone mode always keeps top-level files, so the marketplace manifest comes
+// along without being named here.
+const SPARSE_PATHS = ["plugins"];
+
 export function parseMarketplaceSource(input: string): MarketplaceSource {
 	if (input.startsWith(".") || input.startsWith("/") || input.startsWith("~")) {
 		return {
@@ -40,7 +44,10 @@ export function parseMarketplaceSource(input: string): MarketplaceSource {
 			path: path.resolve(input.replace(/^~/, process.env.HOME ?? "~")),
 		};
 	}
-	const [target, ref] = input.split("#");
+	// owner/repo@ref, matching how a ref is named everywhere else. `#branch` is
+	// still read so an existing invocation does not break.
+	const separator = input.includes("@") ? "@" : "#";
+	const [target, ref] = input.split(separator);
 	const github = target?.match(
 		/^(?:https?:\/\/github\.com\/)?([\w.-]+\/[\w.-]+?)(?:\.git)?\/?$/,
 	);
@@ -48,7 +55,7 @@ export function parseMarketplaceSource(input: string): MarketplaceSource {
 		return { kind: "github", repo: github[1], ...(ref ? { ref } : {}) };
 	}
 	throw new CLIError(
-		`Could not read "${input}" as a marketplace. Use owner/repo, a GitHub URL, or a local path.`,
+		`Could not read "${input}" as a marketplace. Use owner/repo, owner/repo@ref, a GitHub URL, or a local path.`,
 	);
 }
 
@@ -97,17 +104,32 @@ export async function installMarketplace(
 		} else {
 			fs.mkdirSync(path.dirname(location), { recursive: true });
 			try {
+				// A marketplace is a couple of directories inside a repository that
+				// may be enormous — ours is 163 MB and 8,651 files — and this runs
+				// inside the desktop's 60s subprocess budget. Fetch no blobs and
+				// check out only what a marketplace is made of.
 				await git("git", [
 					"clone",
 					"--depth",
 					"1",
+					"--filter=blob:none",
+					"--sparse",
+					"--no-checkout",
 					...(ref ? ["--branch", ref] : []),
 					`https://github.com/${repo}.git`,
 					location,
 				]);
+				await git("git", [
+					"-C",
+					location,
+					"sparse-checkout",
+					"set",
+					...SPARSE_PATHS,
+				]);
+				await git("git", ["-C", location, "checkout"]);
 			} catch (error) {
 				throw new CLIError(
-					`Could not clone ${repo}${ref ? `#${ref}` : ""}: ${error instanceof Error ? error.message : String(error)}`,
+					`Could not clone ${repo}${ref ? `@${ref}` : ""}: ${error instanceof Error ? error.message : String(error)}`,
 				);
 			}
 		}
@@ -454,6 +476,28 @@ export async function installPlugin(
 		installPath: target,
 		skills,
 	};
+}
+
+/**
+ * Flips a plugin's `enabled` flag on this machine.
+ *
+ * installed_plugins.json is the only place provisioning reads it from, so a
+ * toggle that skips this leaves the skills materialized while the MCP servers
+ * are reaped — the plugin ends up half on.
+ */
+export async function setPluginEnabled(
+	name: string,
+	enabled: boolean,
+	marketplace?: string,
+): Promise<InstalledPlugin> {
+	const plugins = readInstalledPlugins();
+	const match = findInstalled(plugins, name, marketplace);
+	if (!match) throw new CLIError(`"${name}" is not installed.`);
+
+	const next = { ...match, enabled };
+	writeInstalledPlugins(plugins.map((p) => (p === match ? next : p)));
+	await syncPlugins();
+	return next;
 }
 
 export async function removePlugin(
