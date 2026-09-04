@@ -189,12 +189,12 @@ export const FIRST_PARTY_MANIFESTS = {
 		},
 		"skills": [
 			{
-				"name": "file-issue",
-				"description": "Turn a rough report into a Linear issue someone can pick up — reproduce the claim, check for duplicates, and fill in team, priority, and labels. Use when the user says to file, open, or create an issue, hands over a bug report or error, or asks to get something into Linear."
-			},
-			{
 				"name": "duplicate-sweep",
 				"description": "Find and merge duplicate Linear issues — group reports of the same underlying bug, pick the survivor, and move the evidence across. Use when the backlog has grown noisy, someone asks whether an issue is already reported, or you are cleaning up before planning."
+			},
+			{
+				"name": "file-issue",
+				"description": "Turn a rough report into a Linear issue someone can pick up — reproduce the claim, check for duplicates, and fill in team, priority, and labels. Use when the user says to file, open, or create an issue, hands over a bug report or error, or asks to get something into Linear."
 			},
 			{
 				"name": "project-status",

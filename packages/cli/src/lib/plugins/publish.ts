@@ -330,8 +330,14 @@ function publishedSkills(
 	const dir = path.join(pluginDir, "skills");
 	if (!fs.existsSync(dir)) return [];
 
+	// Sorted by directory name: readdir order is the filesystem's, and it
+	// differs between macOS and Linux, so an unsorted list makes the generated
+	// bundle a file that only regenerates identically on the OS that wrote it.
 	const skills: { name: string; description: string }[] = [];
-	for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+	const entries = fs
+		.readdirSync(dir, { withFileTypes: true })
+		.sort((a, b) => a.name.localeCompare(b.name));
+	for (const entry of entries) {
 		if (!entry.isDirectory()) continue;
 		const file = path.join(dir, entry.name, "SKILL.md");
 		if (!fs.existsSync(file)) continue;
