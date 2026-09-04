@@ -1,16 +1,14 @@
 import { auth } from "@superset/auth/server";
-import { env } from "@/env";
 import {
+	authMethod,
+	exchangeCode,
 	installedPlugin,
 	manifestAuth,
-	upsertConnection,
-} from "@/lib/plugins/connections";
-import { authMethod } from "@/lib/plugins/manifest";
-import {
-	exchangeCode,
 	resolveIdentity,
-	verifyPluginState,
-} from "@/lib/plugins/oauth";
+	upsertConnection,
+} from "@superset/trpc/integrations/plugins";
+import { env } from "@/env";
+import { pluginStateSchema, verifySignedState } from "@/lib/oauth-state";
 
 function settingsRedirect(plugin: string, params: Record<string, string>) {
 	const url = new URL(`${env.NEXT_PUBLIC_WEB_URL}/plugins/${plugin}`);
@@ -37,7 +35,7 @@ export async function GET(
 		return settingsRedirect(plugin, { error: "missing_params" });
 	}
 
-	const state = verifyPluginState(stateToken);
+	const state = verifySignedState(stateToken, pluginStateSchema);
 	if (!state || state.pluginName !== plugin) {
 		return settingsRedirect(plugin, { error: "invalid_state" });
 	}
@@ -78,7 +76,7 @@ export async function GET(
 		await upsertConnection({
 			installId: install.id,
 			userId: state.userId,
-			organizationId: state.organizationId,
+			organizationId: null,
 			pluginName: plugin,
 			authMethod: authSpec.type,
 			accessToken: token.accessToken,

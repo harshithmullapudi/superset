@@ -16,7 +16,7 @@ import { publicProcedure, router } from "../..";
 /**
  * Materialization only: skills, agent config, and the local install record are
  * written here, never read back for display. Install state is the account's —
- * the UI reads GET /api/plugins — so it is the same on every machine.
+ * the UI reads plugins.list — so it is the same on every machine.
  */
 export const createPluginsRouter = () => {
 	return router({

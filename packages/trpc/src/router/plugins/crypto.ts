@@ -1,5 +1,5 @@
+import { env } from "@superset/auth/env";
 import { symmetricDecrypt, symmetricEncrypt } from "better-auth/crypto";
-import { env } from "@/env";
 
 function key(): string {
 	return env.BETTER_AUTH_SECRET;

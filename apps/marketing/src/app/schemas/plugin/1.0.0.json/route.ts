@@ -1,3 +1,4 @@
+// biome-ignore-all lint/suspicious/noTemplateCurlyInString: ${inputs.*} and ${config.*} are the manifest placeholder syntax this schema documents
 import { COMPANY } from "@superset/shared/constants";
 
 export function GET() {

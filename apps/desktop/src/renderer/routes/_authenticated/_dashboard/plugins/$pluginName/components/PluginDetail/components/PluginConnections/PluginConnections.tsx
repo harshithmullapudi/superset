@@ -14,27 +14,9 @@ import {
 import { useState } from "react";
 import { LuGlobe, LuKeyRound, LuPlus, LuTrash2 } from "react-icons/lu";
 import { PluginIcon } from "renderer/routes/_authenticated/_dashboard/plugins/components/PluginIcon";
+import type { AuthMethod } from "renderer/routes/_authenticated/_dashboard/plugins/hooks/usePluginCatalog";
 import { usePluginConnections } from "renderer/routes/_authenticated/_dashboard/plugins/hooks/usePluginConnections";
 import { SectionHeader } from "../SectionHeader";
-
-export interface AuthInputSpec {
-	name: string;
-	label?: string;
-	placeholder?: string;
-	required?: boolean;
-	secret?: boolean;
-}
-
-export interface PluginAuthSpec {
-	type: "oauth2" | "api_key";
-	label?: string | null;
-	inputs?: readonly AuthInputSpec[];
-}
-
-const METHOD_LABELS: Record<string, string> = {
-	oauth2: "OAuth 2.0",
-	api_key: "API key",
-};
 
 export function PluginConnections({
 	pluginName,
@@ -47,13 +29,28 @@ export function PluginConnections({
 }: {
 	pluginName: string;
 	displayName: string;
-	auth?: readonly PluginAuthSpec[];
+	auth?: readonly AuthMethod[];
 	installed: boolean;
 	onAdd: () => Promise<boolean>;
 	onRemove: () => void;
 	isBusy: boolean;
 }) {
 	const { t } = useLingui();
+	const methodLabel = (type: string) => {
+		if (type === "oauth2") {
+			return t({
+				id: "dashboard.plugins.connections.methodOauth2",
+				message: "OAuth 2.0",
+			});
+		}
+		if (type === "api_key") {
+			return t({
+				id: "dashboard.plugins.connections.methodApiKey",
+				message: "API key",
+			});
+		}
+		return type;
+	};
 	const {
 		connections,
 		isLoading,
@@ -67,7 +64,7 @@ export function PluginConnections({
 	const [values, setValues] = useState<Record<string, string>>({});
 
 	const methods = auth ?? [];
-	const [method, setMethod] = useState<PluginAuthSpec["type"]>(
+	const [method, setMethod] = useState<AuthMethod["type"]>(
 		methods[0]?.type ?? "oauth2",
 	);
 
@@ -85,7 +82,7 @@ export function PluginConnections({
 			return;
 		}
 		if (method === "api_key") {
-			connectApiKey({ inputs: values, method });
+			connectApiKey(values);
 			return;
 		}
 
@@ -213,7 +210,7 @@ export function PluginConnections({
 								value={method}
 								onValueChange={(next) => {
 									setValues({});
-									setMethod(next as PluginAuthSpec["type"]);
+									setMethod(next as AuthMethod["type"]);
 								}}
 							>
 								<SelectTrigger
@@ -225,7 +222,7 @@ export function PluginConnections({
 								<SelectContent>
 									{methods.map((entry) => (
 										<SelectItem key={entry.type} value={entry.type}>
-											{entry.label ?? METHOD_LABELS[entry.type] ?? entry.type}
+											{entry.label ?? methodLabel(entry.type)}
 										</SelectItem>
 									))}
 								</SelectContent>

@@ -1,18 +1,13 @@
-import { string, table } from "@superset/cli-framework";
+import { positional, string, table } from "@superset/cli-framework";
 import { command } from "../../../lib/command";
-import { connectionRequest } from "../../../lib/plugins/api";
-
-interface ToolsResponse {
-	plugin: string;
-	tools: { name: string; description?: string }[];
-}
+import { resolveConnectionId } from "../../../lib/plugins/connection-ref";
 
 export default command({
 	description: "List the tools a connected plugin exposes",
+	args: [positional("plugin").desc("Plugin name, when it has one connection")],
 	options: {
-		pluginId: string()
-			.required()
-			.desc("Plugin id from `superset plugins list`"),
+		connection: string().desc("Connection id from `superset plugins list`"),
+		pluginId: string().desc("Deprecated alias for --connection"),
 	},
 	display: (data) =>
 		table(
@@ -21,13 +16,17 @@ export default command({
 			["PLUGIN", "TOOL", "DESCRIPTION"],
 			[16, 30, 70],
 		),
-	run: async ({ ctx, options }) => {
-		const pluginId = options.pluginId as string;
+	run: async ({ ctx, args, options }) => {
+		const connectionId = await resolveConnectionId(ctx.api, {
+			connection: (options.connection ?? options.pluginId) as
+				| string
+				| undefined,
+			plugin: args.plugin as string | undefined,
+		});
 
-		const { plugin, tools } = await connectionRequest<ToolsResponse>(
-			ctx.bearer,
-			`/api/plugins/connections/${encodeURIComponent(pluginId)}/tools`,
-		);
+		const { plugin, tools } = await ctx.api.plugins.tools.list.query({
+			connectionId,
+		});
 
 		return {
 			data: tools.map((tool) => ({

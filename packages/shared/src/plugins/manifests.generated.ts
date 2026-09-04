@@ -209,9 +209,8 @@ export type FirstPartyPluginName = keyof typeof FIRST_PARTY_MANIFESTS;
 export function firstPartyManifest(
 	name: string,
 ): (typeof FIRST_PARTY_MANIFESTS)[FirstPartyPluginName] | null {
-	return (
-		(FIRST_PARTY_MANIFESTS as Record<string, unknown>)[name] as
-			| (typeof FIRST_PARTY_MANIFESTS)[FirstPartyPluginName]
-			| undefined
-	) ?? null;
+	if (!Object.hasOwn(FIRST_PARTY_MANIFESTS, name)) return null;
+	return (FIRST_PARTY_MANIFESTS as Record<string, unknown>)[
+		name
+	] as (typeof FIRST_PARTY_MANIFESTS)[FirstPartyPluginName];
 }

@@ -28,9 +28,6 @@
 			"version": "1.4.0"
 		}
 	],
-	"featured": [
-		"github",
-		"linear"
-	],
+	"featured": ["github", "linear"],
 	"renames": {}
 }

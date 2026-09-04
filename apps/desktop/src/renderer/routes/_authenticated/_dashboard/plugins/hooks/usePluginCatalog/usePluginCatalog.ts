@@ -2,125 +2,73 @@ import type {
 	PluginCatalogEntry,
 	PluginCategory,
 } from "@superset/shared/plugins";
-import { useQuery } from "@tanstack/react-query";
-import { env } from "renderer/env.renderer";
-import { authClient, useAuthToken } from "renderer/lib/auth-client";
+import type { RouterOutputs } from "@superset/trpc";
+import { authClient } from "renderer/lib/auth-client";
+import { cloudTrpc } from "renderer/lib/cloud-trpc";
 
-export interface AuthInput {
-	name: string;
-	label?: string;
-	placeholder?: string;
-	description?: string;
-	required?: boolean;
-	secret?: boolean;
-}
+type CatalogRow = RouterOutputs["plugins"]["list"][number];
 
-export interface PluginSkill {
-	name: string;
-	description: string;
-}
+export type AuthMethod = CatalogRow["authMethods"][number];
+export type AuthInput = AuthMethod["inputs"][number];
+export type PluginSkill = CatalogRow["skills"][number];
 
-export interface AuthMethod {
-	type: "oauth2" | "api_key";
-	label: string | null;
-	inputs: AuthInput[];
-}
-
-export interface CatalogPlugin extends PluginCatalogEntry {
+export interface CatalogPlugin extends Omit<PluginCatalogEntry, "auth"> {
+	auth?: readonly AuthMethod[];
 	marketplace: string;
 	installed: boolean;
 	latestVersion: string | null;
 	updateAvailable: boolean;
 	enabled: boolean;
 	accounts: string[];
+	connections: CatalogRow["connections"];
 	pluginSkills: PluginSkill[];
 	homepage: string | null;
 	author: string | null;
 	license: string | null;
 }
 
-interface CatalogResponse {
-	plugins: {
-		name: string;
-		version: string;
-		description: string;
-		marketplace: string;
-		displayName: string;
-		category: string;
-		icon?: string;
-		authMethods: {
-			type: "oauth2" | "api_key";
-			label: string | null;
-			inputs: AuthInput[];
-		}[];
-		mcpUrl: string | null;
-		installed: boolean;
-		latestVersion: string | null;
-		enabled: boolean;
-		accounts: string[];
-		skills: PluginSkill[];
-		homepage: string | null;
-		author: string | null;
-		license: string | null;
-	}[];
+function toCatalogPlugin(plugin: CatalogRow): CatalogPlugin {
+	return {
+		name: plugin.name,
+		version: plugin.version,
+		description: plugin.description,
+		interface: {
+			displayName: plugin.displayName,
+			category: plugin.category as PluginCategory,
+		},
+		mcpServers: plugin.mcpUrl
+			? { [plugin.name]: { type: "http" as const, url: plugin.mcpUrl } }
+			: {},
+		auth: plugin.authMethods.length ? plugin.authMethods : undefined,
+		skills: plugin.skills.map((skill) => skill.name),
+		marketplace: plugin.marketplace,
+		installed: plugin.installed,
+		latestVersion: plugin.latestVersion,
+		updateAvailable:
+			plugin.installed &&
+			plugin.latestVersion !== null &&
+			plugin.latestVersion !== plugin.version,
+		enabled: plugin.enabled,
+		accounts: plugin.accounts,
+		connections: plugin.connections,
+		pluginSkills: plugin.skills,
+		homepage: plugin.homepage,
+		author: plugin.author,
+		license: plugin.license,
+	};
 }
 
-export const PLUGIN_CATALOG_KEY = ["plugin-catalog"] as const;
-
 export function usePluginCatalog() {
-	const token = useAuthToken();
-
 	const { data: session } = authClient.useSession();
 	const userId = session?.user?.id ?? null;
 
-	const query = useQuery({
-		queryKey: [...PLUGIN_CATALOG_KEY, userId],
-		enabled: Boolean(token) && Boolean(userId),
-		queryFn: async (): Promise<CatalogPlugin[]> => {
-			const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/plugins`, {
-				headers: { Authorization: `Bearer ${token}` },
-			});
-			if (!response.ok) {
-				const body = (await response.json().catch(() => ({}))) as {
-					error?: string;
-				};
-				throw new Error(body.error ?? `Request failed (${response.status})`);
-			}
-			const { plugins } = (await response.json()) as CatalogResponse;
-
-			return plugins.map((plugin) => ({
-				name: plugin.name,
-				version: plugin.version,
-				description: plugin.description,
-				interface: {
-					displayName: plugin.displayName,
-					category: plugin.category as PluginCategory,
-				},
-				mcpServers: plugin.mcpUrl
-					? { [plugin.name]: { type: "http" as const, url: plugin.mcpUrl } }
-					: {},
-				auth: plugin.authMethods.length ? plugin.authMethods : undefined,
-				skills: plugin.skills.map((skill) => skill.name),
-				marketplace: plugin.marketplace,
-				installed: plugin.installed,
-				latestVersion: plugin.latestVersion,
-				updateAvailable:
-					plugin.installed &&
-					plugin.latestVersion !== null &&
-					plugin.latestVersion !== plugin.version,
-				enabled: plugin.enabled,
-				accounts: plugin.accounts,
-				pluginSkills: plugin.skills,
-				homepage: plugin.homepage,
-				author: plugin.author,
-				license: plugin.license,
-			}));
-		},
+	const query = cloudTrpc.plugins.list.useQuery(undefined, {
+		enabled: Boolean(userId),
 	});
 
 	return {
-		plugins: query.data ?? [],
-		isLoading: query.isLoading || !token,
+		plugins: (query.data ?? []).map(toCatalogPlugin),
+		isLoading: query.isLoading,
 		error: query.error,
 	};
 }

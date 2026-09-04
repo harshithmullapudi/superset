@@ -4,17 +4,16 @@ import { CLIError, positional, string, table } from "@superset/cli-framework";
 import { command } from "../../../lib/command";
 import { getApiUrl } from "../../../lib/config";
 import {
-	type AuthInputSpec,
-	apiRequest,
-	missingInputsError,
-	parseInputs,
-	readStdin,
-} from "../../../lib/plugins/api";
-import {
 	findInstalled,
 	readInstalledPlugins,
 	resolvePluginRef,
 } from "../../../lib/plugins/host";
+import {
+	type AuthInputSpec,
+	missingInputsError,
+	parseInputs,
+	readStdin,
+} from "../../../lib/plugins/inputs";
 import { supersetExtension } from "../../../lib/plugins/marketplace";
 
 export default command({
@@ -105,13 +104,9 @@ export default command({
 			);
 			if (missing.length) throw missingInputsError(name, missing, declared);
 
-			const created = await apiRequest<{
-				connectionId: string;
-				account: string | null;
-			}>(ctx.bearer, `/api/plugins/${name}/connect`, {
-				method: "POST",
-				headers: { "content-type": "application/json" },
-				body: JSON.stringify(provided),
+			const created = await ctx.api.plugins.connectApiKey.mutate({
+				name,
+				inputs: provided,
 			});
 			return {
 				data: [

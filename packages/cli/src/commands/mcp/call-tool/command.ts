@@ -1,23 +1,29 @@
 import { CLIError, positional, string } from "@superset/cli-framework";
 import { command } from "../../../lib/command";
-import { connectionRequest, readStdin } from "../../../lib/plugins/api";
+import { resolveConnectionId } from "../../../lib/plugins/connection-ref";
+import { readStdin } from "../../../lib/plugins/inputs";
 
 export default command({
 	description: "Call a tool on a connected plugin",
 	args: [
+		positional("plugin").desc("Plugin name, when it has one connection"),
 		positional("tool").required().desc("Tool name"),
 		positional("arguments").desc(
 			"Tool arguments as JSON (default: {}, or piped on stdin)",
 		),
 	],
 	options: {
-		pluginId: string()
-			.required()
-			.desc("Plugin id from `superset plugins list`"),
+		connection: string().desc("Connection id from `superset plugins list`"),
+		pluginId: string().desc("Deprecated alias for --connection"),
 	},
 	run: async ({ ctx, args, options }) => {
-		const pluginId = options.pluginId as string;
 		const tool = args.tool as string;
+		const connectionId = await resolveConnectionId(ctx.api, {
+			connection: (options.connection ?? options.pluginId) as
+				| string
+				| undefined,
+			plugin: args.plugin as string | undefined,
+		});
 
 		const raw = args.arguments as string | undefined;
 		const source = raw ?? (await readStdin()) ?? "{}";
@@ -30,15 +36,11 @@ export default command({
 			);
 		}
 
-		const { result } = await connectionRequest<{ result: unknown }>(
-			ctx.bearer,
-			`/api/plugins/connections/${encodeURIComponent(pluginId)}/tools/${encodeURIComponent(tool)}`,
-			{
-				method: "POST",
-				headers: { "content-type": "application/json" },
-				body: JSON.stringify(parsed),
-			},
-		);
+		const { result } = await ctx.api.plugins.tools.call.mutate({
+			connectionId,
+			tool,
+			arguments: parsed,
+		});
 
 		return {
 			data: result,

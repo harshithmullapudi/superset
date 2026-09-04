@@ -180,7 +180,13 @@ export async function disconnect(
 ): Promise<boolean> {
 	const result = await db
 		.update(pluginConnections)
-		.set({ disconnectedAt: new Date(), disconnectReason: reason })
+		.set({
+			disconnectedAt: new Date(),
+			disconnectReason: reason,
+			accessToken: "",
+			refreshToken: null,
+			config: null,
+		})
 		.where(
 			and(
 				eq(pluginConnections.id, connectionId),
@@ -387,106 +393,6 @@ export async function bundledSource(
 	return { repo: row.repo, ref: row.ref ?? "HEAD" };
 }
 
-export function pluginErrorResponse(error: unknown): Response | null {
-	return error instanceof AmbiguousPluginError
-		? Response.json({ error: error.message }, { status: 409 })
-		: null;
-}
-
 export function manifestAuth(manifest: PluginManifest) {
 	return supersetExtension(manifest)?.auth;
-}
-
-export interface PluginContext {
-	manifest: PluginManifest;
-	bundled: BundledSource | null;
-	scope: TemplateScope;
-	connectionId: string | null;
-	authMethod: string | null;
-}
-
-export async function pluginContext(
-	userId: string,
-	pluginName: string,
-): Promise<
-	| { ok: true; context: PluginContext }
-	| { ok: false; status: number; error: string }
-> {
-	try {
-		return await resolvePluginContext(userId, pluginName);
-	} catch (error) {
-		if (error instanceof AmbiguousPluginError) {
-			return { ok: false, status: 409, error: error.message };
-		}
-		throw error;
-	}
-}
-
-async function resolvePluginContext(
-	userId: string,
-	pluginName: string,
-): Promise<
-	| { ok: true; context: PluginContext }
-	| { ok: false; status: number; error: string }
-> {
-	const install = await installedPlugin(userId, pluginName);
-	if (!install) {
-		return {
-			ok: false,
-			status: 404,
-			error: `Plugin "${pluginName}" is not installed`,
-		};
-	}
-	const { manifest } = install;
-	const bundled = await bundledSource(userId, install.marketplace);
-
-	if (!manifestAuth(manifest)) {
-		return {
-			ok: true,
-			context: {
-				manifest,
-				bundled,
-				scope: {},
-				connectionId: null,
-				authMethod: null,
-			},
-		};
-	}
-
-	const rows = (await listConnections(userId, pluginName)).filter(
-		(row) => row.installId === install.id,
-	);
-	if (rows.length === 0) {
-		return {
-			ok: false,
-			status: 409,
-			error: `"${pluginName}" is not connected. Connect an account first.`,
-		};
-	}
-	if (rows.length > 1) {
-		return {
-			ok: false,
-			status: 409,
-			error: `"${pluginName}" has ${rows.length} connected accounts; call it through /api/plugins/connections/<id>/tools to choose one.`,
-		};
-	}
-
-	const connection = rows[0];
-	if (!connection) {
-		return {
-			ok: false,
-			status: 409,
-			error: `"${pluginName}" is not connected.`,
-		};
-	}
-	return {
-		ok: true,
-		context: {
-			manifest,
-			bundled,
-			scope: await templateScope(connection),
-			connectionId: connection.id,
-			authMethod: connection.authMethod,
-		},
-	};
 }

@@ -2,17 +2,10 @@ import { useLingui } from "@lingui/react/macro";
 import { errorMessage } from "@superset/i18n/errors";
 import { getPluginByName } from "@superset/shared/plugins";
 import { toast } from "@superset/ui/sonner";
-import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
+import { cloudTrpc } from "renderer/lib/cloud-trpc";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 import { posthog } from "renderer/lib/posthog";
-import { PLUGIN_CATALOG_KEY } from "renderer/routes/_authenticated/_dashboard/plugins/hooks/usePluginCatalog";
-import {
-	PLUGIN_CONNECTIONS_KEY,
-	registerPluginEnabled,
-	registerPluginInstall,
-	registerPluginUninstall,
-} from "renderer/routes/_authenticated/_dashboard/plugins/hooks/usePluginConnections";
 
 const displayName = (name: string) =>
 	getPluginByName(name)?.interface.displayName ?? name;
@@ -20,12 +13,18 @@ const displayName = (name: string) =>
 /** Install/uninstall/toggle with shared toasts, analytics, and invalidation. */
 export function usePluginMutations() {
 	const { t } = useLingui();
-	const queryClient = useQueryClient();
+	const utils = cloudTrpc.useUtils();
 	const navigate = useNavigate();
 
-	const invalidate = () => {
-		void queryClient.invalidateQueries({ queryKey: PLUGIN_CATALOG_KEY });
-		void queryClient.invalidateQueries({ queryKey: PLUGIN_CONNECTIONS_KEY });
+	const accountInstall = cloudTrpc.plugins.install.useMutation();
+	const accountUninstall = cloudTrpc.plugins.uninstall.useMutation();
+	const accountSetEnabled = cloudTrpc.plugins.setEnabled.useMutation();
+
+	const invalidate = async () => {
+		await Promise.all([
+			utils.plugins.list.invalidate(),
+			utils.plugins.connections.list.invalidate(),
+		]);
 	};
 
 	const syncAccount = async (
@@ -33,8 +32,8 @@ export function usePluginMutations() {
 		action: "install" | "uninstall",
 	): Promise<boolean> => {
 		try {
-			if (action === "install") await registerPluginInstall(name);
-			else await registerPluginUninstall(name);
+			if (action === "install") await accountInstall.mutateAsync({ name });
+			else await accountUninstall.mutateAsync({ name });
 			return true;
 		} catch (error) {
 			toast.warning(
@@ -46,7 +45,7 @@ export function usePluginMutations() {
 			);
 			return false;
 		} finally {
-			invalidate();
+			await invalidate();
 		}
 	};
 
@@ -77,8 +76,8 @@ export function usePluginMutations() {
 		},
 	});
 	const uninstallMutation = electronTrpc.plugins.uninstall.useMutation({
-		onSuccess: (_data, variables) => {
-			void syncAccount(variables.name, "uninstall");
+		onSuccess: async (_data, variables) => {
+			await syncAccount(variables.name, "uninstall");
 			posthog.capture("plugin_uninstalled", { plugin: variables.name });
 			toast.success(
 				t({
@@ -98,18 +97,23 @@ export function usePluginMutations() {
 		},
 	});
 	const setEnabledMutation = electronTrpc.plugins.setEnabled.useMutation({
-		onSuccess: (_data, variables) => {
-			void registerPluginEnabled(variables.name, variables.enabled)
-				.catch((error) =>
-					toast.warning(
-						t({
-							id: "dashboard.plugins.mutations.accountSyncFailed",
-							message: `${displayName(variables.name)} is set up on this machine, but not on your account`,
-						}),
-						{ description: errorMessage(error) },
-					),
-				)
-				.finally(() => invalidate());
+		onSuccess: async (_data, variables) => {
+			try {
+				await accountSetEnabled.mutateAsync({
+					name: variables.name,
+					enabled: variables.enabled,
+				});
+			} catch (error) {
+				toast.warning(
+					t({
+						id: "dashboard.plugins.mutations.accountSyncFailed",
+						message: `${displayName(variables.name)} is set up on this machine, but not on your account`,
+					}),
+					{ description: errorMessage(error) },
+				);
+			} finally {
+				await invalidate();
+			}
 			posthog.capture(
 				variables.enabled ? "plugin_enabled" : "plugin_disabled",
 				{ plugin: variables.name },
@@ -197,6 +201,9 @@ export function usePluginMutations() {
 			installMutation.isPending ||
 			updateMutation.isPending ||
 			uninstallMutation.isPending ||
-			setEnabledMutation.isPending,
+			setEnabledMutation.isPending ||
+			accountInstall.isPending ||
+			accountUninstall.isPending ||
+			accountSetEnabled.isPending,
 	};
 }

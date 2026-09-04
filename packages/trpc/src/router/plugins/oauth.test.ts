@@ -1,74 +1,15 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
-import { createHmac } from "node:crypto";
 
-mock.module("@/env", () => ({
+mock.module("../../env", () => ({
 	env: {
 		BETTER_AUTH_SECRET: "test-secret",
 		NEXT_PUBLIC_API_URL: "https://api.test",
 	},
 }));
 
-const {
-	buildAuthorizationUrl,
-	clientCredentials,
-	createPluginState,
-	redirectUri,
-	verifyPluginState,
-} = await import("./oauth");
-
-const PAYLOAD = {
-	userId: "user_1",
-	organizationId: "org_1",
-	pluginName: "linear",
-	authMethod: "oauth2",
-	inputs: {},
-};
-
-describe("plugin oauth state", () => {
-	test("round-trips the payload it was created with", () => {
-		const state = verifyPluginState(createPluginState(PAYLOAD));
-		expect(state).toMatchObject(PAYLOAD);
-	});
-
-	test("rejects a tampered payload carrying a valid-looking signature", () => {
-		const [, signature] = createPluginState(PAYLOAD).split(".");
-		const forged = Buffer.from(
-			JSON.stringify({ ...PAYLOAD, userId: "victim", timestamp: Date.now() }),
-		).toString("base64url");
-
-		expect(verifyPluginState(`${forged}.${signature}`)).toBeNull();
-	});
-
-	test("rejects a signature from a different secret", () => {
-		const token = createPluginState(PAYLOAD);
-		const [body] = token.split(".");
-		const wrong = createHmac("sha256", "other-secret")
-			.update(body)
-			.digest("base64url");
-
-		expect(verifyPluginState(`${body}.${wrong}`)).toBeNull();
-	});
-
-	test.each([
-		["no separator"],
-		[".sig"],
-		["body."],
-		[""],
-	])("rejects the malformed token %j", (token) => {
-		expect(verifyPluginState(token)).toBeNull();
-	});
-
-	test("rejects a state older than its ten-minute window", () => {
-		const body = Buffer.from(
-			JSON.stringify({ ...PAYLOAD, timestamp: Date.now() - 11 * 60 * 1000 }),
-		).toString("base64url");
-		const signature = createHmac("sha256", "test-secret")
-			.update(body)
-			.digest("base64url");
-
-		expect(verifyPluginState(`${body}.${signature}`)).toBeNull();
-	});
-});
+const { buildAuthorizationUrl, clientCredentials, redirectUri } = await import(
+	"./oauth"
+);
 
 describe("clientCredentials", () => {
 	const vars = ["PLUGIN_LINEAR_CLIENT_ID", "PLUGIN_LINEAR_CLIENT_SECRET"];

@@ -1,16 +1,5 @@
 import { string, table } from "@superset/cli-framework";
 import { command } from "../../../lib/command";
-import { apiRequest } from "../../../lib/plugins/api";
-
-interface ConnectionsResponse {
-	connections: Array<{
-		id: string;
-		plugin: string;
-		account: string | null;
-		accountId: string;
-		createdAt: string;
-	}>;
-}
 
 export default command({
 	description: "List the plugin accounts connected to your Superset account",
@@ -26,11 +15,9 @@ export default command({
 		),
 	run: async ({ ctx, options }) => {
 		const plugin = options.plugin as string | undefined;
-		const query = plugin ? `?plugin=${encodeURIComponent(plugin)}` : "";
-		const { connections } = await apiRequest<ConnectionsResponse>(
-			ctx.bearer,
-			`/api/plugins/connections${query}`,
-		);
+		const connections = await ctx.api.plugins.connections.list.query({
+			plugin,
+		});
 
 		return {
 			data: connections.map((connection) => ({

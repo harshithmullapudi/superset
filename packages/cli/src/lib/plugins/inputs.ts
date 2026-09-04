@@ -1,67 +1,8 @@
 import { CLIError } from "@superset/cli-framework";
-import { getApiUrl } from "../config";
+import type { RouterOutputs } from "@superset/trpc";
 
-function authHeaders(bearer: string): Record<string, string> {
-	return bearer.startsWith("sk_live_")
-		? { "x-api-key": bearer }
-		: { Authorization: `Bearer ${bearer}` };
-}
-
-export async function apiRequest<T>(
-	bearer: string,
-	path: string,
-	init?: RequestInit,
-): Promise<T> {
-	const response = await fetch(`${getApiUrl()}${path}`, {
-		...init,
-		headers: { ...authHeaders(bearer), ...(init?.headers ?? {}) },
-	});
-
-	const text = await response.text();
-	let payload: unknown;
-	try {
-		payload = text ? JSON.parse(text) : {};
-	} catch {
-		throw new CLIError(
-			`${path} returned ${response.status} with a non-JSON body: ${text.slice(0, 200)}`,
-		);
-	}
-
-	if (!response.ok) {
-		const message = (payload as { error?: string }).error;
-		throw new CLIError(message ?? `${path} returned ${response.status}`);
-	}
-	return payload as T;
-}
-
-export async function connectionRequest<T>(
-	bearer: string,
-	path: string,
-	init?: RequestInit,
-): Promise<T> {
-	try {
-		return await apiRequest<T>(bearer, path, init);
-	} catch (error) {
-		if (
-			error instanceof CLIError &&
-			/connection not found/i.test(error.message)
-		) {
-			throw new CLIError(
-				error.message,
-				"Run: superset plugins list  (the pluginId column holds the id)",
-			);
-		}
-		throw error;
-	}
-}
-
-export interface AuthInputSpec {
-	name: string;
-	label?: string;
-	description?: string;
-	required?: boolean;
-	secret?: boolean;
-}
+export type AuthInputSpec =
+	RouterOutputs["plugins"]["list"][number]["authMethods"][number]["inputs"][number];
 
 export function missingInputsError(
 	pluginName: string,

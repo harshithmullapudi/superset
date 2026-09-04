@@ -1,2 +1,7 @@
-export type { CatalogPlugin } from "./usePluginCatalog";
-export { PLUGIN_CATALOG_KEY, usePluginCatalog } from "./usePluginCatalog";
+export type {
+	AuthInput,
+	AuthMethod,
+	CatalogPlugin,
+	PluginSkill,
+} from "./usePluginCatalog";
+export { usePluginCatalog } from "./usePluginCatalog";

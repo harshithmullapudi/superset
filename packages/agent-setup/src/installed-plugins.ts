@@ -56,11 +56,21 @@ export function readInstalledPluginSources(): PluginSkillSource[] | null {
 		occurrences.set(entry.name, (occurrences.get(entry.name) ?? 0) + 1);
 	}
 
-	return usable.map((entry) => ({
-		name:
-			(occurrences.get(entry.name) ?? 0) > 1 && entry.marketplace
-				? `${entry.marketplace}-${entry.name}`
-				: entry.name,
-		dir: entry.dir,
-	}));
+	const taken = new Set<string>();
+	for (const entry of usable) {
+		if (occurrences.get(entry.name) === 1) taken.add(entry.name);
+	}
+
+	return usable.map((entry) => {
+		if (occurrences.get(entry.name) === 1) {
+			return { name: entry.name, dir: entry.dir };
+		}
+		const base = entry.marketplace
+			? `${entry.marketplace}-${entry.name}`
+			: entry.name;
+		let name = base;
+		for (let n = 2; taken.has(name); n++) name = `${base}-${n}`;
+		taken.add(name);
+		return { name, dir: entry.dir };
+	});
 }

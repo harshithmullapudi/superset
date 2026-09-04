@@ -266,7 +266,7 @@ function snapshotDrift(plugin: ResolvedPlugin, version: string): string[] {
 		: undefined;
 	const bundle = path.join(target, SERVER_ENTRY);
 	const hasBundle = fs.existsSync(bundle);
-	if (plugin.hasServerSource || hasBundle || stamped) {
+	if (plugin.hasServerSource || hasBundle || stamped !== undefined) {
 		const actual = hasBundle
 			? `sha256-${createHash("sha256").update(fs.readFileSync(bundle)).digest("base64")}`
 			: null;
@@ -463,11 +463,10 @@ export type FirstPartyPluginName = keyof typeof FIRST_PARTY_MANIFESTS;
 export function firstPartyManifest(
 	name: string,
 ): (typeof FIRST_PARTY_MANIFESTS)[FirstPartyPluginName] | null {
-	return (
-		(FIRST_PARTY_MANIFESTS as Record<string, unknown>)[name] as
-			| (typeof FIRST_PARTY_MANIFESTS)[FirstPartyPluginName]
-			| undefined
-	) ?? null;
+	if (!Object.hasOwn(FIRST_PARTY_MANIFESTS, name)) return null;
+	return (FIRST_PARTY_MANIFESTS as Record<string, unknown>)[
+		name
+	] as (typeof FIRST_PARTY_MANIFESTS)[FirstPartyPluginName];
 }
 `;
 	return { target, contents };

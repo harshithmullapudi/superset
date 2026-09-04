@@ -1,18 +1,8 @@
 import { boolean, table } from "@superset/cli-framework";
+import type { RouterOutputs } from "@superset/trpc";
 import { command } from "../../../lib/command";
-import { apiRequest } from "../../../lib/plugins/api";
 
-interface CatalogPlugin {
-	name: string;
-	version: string;
-	description: string;
-	marketplace: string;
-	authMethods: { type: "oauth2" | "api_key" }[];
-	installed: boolean;
-	enabled: boolean;
-	connections: { id: string; account: string | null }[];
-	accounts: string[];
-}
+type CatalogPlugin = RouterOutputs["plugins"]["list"][number];
 
 export default command({
 	description:
@@ -23,15 +13,12 @@ export default command({
 	display: (data) =>
 		table(
 			(data ?? []) as Record<string, unknown>[],
-			["name", "version", "status", "pluginId"],
-			["PLUGIN", "VERSION", "STATUS", "PLUGIN ID"],
-			[16, 9, 30, 38],
+			["name", "version", "status", "account", "pluginId"],
+			["PLUGIN", "VERSION", "STATUS", "ACCOUNT", "PLUGIN ID"],
+			[16, 9, 24, 24, 38],
 		),
 	run: async ({ ctx, options }) => {
-		const { plugins } = await apiRequest<{ plugins: CatalogPlugin[] }>(
-			ctx.bearer,
-			"/api/plugins",
-		);
+		const plugins = await ctx.api.plugins.list.query();
 
 		const visible = options.available
 			? plugins

@@ -1,6 +1,5 @@
 import { positional, string } from "@superset/cli-framework";
 import { command } from "../../../lib/command";
-import { apiRequest } from "../../../lib/plugins/api";
 import { resolvePluginRef } from "../../../lib/plugins/host";
 import { removePlugin } from "../../../lib/plugins/install";
 
@@ -22,18 +21,26 @@ export default command({
 			options.marketplace as string | undefined,
 		);
 
-		const query = marketplace
-			? `?marketplace=${encodeURIComponent(marketplace)}`
-			: "";
-		await apiRequest(ctx.bearer, `/api/plugins/${name}/install${query}`, {
-			method: "DELETE",
-		});
+		let accountError: string | null = null;
+		try {
+			await ctx.api.plugins.uninstall.mutate({ name, marketplace });
+		} catch (error) {
+			const code =
+				error && typeof error === "object" && "data" in error
+					? (error as { data?: { code?: string } }).data?.code
+					: undefined;
+			if (code !== "NOT_FOUND") {
+				accountError = error instanceof Error ? error.message : String(error);
+			}
+		}
 
 		const removed = await removePlugin(name, marketplace);
 
 		return {
 			data: { name: removed.name, marketplace: removed.marketplace },
-			message: `Removed ${removed.name}@${removed.version} (${removed.marketplace}).`,
+			message: accountError
+				? `Removed ${removed.name}@${removed.version} (${removed.marketplace}) from this machine, but the account still lists it: ${accountError}`
+				: `Removed ${removed.name}@${removed.version} (${removed.marketplace}).`,
 		};
 	},
 });

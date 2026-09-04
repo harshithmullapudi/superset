@@ -1,89 +1,15 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { RouterOutputs } from "@superset/trpc";
 import { env } from "renderer/env.renderer";
-import {
-	authClient,
-	getAuthToken,
-	useAuthToken,
-} from "renderer/lib/auth-client";
+import { authClient } from "renderer/lib/auth-client";
+import { cloudTrpc } from "renderer/lib/cloud-trpc";
 
-import { PLUGIN_CATALOG_KEY } from "renderer/routes/_authenticated/_dashboard/plugins/hooks/usePluginCatalog";
+export type PluginConnection =
+	RouterOutputs["plugins"]["connections"]["list"][number];
 
-export const PLUGIN_CONNECTIONS_KEY = ["plugin-connections"] as const;
-
-export interface PluginConnection {
-	id: string;
-	plugin: string;
-	account: string | null;
-	accountId: string;
-	scopes: string[] | null;
-	createdAt: string;
-}
-
-function authHeaders(): Record<string, string> {
-	const token = getAuthToken();
-	return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-	const response = await fetch(`${env.NEXT_PUBLIC_API_URL}${path}`, {
-		...init,
-		headers: { ...authHeaders(), ...(init?.headers ?? {}) },
-	});
-	const payload = (await response.json().catch(() => ({}))) as {
-		error?: string;
-	};
-	if (!response.ok) {
-		throw new Error(payload.error ?? `Request failed (${response.status})`);
-	}
-	return payload as T;
-}
-
-export async function registerPluginInstall(
-	pluginName: string,
-): Promise<{ needsConnection: boolean }> {
-	return await request<{ needsConnection: boolean }>(
-		`/api/plugins/${pluginName}/install`,
-		{ method: "POST" },
-	);
-}
-
-export async function registerPluginEnabled(
-	pluginName: string,
-	enabled: boolean,
-): Promise<void> {
-	await request(`/api/plugins/${pluginName}/install`, {
-		method: "PATCH",
-		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ enabled }),
-	});
-}
-
-export async function registerPluginUninstall(
-	pluginName: string,
-): Promise<void> {
-	await request(`/api/plugins/${pluginName}/install`, { method: "DELETE" });
-}
-
-export interface PluginConnectResult {
-	connectionId: string;
-	account: string | null;
-}
-
-export async function connectPluginApiKey(
-	pluginName: string,
-	inputs: Record<string, string>,
-	method: string,
-): Promise<PluginConnectResult> {
-	return await request<PluginConnectResult>(
-		`/api/plugins/${pluginName}/connect?method=${encodeURIComponent(method)}`,
-		{
-			method: "POST",
-			headers: { "content-type": "application/json" },
-			body: JSON.stringify(inputs),
-		},
-	);
-}
-
+/**
+ * Sends the browser to the provider. Stays a raw URL because the flow ends in
+ * a redirect the system browser has to follow, which no procedure can express.
+ */
 export function openPluginOAuth(
 	apiUrl: string,
 	pluginName: string,
@@ -99,74 +25,60 @@ export function openPluginOAuth(
 }
 
 export function usePluginConnections(pluginName: string) {
-	const token = useAuthToken();
-	const queryClient = useQueryClient();
+	const utils = cloudTrpc.useUtils();
 	const { data: session } = authClient.useSession();
 	const userId = session?.user?.id ?? null;
-	const queryKey = [...PLUGIN_CONNECTIONS_KEY, userId, pluginName];
-	const refresh = () => {
-		void queryClient.invalidateQueries({ queryKey });
-		void queryClient.invalidateQueries({ queryKey: PLUGIN_CATALOG_KEY });
+
+	const refresh = async () => {
+		await Promise.all([
+			utils.plugins.connections.list.invalidate({ plugin: pluginName }),
+			utils.plugins.list.invalidate(),
+		]);
 	};
 
-	const connections = useQuery({
-		queryKey,
-		enabled: Boolean(token) && Boolean(userId),
-		queryFn: async () => {
-			const { connections } = await request<{
-				connections: PluginConnection[];
-			}>(`/api/plugins/connections?plugin=${encodeURIComponent(pluginName)}`);
-			return connections;
-		},
-	});
+	const connections = cloudTrpc.plugins.connections.list.useQuery(
+		{ plugin: pluginName },
+		{ enabled: Boolean(userId) },
+	);
 
-	const disconnect = useMutation({
-		mutationFn: async (connectionId: string) => {
-			await request(`/api/plugins/connections/${connectionId}`, {
-				method: "DELETE",
+	const disconnect = cloudTrpc.plugins.connections.disconnect.useMutation({
+		onMutate: async ({ connectionId }) => {
+			await utils.plugins.connections.list.cancel({ plugin: pluginName });
+			const previous = utils.plugins.connections.list.getData({
+				plugin: pluginName,
 			});
-		},
-		onMutate: async (connectionId) => {
-			await queryClient.cancelQueries({ queryKey });
-			const previous = queryClient.getQueryData<PluginConnection[]>(queryKey);
-			queryClient.setQueryData<PluginConnection[]>(queryKey, (rows) =>
+			utils.plugins.connections.list.setData({ plugin: pluginName }, (rows) =>
 				(rows ?? []).filter((row) => row.id !== connectionId),
 			);
 			return { previous };
 		},
-		onError: (_error, _id, context) => {
-			if (context?.previous)
-				queryClient.setQueryData(queryKey, context.previous);
+		onError: (_error, _input, context) => {
+			if (context?.previous) {
+				utils.plugins.connections.list.setData(
+					{ plugin: pluginName },
+					context.previous,
+				);
+			}
 		},
 		onSettled: refresh,
 	});
 
-	const connectApiKey = useMutation({
-		mutationFn: async ({
-			inputs,
-			method,
-		}: {
-			inputs: Record<string, string>;
-			method: string;
-		}) => await connectPluginApiKey(pluginName, inputs, method),
+	const connectApiKey = cloudTrpc.plugins.connectApiKey.useMutation({
 		onSuccess: refresh,
 	});
-
-	const connectOAuth = (
-		inputs: Record<string, string> = {},
-		method = "oauth2",
-	) => openPluginOAuth(env.NEXT_PUBLIC_API_URL, pluginName, inputs, method);
 
 	return {
 		connections: connections.data ?? [],
 		isLoading: connections.isLoading,
 		error: connections.error,
 		refetch: connections.refetch,
-		connectOAuth,
-		connectApiKey: connectApiKey.mutate,
+		connectOAuth: (inputs: Record<string, string> = {}, method = "oauth2") =>
+			openPluginOAuth(env.NEXT_PUBLIC_API_URL, pluginName, inputs, method),
+		connectApiKey: (inputs: Record<string, string>) =>
+			connectApiKey.mutate({ name: pluginName, inputs }),
 		isConnecting: connectApiKey.isPending,
 		connectError: connectApiKey.error,
-		disconnect: disconnect.mutate,
+		disconnect: (connectionId: string) => disconnect.mutate({ connectionId }),
 		isDisconnecting: disconnect.isPending,
 	};
 }

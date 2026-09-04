@@ -2,28 +2,18 @@ import fs from "node:fs";
 import path from "node:path";
 import { boolean, positional, string, table } from "@superset/cli-framework";
 import { command } from "../../../lib/command";
+import { resolvePluginRef } from "../../../lib/plugins/host";
 import {
 	type AuthInputSpec,
-	apiRequest,
 	missingInputsError,
 	parseInputs,
 	readStdin,
-} from "../../../lib/plugins/api";
-import { resolvePluginRef } from "../../../lib/plugins/host";
+} from "../../../lib/plugins/inputs";
 import {
 	ensureDefaultMarketplace,
 	installPlugin,
 } from "../../../lib/plugins/install";
 import { supersetExtension } from "../../../lib/plugins/marketplace";
-
-interface InstallResponse {
-	install: { plugin: string; version: string; marketplace: string };
-	needsConnection: boolean;
-}
-
-interface ConnectionsResponse {
-	connections: Array<{ id: string; account: string | null }>;
-}
 
 export default command({
 	description:
@@ -62,14 +52,15 @@ export default command({
 			update: Boolean(options.update),
 		});
 
-		let account: InstallResponse | null = null;
+		let account: Awaited<
+			ReturnType<typeof ctx.api.plugins.install.mutate>
+		> | null = null;
 		let accountError: string | null = null;
 		try {
-			account = await apiRequest<InstallResponse>(
-				ctx.bearer,
-				`/api/plugins/${name}/install?marketplace=${encodeURIComponent(local.marketplace)}`,
-				{ method: "POST" },
-			);
+			account = await ctx.api.plugins.install.mutate({
+				name,
+				marketplace: local.marketplace,
+			});
 		} catch (error) {
 			accountError = error instanceof Error ? error.message : String(error);
 		}
@@ -87,10 +78,9 @@ export default command({
 		if (account?.needsConnection && methods.length > 1) {
 			connection = `needs connection: superset plugins connect ${name} --method <${methods.map((m) => m.type).join("|")}>`;
 		} else if (account?.needsConnection && auth) {
-			const { connections } = await apiRequest<ConnectionsResponse>(
-				ctx.bearer,
-				`/api/plugins/connections?plugin=${encodeURIComponent(name)}`,
-			);
+			const connections = await ctx.api.plugins.connections.list.query({
+				plugin: name,
+			});
 
 			if (connections.length > 0) {
 				connection = `connected as ${connections[0]?.account ?? "unknown"}`;
@@ -106,15 +96,10 @@ export default command({
 				if (missing.length) {
 					throw missingInputsError(name, missing, declared);
 				}
-				const created = await apiRequest<{ account: string | null }>(
-					ctx.bearer,
-					`/api/plugins/${encodeURIComponent(name)}/connect`,
-					{
-						method: "POST",
-						headers: { "content-type": "application/json" },
-						body: JSON.stringify(provided),
-					},
-				);
+				const created = await ctx.api.plugins.connectApiKey.mutate({
+					name,
+					inputs: provided,
+				});
 				connection = `connected as ${created.account ?? "unknown"}`;
 			} else {
 				connection = "authorize in a browser";

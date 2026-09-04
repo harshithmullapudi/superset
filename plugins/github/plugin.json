@@ -10,13 +10,7 @@
 	"homepage": "https://docs.superset.sh",
 	"repository": "https://github.com/superset-sh/superset",
 	"license": "MIT",
-	"keywords": [
-		"github",
-		"issues",
-		"pull-requests",
-		"ci",
-		"code-review"
-	],
+	"keywords": ["github", "issues", "pull-requests", "ci", "code-review"],
 	"extensions": {
 		"superset": {
 			"interface": {
@@ -30,11 +24,7 @@
 					"provider": "github",
 					"authorization_url": "https://github.com/login/oauth/authorize",
 					"token_url": "https://github.com/login/oauth/access_token",
-					"scopes": [
-						"repo",
-						"read:org",
-						"workflow"
-					],
+					"scopes": ["repo", "read:org", "workflow"],
 					"scope_separator": " ",
 					"token_request_auth_method": "client_secret_post",
 					"requires_env": [

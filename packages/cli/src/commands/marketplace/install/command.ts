@@ -1,6 +1,5 @@
 import { positional, string, table } from "@superset/cli-framework";
 import { command } from "../../../lib/command";
-import { apiRequest } from "../../../lib/plugins/api";
 import {
 	installMarketplace,
 	parseMarketplaceSource,
@@ -30,17 +29,20 @@ export default command({
 			name: options.name as string | undefined,
 		});
 
-		await apiRequest(ctx.bearer, "/api/plugins/marketplaces", {
-			method: "POST",
-			headers: { "content-type": "application/json" },
-			body: JSON.stringify({
-				name: local.name,
-				sourceKind: source.kind,
-				repo: source.repo,
-				ref: source.ref,
-				path: source.path,
-			}),
-		});
+		await ctx.api.plugins.marketplaces.add.mutate(
+			source.kind === "github"
+				? {
+						name: local.name,
+						sourceKind: "github",
+						repo: source.repo as string,
+						ref: source.ref,
+					}
+				: {
+						name: local.name,
+						sourceKind: "path",
+						path: source.path as string,
+					},
+		);
 
 		return {
 			data: [
@@ -50,7 +52,7 @@ export default command({
 					location: local.location,
 				},
 			],
-			message: `${local.updated ? "Updated" : "Added"} marketplace "${local.name}" with ${local.plugins} plugin${local.plugins === 1 ? "" : "s"}. Install one with: superset plugins install <name>`,
+			message: `${local.updated ? "Updated" : "Added"} marketplace "${local.name}" with ${local.plugins} plugin${local.plugins === 1 ? "" : "s"}. Install one with: superset plugins install <name> --marketplace ${local.name}`,
 		};
 	},
 });

@@ -1,16 +1,8 @@
 import { table } from "@superset/cli-framework";
+import type { RouterOutputs } from "@superset/trpc";
 import { command } from "../../../lib/command";
-import { apiRequest } from "../../../lib/plugins/api";
 
-interface Marketplace {
-	name: string;
-	builtin: boolean;
-	sourceKind: string;
-	repo?: string | null;
-	ref?: string | null;
-	path?: string | null;
-	plugins?: number;
-}
+type Marketplace = RouterOutputs["plugins"]["marketplaces"]["list"][number];
 
 export default command({
 	description: "List the marketplaces on your account",
@@ -22,10 +14,7 @@ export default command({
 			[24, 60],
 		),
 	run: async ({ ctx }) => {
-		const { marketplaces } = await apiRequest<{ marketplaces: Marketplace[] }>(
-			ctx.bearer,
-			"/api/plugins/marketplaces",
-		);
+		const marketplaces = await ctx.api.plugins.marketplaces.list.query();
 
 		const describe = (entry: Marketplace) => {
 			if (entry.builtin) return "built in";

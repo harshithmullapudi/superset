@@ -1,3 +1,4 @@
+// biome-ignore-all lint/suspicious/noTemplateCurlyInString: ${config.*} and ${inputs.*} are the manifest placeholder syntax, not template literals
 import { describe, expect, test } from "bun:test";
 import {
 	credentialFetch,

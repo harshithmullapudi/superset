@@ -1,6 +1,4 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
-import { z } from "zod";
-import { env } from "@/env";
+import { env } from "../../env";
 import {
 	type AuthIdentity,
 	credentialFetch,
@@ -10,51 +8,6 @@ import {
 	resolveUrlTemplate,
 	type TemplateScope,
 } from "./manifest";
-
-const STATE_TTL_MS = 10 * 60 * 1000;
-
-const statePayloadSchema = z.object({
-	userId: z.string().min(1),
-	organizationId: z.string().min(1).nullable(),
-	pluginName: z.string().min(1),
-	authMethod: z.string().min(1).default("oauth2"),
-	inputs: z.record(z.string(), z.string()).default({}),
-	timestamp: z.number(),
-});
-
-export type PluginState = z.infer<typeof statePayloadSchema>;
-
-export function createPluginState(
-	payload: Omit<PluginState, "timestamp">,
-): string {
-	const body = Buffer.from(
-		JSON.stringify({ ...payload, timestamp: Date.now() }),
-	).toString("base64url");
-	const signature = createHmac("sha256", env.BETTER_AUTH_SECRET)
-		.update(body)
-		.digest("base64url");
-	return `${body}.${signature}`;
-}
-
-export function verifyPluginState(token: string): PluginState | null {
-	const [body, signature] = token.split(".");
-	if (!body || !signature) return null;
-
-	const expected = createHmac("sha256", env.BETTER_AUTH_SECRET)
-		.update(body)
-		.digest("base64url");
-	const a = Buffer.from(signature);
-	const b = Buffer.from(expected);
-	if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
-
-	const parsed = statePayloadSchema.safeParse(
-		JSON.parse(Buffer.from(body, "base64url").toString()),
-	);
-	if (!parsed.success) return null;
-	if (Date.now() - parsed.data.timestamp > STATE_TTL_MS) return null;
-
-	return parsed.data;
-}
 
 export function clientCredentials(pluginName: string): {
 	clientId: string;
