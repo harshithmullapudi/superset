@@ -104,7 +104,7 @@ export function PluginConnections({
 						</p>
 					</div>
 					<Badge variant="outline" className="gap-1.5">
-						<span className="size-1.5 rounded-full bg-emerald-500" />
+						<span className="size-1.5 rounded-full bg-success" />
 						<Trans>Connected</Trans>
 					</Badge>
 					<Button
