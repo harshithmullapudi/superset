@@ -76,13 +76,25 @@ BEGIN
 	SELECT count(*) INTO stale_profiles
 	FROM "leaderboard_participants" p
 	JOIN "public_profiles" pp ON pp."user_id" = p."user_id"
-	WHERE (p."handle", p."visibility", p."tokens", p."usd", p."sessions",
-		p."tier", p."active_days", p."axis_width", p."axis_depth",
-		p."axis_output", p."axis_cost", p."day_range_start", p."day_range_end")
+	WHERE (p."handle", p."visibility", p."organization_id",
+		p."opted_in_at", p."revoked_at", p."flagged_at",
+		p."last_published_at", p."payload_version", p."tokens",
+		p."usd", p."sessions", p."uncached_input", p."cached_input",
+		p."cache_write_5m", p."cache_write_1h", p."output",
+		p."reasoning_output", p."approximate", p."day_range_start",
+		p."day_range_end", p."tier", p."tier_computed_at",
+		p."active_days", p."axis_width", p."axis_depth",
+		p."axis_output", p."axis_cost")
 		IS DISTINCT FROM
-		(pp."handle", pp."visibility", pp."tokens", pp."usd", pp."sessions",
-		pp."tier", pp."active_days", pp."axis_width", pp."axis_depth",
-		pp."axis_output", pp."axis_cost", pp."day_range_start", pp."day_range_end");
+		(pp."handle", pp."visibility", pp."organization_id",
+		pp."opted_in_at", pp."revoked_at", pp."flagged_at",
+		pp."last_published_at", pp."payload_version", pp."tokens",
+		pp."usd", pp."sessions", pp."uncached_input", pp."cached_input",
+		pp."cache_write_5m", pp."cache_write_1h", pp."output",
+		pp."reasoning_output", pp."approximate", pp."day_range_start",
+		pp."day_range_end", pp."tier", pp."tier_computed_at",
+		pp."active_days", pp."axis_width", pp."axis_depth",
+		pp."axis_output", pp."axis_cost");
 
 	SELECT count(*) INTO orphan_daily
 	FROM "leaderboard_daily" d
