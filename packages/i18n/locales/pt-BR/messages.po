@@ -1265,7 +1265,7 @@ msgid "active days"
 msgstr "dias ativos"
 
 msgid "Active days in the last 30"
-msgstr "Dias ativos nos últimos 30"
+msgstr "Dias ativos nos últimos 30 dias"
 
 msgid "Active organization required to create an API key"
 msgstr "É preciso uma organização ativa para criar uma chave de API"

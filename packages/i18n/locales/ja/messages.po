@@ -5095,7 +5095,7 @@ msgstr "2028年前半"
 
 #. placeholder {0}: formatDate(new Date(`${awardedOn}T00:00:00Z`), { day: "numeric", month: "short", year: "numeric", timeZone: "UTC", })
 msgid "Earned {0}"
-msgstr "{0} に獲得"
+msgstr "獲得日: {0}"
 
 msgid "Earned {name}"
 msgstr "「{name}」を獲得"
