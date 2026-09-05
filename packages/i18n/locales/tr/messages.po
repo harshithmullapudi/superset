@@ -11756,6 +11756,10 @@ msgstr "SCIM sağlama"
 msgid "Scope"
 msgstr "Kapsam"
 
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "Scoring starts once the board can see {0} days of usage."
+msgstr "Puanlama, tablo {0} günlük kullanım gördüğünde başlar."
+
 msgid "Screenshot copied to clipboard"
 msgstr "Ekran görüntüsü panoya kopyalandı"
 
@@ -14623,6 +14627,10 @@ msgstr "Push edilmemiş"
 msgid "Unranked"
 msgstr "Sırasız"
 
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "Unranked until {0} days carry usage."
+msgstr "{0} gün kullanım birikene kadar sıralama dışısın."
+
 msgid "Unresolve"
 msgstr "Çözümü geri al"
 
@@ -15426,6 +15434,10 @@ msgstr "<0>{currentPlanLabel} planındasınız</0>. Sorularınız varsa veya pla
 
 msgid "You are the only owner of an organization that has other members. Transfer ownership or delete the organization first."
 msgstr "Başka üyeleri olan bir kuruluşun tek sahibisiniz. Önce sahipliği devredin veya kuruluşu silin."
+
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "You are unranked until {0} days carry usage. Scoring starts once the board can see a full picture."
+msgstr "{0} gün kullanım birikene kadar sıralama dışısın. Tablo bütün resmi gördüğünde puanlama başlar."
 
 msgid "You can't undo this action. Terminal panes will show \"Process exited\" and can be restarted."
 msgstr "Bu işlemi geri alamazsınız. Terminal bölmelerinde \"Process exited\" görünür ve yeniden başlatılabilirler."

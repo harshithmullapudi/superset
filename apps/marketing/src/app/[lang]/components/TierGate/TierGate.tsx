@@ -1,6 +1,8 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import {
 	type AxisValues,
+	MIN_ACTIVE_DAYS,
+	rankingGap,
 	scoredGaps,
 	type Tier,
 } from "@superset/trpc/leaderboard-tier";
@@ -16,7 +18,8 @@ interface TierGateProps {
 
 export function TierGate({ tier, axes }: TierGateProps) {
 	const { t } = useLingui();
-	const gaps = scoredGaps(axes, tier as Tier);
+	const unranked = tier <= 0;
+	const gaps = unranked ? [rankingGap(axes)] : scoredGaps(axes, tier as Tier);
 	const atTop = tier >= 4;
 	const nextLabel = t(tierLabel(Math.min(4, tier + 1)));
 	const met = gaps.filter((gap) => gap.met).length;
@@ -45,6 +48,11 @@ export function TierGate({ tier, axes }: TierGateProps) {
 			<p className="text-[0.68rem] text-muted-foreground mt-2 leading-relaxed">
 				{atTop ? (
 					<Trans>Top tier. Nothing left to clear.</Trans>
+				) : unranked ? (
+					<Trans>
+						You are unranked until {String(MIN_ACTIVE_DAYS)} days carry usage.
+						Scoring starts once the board can see a full picture.
+					</Trans>
 				) : met === gaps.length ? (
 					<Trans>
 						Every axis is carrying its weight for the next tier. Hold it and the

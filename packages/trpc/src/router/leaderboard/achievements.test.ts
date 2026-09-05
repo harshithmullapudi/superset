@@ -5,6 +5,7 @@ import {
 	CATALOG,
 	CATALOG_BY_SLUG,
 	earnedTier,
+	highestPerSlug,
 	isRetired,
 	MILESTONES,
 	totalAwardableRows,
@@ -139,5 +140,34 @@ describe("isRetired", () => {
 		const retired = { ...CATALOG_BY_SLUG["day-one"], retiredAt: "2026-09-30" };
 		expect(isRetired(retired, "2026-09-29")).toBe(false);
 		expect(isRetired(retired, "2026-10-01")).toBe(true);
+	});
+});
+
+describe("highestPerSlug", () => {
+	test("keeps the date the retained tier was earned", () => {
+		expect(
+			highestPerSlug([
+				{ slug: "ship-it", tier: 1, awardedOn: "2026-01-01" },
+				{ slug: "ship-it", tier: 2, awardedOn: "2026-06-01" },
+			]),
+		).toEqual([{ slug: "ship-it", tier: 2, awardedOn: "2026-06-01" }]);
+	});
+
+	test("is order independent", () => {
+		expect(
+			highestPerSlug([
+				{ slug: "ship-it", tier: 2, awardedOn: "2026-06-01" },
+				{ slug: "ship-it", tier: 1, awardedOn: "2026-01-01" },
+			]),
+		).toEqual([{ slug: "ship-it", tier: 2, awardedOn: "2026-06-01" }]);
+	});
+
+	test("takes the earliest date when the tier is the same", () => {
+		expect(
+			highestPerSlug([
+				{ slug: "day-one", tier: 0, awardedOn: "2026-06-01" },
+				{ slug: "day-one", tier: 0, awardedOn: "2026-01-01" },
+			]),
+		).toEqual([{ slug: "day-one", tier: 0, awardedOn: "2026-01-01" }]);
 	});
 });

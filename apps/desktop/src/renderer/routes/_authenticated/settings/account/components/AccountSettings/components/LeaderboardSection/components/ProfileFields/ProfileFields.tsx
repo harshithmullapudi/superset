@@ -54,6 +54,7 @@ export function ProfileFields({ handle }: { handle: string }) {
 	const websiteUrl = draft?.websiteUrl ?? "";
 	const edit = (patch: Partial<Omit<Draft, "handle">>) =>
 		setDraft((current) => (current ? { ...current, ...patch } : current));
+	const locked = !draft || profile.isError;
 
 	const save = async () => {
 		setSaving(true);
@@ -84,6 +85,7 @@ export function ProfileFields({ handle }: { handle: string }) {
 				</Label>
 				<Textarea
 					id="leaderboard-bio"
+					disabled={locked}
 					value={bio}
 					maxLength={BIO_MAX}
 					rows={2}
@@ -106,6 +108,7 @@ export function ProfileFields({ handle }: { handle: string }) {
 					</Label>
 					<Input
 						id="leaderboard-x"
+						disabled={locked}
 						value={xHandle}
 						onChange={(event) => edit({ xHandle: event.target.value })}
 						placeholder="yourhandle"
@@ -117,6 +120,7 @@ export function ProfileFields({ handle }: { handle: string }) {
 					</Label>
 					<Input
 						id="leaderboard-site"
+						disabled={locked}
 						value={websiteUrl}
 						onChange={(event) => edit({ websiteUrl: event.target.value })}
 						placeholder="https://example.com"

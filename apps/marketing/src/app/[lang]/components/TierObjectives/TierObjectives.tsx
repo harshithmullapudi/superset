@@ -2,6 +2,8 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { formatList } from "@superset/i18n/format";
 import {
 	type AxisValues,
+	MIN_ACTIVE_DAYS,
+	rankingGap,
 	scoredGaps,
 	type Tier,
 } from "@superset/trpc/leaderboard-tier";
@@ -20,7 +22,8 @@ interface TierObjectivesProps {
 
 export function TierObjectives({ tier, axes }: TierObjectivesProps) {
 	const { t } = useLingui();
-	const gaps = scoredGaps(axes, tier as Tier);
+	const unranked = tier <= 0;
+	const gaps = unranked ? [rankingGap(axes)] : scoredGaps(axes, tier as Tier);
 	const atTop = tier >= 4;
 	const nextLabel = t(tierLabel(Math.min(4, tier + 1)));
 	const met = gaps.filter((gap) => gap.met).length;
@@ -48,6 +51,10 @@ export function TierObjectives({ tier, axes }: TierObjectivesProps) {
 					{atTop ? (
 						<Trans>
 							All objectives cleared. Top rung, nothing left to reach for.
+						</Trans>
+					) : unranked ? (
+						<Trans>
+							Unranked until {String(MIN_ACTIVE_DAYS)} days carry usage.
 						</Trans>
 					) : met === gaps.length ? (
 						<Trans>
@@ -127,6 +134,11 @@ export function TierObjectives({ tier, axes }: TierObjectivesProps) {
 			<p className="mt-4 border-t border-border pt-3 font-mono text-[0.6rem] leading-relaxed text-muted-foreground/60">
 				{atTop ? (
 					<Trans>Top tier. Nothing left to clear.</Trans>
+				) : unranked ? (
+					<Trans>
+						Scoring starts once the board can see {String(MIN_ACTIVE_DAYS)} days
+						of usage.
+					</Trans>
 				) : met === gaps.length ? (
 					<Trans>
 						Every objective is carrying its weight for the next rung. Measured

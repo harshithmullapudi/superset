@@ -11756,6 +11756,10 @@ msgstr "Provisionamento SCIM"
 msgid "Scope"
 msgstr "Escopo"
 
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "Scoring starts once the board can see {0} days of usage."
+msgstr "A pontuação começa quando o quadro tem {0} dias de uso."
+
 msgid "Screenshot copied to clipboard"
 msgstr "Captura de tela copiada para a área de transferência"
 
@@ -14623,6 +14627,10 @@ msgstr "Sem push"
 msgid "Unranked"
 msgstr "Sem posição"
 
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "Unranked until {0} days carry usage."
+msgstr "Sem classificação até que {0} dias tenham atividade."
+
 msgid "Unresolve"
 msgstr "Reabrir"
 
@@ -15426,6 +15434,10 @@ msgstr "Você está no <0>plano {currentPlanLabel}</0>. Se tiver dúvidas ou qui
 
 msgid "You are the only owner of an organization that has other members. Transfer ownership or delete the organization first."
 msgstr "Você é o único proprietário de uma organização que tem outros membros. Transfira a propriedade ou exclua a organização primeiro."
+
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "You are unranked until {0} days carry usage. Scoring starts once the board can see a full picture."
+msgstr "Você fica sem classificação até que {0} dias tenham atividade. A pontuação começa quando o quadro enxerga o quadro completo."
 
 msgid "You can't undo this action. Terminal panes will show \"Process exited\" and can be restarted."
 msgstr "Não dá para desfazer. Os painéis de terminal vão mostrar \"Processo encerrado\" e podem ser reiniciados."

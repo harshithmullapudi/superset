@@ -304,12 +304,13 @@ export function highestPerSlug(awards: readonly HeldAward[]): HeldAward[] {
 			best.set(award.slug, award);
 			continue;
 		}
-		best.set(award.slug, {
-			slug: award.slug,
-			tier: Math.max(held.tier, award.tier),
-			awardedOn:
-				held.awardedOn < award.awardedOn ? held.awardedOn : award.awardedOn,
-		});
+		if (award.tier > held.tier) {
+			best.set(award.slug, award);
+			continue;
+		}
+		if (award.tier === held.tier && award.awardedOn < held.awardedOn) {
+			best.set(award.slug, award);
+		}
 	}
 
 	return [...best.values()];

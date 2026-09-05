@@ -11756,6 +11756,10 @@ msgstr "Cấp phát SCIM"
 msgid "Scope"
 msgstr "Phạm vi"
 
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "Scoring starts once the board can see {0} days of usage."
+msgstr "Việc tính điểm bắt đầu khi bảng xếp hạng có {0} ngày sử dụng."
+
 msgid "Screenshot copied to clipboard"
 msgstr "Đã sao chép ảnh chụp màn hình vào clipboard"
 
@@ -14623,6 +14627,10 @@ msgstr "Chưa push"
 msgid "Unranked"
 msgstr "Chưa xếp hạng"
 
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "Unranked until {0} days carry usage."
+msgstr "Chưa xếp hạng cho đến khi có {0} ngày hoạt động."
+
 msgid "Unresolve"
 msgstr "Bỏ giải quyết"
 
@@ -15426,6 +15434,10 @@ msgstr "Bạn đang dùng <0>gói {currentPlanLabel}</0>. Nếu có thắc mắc
 
 msgid "You are the only owner of an organization that has other members. Transfer ownership or delete the organization first."
 msgstr "Bạn là chủ sở hữu duy nhất của một tổ chức còn thành viên khác. Hãy chuyển quyền sở hữu hoặc xóa tổ chức trước."
+
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "You are unranked until {0} days carry usage. Scoring starts once the board can see a full picture."
+msgstr "Bạn chưa được xếp hạng cho đến khi có {0} ngày hoạt động. Việc tính điểm bắt đầu khi thấy được bức tranh đầy đủ."
 
 msgid "You can't undo this action. Terminal panes will show \"Process exited\" and can be restarted."
 msgstr "Không thể hoàn tác thao tác này. Các khung terminal sẽ hiện \"Process exited\" và có thể khởi động lại."

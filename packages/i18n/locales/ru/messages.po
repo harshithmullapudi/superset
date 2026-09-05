@@ -11756,6 +11756,10 @@ msgstr "Провижининг SCIM"
 msgid "Scope"
 msgstr "Область"
 
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "Scoring starts once the board can see {0} days of usage."
+msgstr "Подсчёт очков начнётся, когда наберётся дней с активностью: {0}."
+
 msgid "Screenshot copied to clipboard"
 msgstr "Скриншот скопирован в буфер обмена"
 
@@ -14623,6 +14627,10 @@ msgstr "Неотправленное"
 msgid "Unranked"
 msgstr "Без места"
 
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "Unranked until {0} days carry usage."
+msgstr "Без рейтинга, пока не наберётся дней с активностью: {0}."
+
 msgid "Unresolve"
 msgstr "Снова открыть"
 
@@ -15426,6 +15434,10 @@ msgstr "У вас <0>тариф {currentPlanLabel}</0>. Если есть воп
 
 msgid "You are the only owner of an organization that has other members. Transfer ownership or delete the organization first."
 msgstr "Вы единственный владелец организации, в которой есть другие участники. Сначала передайте владение или удалите организацию."
+
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "You are unranked until {0} days carry usage. Scoring starts once the board can see a full picture."
+msgstr "Вы вне рейтинга, пока не наберётся дней с активностью: {0}. Подсчёт очков начнётся, когда картина станет полной."
 
 msgid "You can't undo this action. Terminal panes will show \"Process exited\" and can be restarted."
 msgstr "Это действие нельзя отменить. В панелях терминала появится «Process exited», их можно перезапустить."

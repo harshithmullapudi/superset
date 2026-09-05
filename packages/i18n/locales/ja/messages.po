@@ -11756,6 +11756,10 @@ msgstr "SCIMプロビジョニング"
 msgid "Scope"
 msgstr "範囲"
 
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "Scoring starts once the board can see {0} days of usage."
+msgstr "{0}日分の使用状況がそろうとスコアリングが始まります。"
+
 msgid "Screenshot copied to clipboard"
 msgstr "スクリーンショットをクリップボードにコピーしました"
 
@@ -14623,6 +14627,10 @@ msgstr "未プッシュ"
 msgid "Unranked"
 msgstr "ランク外"
 
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "Unranked until {0} days carry usage."
+msgstr "{0}日分の使用実績がそろうまではランク外です。"
+
 msgid "Unresolve"
 msgstr "解決を取り消す"
 
@@ -15426,6 +15434,10 @@ msgstr "現在<0>{currentPlanLabel}プラン</0>をご利用中です。プラ�
 
 msgid "You are the only owner of an organization that has other members. Transfer ownership or delete the organization first."
 msgstr "他にメンバーがいる組織の唯一のオーナーです。先にオーナー権限を移譲するか、組織を削除してください。"
+
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "You are unranked until {0} days carry usage. Scoring starts once the board can see a full picture."
+msgstr "{0}日分の使用実績がそろうまではランク外です。全体像が見えるようになってからスコアリングが始まります。"
 
 msgid "You can't undo this action. Terminal panes will show \"Process exited\" and can be restarted."
 msgstr "この操作は元に戻せません。ターミナルペインに「Process exited」と表示され、再起動できます。"

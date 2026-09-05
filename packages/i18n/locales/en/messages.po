@@ -11756,6 +11756,10 @@ msgstr "SCIM provisioning"
 msgid "Scope"
 msgstr "Scope"
 
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "Scoring starts once the board can see {0} days of usage."
+msgstr "Scoring starts once the board can see {0} days of usage."
+
 msgid "Screenshot copied to clipboard"
 msgstr "Screenshot copied to clipboard"
 
@@ -14623,6 +14627,10 @@ msgstr "Unpushed"
 msgid "Unranked"
 msgstr "Unranked"
 
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "Unranked until {0} days carry usage."
+msgstr "Unranked until {0} days carry usage."
+
 msgid "Unresolve"
 msgstr "Unresolve"
 
@@ -15426,6 +15434,10 @@ msgstr "You are on the <0>{currentPlanLabel} plan</0>. If you have any questions
 
 msgid "You are the only owner of an organization that has other members. Transfer ownership or delete the organization first."
 msgstr "You are the only owner of an organization that has other members. Transfer ownership or delete the organization first."
+
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "You are unranked until {0} days carry usage. Scoring starts once the board can see a full picture."
+msgstr "You are unranked until {0} days carry usage. Scoring starts once the board can see a full picture."
 
 msgid "You can't undo this action. Terminal panes will show \"Process exited\" and can be restarted."
 msgstr "You can't undo this action. Terminal panes will show \"Process exited\" and can be restarted."

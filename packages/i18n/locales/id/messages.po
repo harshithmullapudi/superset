@@ -11756,6 +11756,10 @@ msgstr "Provisioning SCIM"
 msgid "Scope"
 msgstr "Cakupan"
 
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "Scoring starts once the board can see {0} days of usage."
+msgstr "Penilaian dimulai setelah papan melihat {0} hari penggunaan."
+
 msgid "Screenshot copied to clipboard"
 msgstr "Tangkapan layar disalin ke clipboard"
 
@@ -14623,6 +14627,10 @@ msgstr "Belum di-push"
 msgid "Unranked"
 msgstr "Belum berperingkat"
 
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "Unranked until {0} days carry usage."
+msgstr "Tanpa peringkat sampai ada {0} hari dengan penggunaan."
+
 msgid "Unresolve"
 msgstr "Buka lagi"
 
@@ -15426,6 +15434,10 @@ msgstr "Anda memakai <0>paket {currentPlanLabel}</0>. Kalau ada pertanyaan atau 
 
 msgid "You are the only owner of an organization that has other members. Transfer ownership or delete the organization first."
 msgstr "Anda satu-satunya pemilik organisasi yang punya anggota lain. Alihkan kepemilikan atau hapus organisasinya dulu."
+
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "You are unranked until {0} days carry usage. Scoring starts once the board can see a full picture."
+msgstr "Anda tanpa peringkat sampai ada {0} hari dengan penggunaan. Penilaian dimulai setelah gambaran utuh terlihat."
 
 msgid "You can't undo this action. Terminal panes will show \"Process exited\" and can be restarted."
 msgstr "Tindakan ini tidak bisa dibatalkan. Panel terminal akan menampilkan \"Process exited\" dan bisa dijalankan ulang."

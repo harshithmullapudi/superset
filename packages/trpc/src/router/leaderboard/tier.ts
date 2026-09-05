@@ -111,7 +111,7 @@ export function bandTier(score: number): Tier {
 	return tier as Tier;
 }
 
-const MIN_ACTIVE_DAYS = FLOORS.sustain[0];
+export const MIN_ACTIVE_DAYS = FLOORS.sustain[0];
 const OUTPUT_WINDOW_DAYS = 7;
 
 export function floorTier(value: number, floors: readonly number[]): Tier {
@@ -306,6 +306,17 @@ export function tierGap(values: AxisValues, tier: Tier): AxisGap[] {
 
 export function scoredGaps(values: AxisValues, tier: Tier): AxisGap[] {
 	return tierGap(values, tier).filter((gap) => gap.scored);
+}
+
+export function rankingGap(values: AxisValues): AxisGap {
+	return {
+		axis: "sustain",
+		current: values.sustain,
+		needed: MIN_ACTIVE_DAYS,
+		met: values.sustain >= MIN_ACTIVE_DAYS,
+		scored: true,
+		lowerIsBetter: false,
+	};
 }
 
 export function blockingAxes(values: AxisValues, tier: Tier): AxisName[] {

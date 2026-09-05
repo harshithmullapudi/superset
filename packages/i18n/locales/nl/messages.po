@@ -11756,6 +11756,10 @@ msgstr "SCIM-provisioning"
 msgid "Scope"
 msgstr "Bereik"
 
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "Scoring starts once the board can see {0} days of usage."
+msgstr "De score start zodra het bord {0} dagen gebruik ziet."
+
 msgid "Screenshot copied to clipboard"
 msgstr "Screenshot naar klembord gekopieerd"
 
@@ -14623,6 +14627,10 @@ msgstr "Niet gepusht"
 msgid "Unranked"
 msgstr "Geen positie"
 
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "Unranked until {0} days carry usage."
+msgstr "Geen positie tot {0} dagen gebruik tonen."
+
 msgid "Unresolve"
 msgstr "Heropenen"
 
@@ -15426,6 +15434,10 @@ msgstr "Je zit op het <0>{currentPlanLabel}-plan</0>. Heb je vragen of wil je me
 
 msgid "You are the only owner of an organization that has other members. Transfer ownership or delete the organization first."
 msgstr "Je bent de enige eigenaar van een organisatie met andere leden. Draag het eigendom over of verwijder de organisatie eerst."
+
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "You are unranked until {0} days carry usage. Scoring starts once the board can see a full picture."
+msgstr "Je hebt geen positie tot {0} dagen gebruik tonen. De score start zodra het volledige beeld zichtbaar is."
 
 msgid "You can't undo this action. Terminal panes will show \"Process exited\" and can be restarted."
 msgstr "Dit kun je niet ongedaan maken. Terminalpanelen tonen \"Process exited\" en zijn opnieuw te starten."

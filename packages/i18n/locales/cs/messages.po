@@ -11756,6 +11756,10 @@ msgstr "Provisioning přes SCIM"
 msgid "Scope"
 msgstr "Rozsah"
 
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "Scoring starts once the board can see {0} days of usage."
+msgstr "Bodování začne, jakmile žebříček uvidí dní s aktivitou: {0}."
+
 msgid "Screenshot copied to clipboard"
 msgstr "Snímek obrazovky zkopírován do schránky"
 
@@ -14623,6 +14627,10 @@ msgstr "Neodesláno"
 msgid "Unranked"
 msgstr "Bez pořadí"
 
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "Unranked until {0} days carry usage."
+msgstr "Bez pořadí, dokud nebude dní s aktivitou: {0}."
+
 msgid "Unresolve"
 msgstr "Zrušit vyřešení"
 
@@ -15426,6 +15434,10 @@ msgstr "Máte <0>tarif {currentPlanLabel}</0>. Pokud máte dotazy nebo potřebuj
 
 msgid "You are the only owner of an organization that has other members. Transfer ownership or delete the organization first."
 msgstr "Jste jediný vlastník organizace, která má další členy. Nejprve převeďte vlastnictví nebo organizaci smažte."
+
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "You are unranked until {0} days carry usage. Scoring starts once the board can see a full picture."
+msgstr "Nemáš pořadí, dokud nebude dní s aktivitou: {0}. Bodování začne, až bude vidět celý obrázek."
 
 msgid "You can't undo this action. Terminal panes will show \"Process exited\" and can be restarted."
 msgstr "Tuto akci nelze vrátit zpět. Panely terminálu zobrazí „Proces skončil“ a půjde je spustit znovu."

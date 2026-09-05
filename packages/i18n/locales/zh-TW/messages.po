@@ -11756,6 +11756,10 @@ msgstr "SCIM帳號開通"
 msgid "Scope"
 msgstr "範圍"
 
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "Scoring starts once the board can see {0} days of usage."
+msgstr "當看板看到 {0} 天的使用資料後，才會開始計分。"
+
 msgid "Screenshot copied to clipboard"
 msgstr "截圖已複製到剪貼簿"
 
@@ -14623,6 +14627,10 @@ msgstr "未推送"
 msgid "Unranked"
 msgstr "未上榜"
 
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "Unranked until {0} days carry usage."
+msgstr "在累計 {0} 天使用紀錄之前不參與排名。"
+
 msgid "Unresolve"
 msgstr "取消解決"
 
@@ -15426,6 +15434,10 @@ msgstr "你目前使用的是<0>{currentPlanLabel}方案</0>。如有任何疑�
 
 msgid "You are the only owner of an organization that has other members. Transfer ownership or delete the organization first."
 msgstr "你是某個仍有其他成員的組織的唯一擁有者。請先轉移所有權或刪除該組織。"
+
+#. placeholder {0}: String(MIN_ACTIVE_DAYS)
+msgid "You are unranked until {0} days carry usage. Scoring starts once the board can see a full picture."
+msgstr "在累計 {0} 天使用紀錄之前你不參與排名。等看板掌握完整情況後才會開始計分。"
 
 msgid "You can't undo this action. Terminal panes will show \"Process exited\" and can be restarted."
 msgstr "此操作無法復原。終端窗格會顯示「處理程序已退出」，之後可以重新啟動。"

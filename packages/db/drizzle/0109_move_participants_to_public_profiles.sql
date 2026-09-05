@@ -56,6 +56,7 @@ DO $$
 DECLARE
 	missing_handles bigint;
 	missing_profiles bigint;
+	stale_profiles bigint;
 	orphan_daily bigint;
 	orphan_factory bigint;
 BEGIN
@@ -72,6 +73,17 @@ BEGIN
 		SELECT 1 FROM "public_profiles" pp WHERE pp."user_id" = p."user_id"
 	);
 
+	SELECT count(*) INTO stale_profiles
+	FROM "leaderboard_participants" p
+	JOIN "public_profiles" pp ON pp."user_id" = p."user_id"
+	WHERE (p."handle", p."visibility", p."tokens", p."usd", p."sessions",
+		p."tier", p."active_days", p."axis_width", p."axis_depth",
+		p."axis_output", p."axis_cost", p."day_range_start", p."day_range_end")
+		IS DISTINCT FROM
+		(pp."handle", pp."visibility", pp."tokens", pp."usd", pp."sessions",
+		pp."tier", pp."active_days", pp."axis_width", pp."axis_depth",
+		pp."axis_output", pp."axis_cost", pp."day_range_start", pp."day_range_end");
+
 	SELECT count(*) INTO orphan_daily
 	FROM "leaderboard_daily" d
 	WHERE NOT EXISTS (
@@ -84,13 +96,13 @@ BEGIN
 		SELECT 1 FROM "public_profiles" pp WHERE pp."user_id" = f."user_id"
 	);
 
-	IF missing_handles > 0 OR missing_profiles > 0
+	IF missing_handles > 0 OR missing_profiles > 0 OR stale_profiles > 0
 		OR orphan_daily > 0 OR orphan_factory > 0 THEN
 		RAISE EXCEPTION
-			'Participant copy incomplete: % handle(s) and % profile(s) not copied, leaving % leaderboard_daily and % leaderboard_daily_factory row(s) orphaned',
-			missing_handles, missing_profiles, orphan_daily, orphan_factory
+			'Participant copy incomplete: % handle(s) and % profile(s) not copied, % profile(s) disagree with their participant row, leaving % leaderboard_daily and % leaderboard_daily_factory row(s) orphaned',
+			missing_handles, missing_profiles, stale_profiles, orphan_daily, orphan_factory
 		USING HINT =
-			'A handle or user_id already belonged to a different owner; reconcile it and re-run.';
+			'A handle, user_id or profile row already existed with different data; reconcile it and re-run.';
 	END IF;
 END $$;
 --> statement-breakpoint
