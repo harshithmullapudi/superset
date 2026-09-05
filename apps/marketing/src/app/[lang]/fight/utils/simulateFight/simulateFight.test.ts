@@ -32,17 +32,45 @@ describe("simulateFight", () => {
 		);
 	});
 
-	it("gives the win to the higher rating for every roster pair", () => {
+	it("gives the win to a clearly higher rating", () => {
 		for (const a of HOUSE_FIGHTERS) {
 			for (const b of HOUSE_FIGHTERS) {
 				if (a.handle === b.handle) continue;
+				const ratingA = buildKit(a).rating;
+				const ratingB = buildKit(b).rating;
+				const gap = Math.max(ratingA, ratingB) / Math.min(ratingA, ratingB);
+				if (gap < 1.1) continue;
+
 				const result = simulateFight(a, b);
-				const stronger = buildKit(a).rating >= buildKit(b).rating ? "a" : "b";
+				const stronger = ratingA >= ratingB ? "a" : "b";
 				expect(`${a.handle}v${b.handle}:${result.winner}`).toBe(
 					`${a.handle}v${b.handle}:${stronger}`,
 				);
 			}
 		}
+	});
+
+	it("picks the same winner whichever handle is passed first", () => {
+		for (const a of HOUSE_FIGHTERS) {
+			for (const b of HOUSE_FIGHTERS) {
+				if (a.handle >= b.handle) continue;
+				const forward = simulateFight(a, b);
+				const reversed = simulateFight(b, a);
+				expect(forward.winner === "a" ? a.handle : b.handle).toBe(
+					reversed.winner === "a" ? b.handle : a.handle,
+				);
+				expect(forward.events.length).toBe(reversed.events.length);
+			}
+		}
+	});
+
+	it("keeps equal ratings from being decided by argument order", () => {
+		const [first] = HOUSE_FIGHTERS;
+		if (!first) throw new Error("roster is empty");
+		const twin = { ...first, handle: "zzclone", name: "Clone" };
+		expect(buildKit(twin).rating).toBe(buildKit(first).rating);
+		expect(simulateFight(first, twin).winner).toBe("a");
+		expect(simulateFight(twin, first).winner).toBe("b");
 	});
 
 	it("resolves every roster pair well inside the turn cap", () => {

@@ -294,6 +294,11 @@ msgstr "{0} → {1} pendente"
 msgid "{0} actions"
 msgstr "Ações de {0}"
 
+#. placeholder {0}: left.name
+#. placeholder {1}: right.name
+msgid "{0} and {1} settle it as terminal dinosaurs. Stats decide the winner."
+msgstr "{0} e {1} resolvem isso como dinossauros de terminal. As estatísticas decidem o vencedor."
+
 #. placeholder {0}: formatTokens(me.tokens - below.tokens)
 msgid "{0} behind you"
 msgstr "{0} atrás de você"
@@ -424,6 +429,11 @@ msgstr "{0} para ultrapassar #{1}"
 msgid "{0} tokens in the last 30 days. Publishing as <0>{handle}</0>."
 msgstr "{0} tokens nos últimos 30 dias. Publicando como <0>{handle}</0>."
 
+#. placeholder {0}: formatTokens(cell.tokens)
+#. placeholder {1}: cell.day
+msgid "{0} tokens on {1}"
+msgstr "{0} tokens em {1}"
+
 #. placeholder {0}: formatTokens(calendar.total)
 #. placeholder {1}: String(calendar.activeDays)
 msgid "{0} tokens over {1} active days"
@@ -437,9 +447,24 @@ msgstr "{0} desinstalado"
 msgid "{0} updated"
 msgstr "{0} atualizado"
 
+#. placeholder {0}: left.name
+#. placeholder {1}: right.name
+msgid "{0} vs {1}"
+msgstr "{0} contra {1}"
+
 #. placeholder {0}: file.path
 msgid "{0} was deleted in this change."
 msgstr "{0} foi excluído nesta alteração."
+
+#. placeholder {0}: winner?.name
+#. placeholder {1}: result.events.length
+msgid "{0} wins in {1} turns"
+msgstr "{0} vence em {1} turnos"
+
+#. placeholder {0}: winner?.name
+#. placeholder {1}: result.events.length
+msgid "{0} wins on damage after {1} turns"
+msgstr "{0} vence por dano após {1} turnos"
 
 #. placeholder {0}: check.name
 #. placeholder {1}: took ? `, ${took}` : ""
@@ -800,6 +825,9 @@ msgstr "{teardownFailureCount, plural, one {Excluir mesmo assim pula o script de
 
 msgid "{teardownFailureCount, plural, one {Delete anyway} other {Delete # anyway}}"
 msgstr "{teardownFailureCount, plural, one {Excluir mesmo assim} other {Excluir # mesmo assim}}"
+
+msgid "{threshold, plural, one {# agent PR merged} other {# agent PRs merged}}"
+msgstr "{threshold, plural, one {# PR de agente mesclado} other {# PRs de agente mesclados}}"
 
 msgid "{toolName} interrupted"
 msgstr "{toolName} interrompida"
@@ -2168,9 +2196,6 @@ msgstr "Aguardando sua revisão"
 
 msgid "Awaiting review from you or your team"
 msgstr "Aguardando revisão sua ou da sua equipe"
-
-msgid "Axes are medians over the trailing 30 days"
-msgstr "Os eixos são medianas dos últimos 30 dias"
 
 msgid "Back"
 msgstr "Voltar"
@@ -3646,6 +3671,9 @@ msgstr "Falha ao copiar"
 msgid "Copy failed. Select the text and copy it manually."
 msgstr "Falha ao copiar. Selecione o texto e copie manualmente."
 
+msgid "copy fight link"
+msgstr "copiar link da luta"
+
 msgid "Copy file name"
 msgstr "Copiar o nome do arquivo"
 
@@ -3959,6 +3987,9 @@ msgstr "Não foi possível carregar os pull requests: {msg}"
 
 msgid "Couldn't load review comments"
 msgstr "Não foi possível carregar os comentários de revisão"
+
+msgid "Couldn't load your profile, so editing is disabled."
+msgstr "Não foi possível carregar seu perfil, então a edição está desativada."
 
 msgid "Couldn't merge pull request"
 msgstr "Não foi possível fazer o merge do pull request"
@@ -5277,8 +5308,8 @@ msgstr "Toda sexta às 16h, escreva as notas de versão a partir dos PRs mesclad
 msgid "Every minute"
 msgstr "A cada minuto"
 
-msgid "Every objective is carrying its weight for the next rung. Medians over the trailing 30 days."
-msgstr "Cada objetivo está fazendo a sua parte para o próximo degrau. Medianas dos últimos 30 dias."
+msgid "Every objective is carrying its weight for the next rung. Measured over the trailing 30 days."
+msgstr "Todos os objetivos estão contribuindo para o próximo degrau. Medido nos últimos 30 dias."
 
 msgid "Every star on <0>{repoSlug}</0>, plotted since launch."
 msgstr "Cada estrela em <0>{repoSlug}</0>, no gráfico desde o lançamento."
@@ -7551,6 +7582,9 @@ msgstr "Vincule um repositório do GitHub ao projeto primeiro para poder clonar.
 msgid "Link by Stripe"
 msgstr "Link by Stripe"
 
+msgid "link copied"
+msgstr "link copiado"
+
 msgid "Link copied"
 msgstr "Link copiado"
 
@@ -7934,6 +7968,9 @@ msgstr "Servidor MCP"
 
 msgid "Mean"
 msgstr "Média"
+
+msgid "Measured over the trailing 30 days"
+msgstr "Medido nos últimos 30 dias"
 
 msgid "Measuring resource usage…"
 msgstr "Medindo o uso de recursos…"
@@ -8343,6 +8380,9 @@ msgstr "Novo navegador"
 
 msgid "New Browser Tab"
 msgstr "Nova aba do navegador"
+
+msgid "new challengers"
+msgstr "novos desafiantes"
 
 msgid "New chat"
 msgstr "Novo chat"
@@ -10105,6 +10145,9 @@ msgstr "Escolha a pasta de worktrees do projeto em {hostName}."
 msgid "Pick the worktree folder on {hostName}."
 msgstr "Escolha a pasta das worktrees em {hostName}."
 
+msgid "Pick two developers, watch their agent usage stats fight it out as terminal dinosaurs. Same two handles always produce the same fight."
+msgstr "Escolha dois desenvolvedores e veja as estatísticas de uso de agentes deles se enfrentarem como dinossauros de terminal. Os mesmos dois handles sempre produzem a mesma luta."
+
 msgid "Pick your agent for a one-line install, or copy the config by hand. Every client, including OAuth and API key setup, is covered in the <0>full MCP server docs</0>."
 msgstr "Escolha seu agente para uma instalação em uma linha ou copie a configuração à mão. Todos os clientes, incluindo a configuração de OAuth e de chave de API, estão na <0>documentação completa do servidor MCP</0>."
 
@@ -10910,6 +10953,9 @@ msgstr "Mover o projeto?"
 
 msgid "Relocating…"
 msgstr "Movendo…"
+
+msgid "rematch"
+msgstr "revanche"
 
 msgid "remote"
 msgstr "remota"
@@ -13064,6 +13110,9 @@ msgstr "Resumo"
 msgid "sun 11:00"
 msgstr "dom 11:00"
 
+msgid "Super Fights"
+msgstr "Super Lutas"
+
 msgid "superseded"
 msgstr "substituída"
 
@@ -14908,6 +14957,11 @@ msgstr "VS Code"
 msgid "Wait for workspace setup before starting agents"
 msgstr "Esperar o setup da área de trabalho antes de iniciar os agentes"
 
+#. placeholder {0}: names.a
+#. placeholder {1}: names.b
+msgid "waiting for {0} and {1}…"
+msgstr "aguardando {0} e {1}…"
+
 msgid "Waiting for Checks"
 msgstr "Aguardando as verificações"
 
@@ -15466,11 +15520,15 @@ msgstr "O plano da sua organização é gerenciado pelo proprietário em {0}."
 msgid "Your rank"
 msgstr "Sua posição"
 
-msgid "Your rung is a weighted score across all five objectives, so a strong one offsets a weak one. Medians over the trailing 30 days."
-msgstr "Seu degrau é uma pontuação ponderada dos cinco objetivos, então um forte compensa um fraco. Medianas dos últimos 30 dias."
+#. placeholder {0}: String(gaps.length)
+msgid "Your rung is a weighted score across the {0} objectives measured for you, so a strong one offsets a weak one. Measured over the trailing 30 days."
+msgstr "Seu degrau é uma pontuação ponderada dos {0} objetivos medidos para você, então um forte compensa um fraco. Medido nos últimos 30 dias."
 
 msgid "Your Slack account has been linked to Superset. You can close this tab and return to Slack."
 msgstr "Sua conta do Slack foi vinculada ao Superset. Você pode fechar esta aba e voltar ao Slack."
+
+msgid "Your stats, settled in combat"
+msgstr "Suas estatísticas, resolvidas no combate"
 
 msgid "Your subscription has been activated. You can now access all Pro features."
 msgstr "Sua assinatura foi ativada. Agora você tem acesso a todos os recursos Pro."
@@ -15484,8 +15542,9 @@ msgstr "O download do Superset está começando."
 msgid "Your terminal sessions won't be interrupted."
 msgstr "Suas sessões de terminal não serão interrompidas."
 
-msgid "Your tier is a weighted score across all five axes, so a strong axis offsets a weak one. The axes below are the ones lagging."
-msgstr "Seu nível é uma pontuação ponderada dos cinco eixos, então um eixo forte compensa um fraco. Abaixo estão os eixos atrasados."
+#. placeholder {0}: String(gaps.length)
+msgid "Your tier is a weighted score across the {0} axes measured for you, so a strong axis offsets a weak one. The axes below are the ones lagging."
+msgstr "Seu nível é uma pontuação ponderada dos {0} eixos medidos para você, então um eixo forte compensa um fraco. Os eixos abaixo são os que estão atrasados."
 
 msgid "Your tokens"
 msgstr "Seus tokens"

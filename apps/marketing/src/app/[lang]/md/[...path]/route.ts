@@ -296,10 +296,23 @@ export async function GET(
 	activateServerI18n(lang);
 	const locale = lang;
 	const [section, slug] = path;
-	const page =
-		path.length === 2 && section && slug
-			? await loadPage(section, slug)
-			: undefined;
+	let page: MarkdownPage | undefined;
+	try {
+		page =
+			path.length === 2 && section && slug
+				? await loadPage(section, slug)
+				: undefined;
+	} catch (error) {
+		console.error("[marketing/md] page load failed:", error);
+		return new Response("Temporarily unavailable\n", {
+			status: 503,
+			headers: {
+				"content-type": "text/markdown; charset=utf-8",
+				"cache-control": "no-store",
+				"retry-after": "30",
+			},
+		});
+	}
 	if (!page) {
 		return markdownNotFound();
 	}

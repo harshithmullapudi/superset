@@ -294,6 +294,11 @@ msgstr "{0} → {1} 대기 중"
 msgid "{0} actions"
 msgstr "{0} 작업"
 
+#. placeholder {0}: left.name
+#. placeholder {1}: right.name
+msgid "{0} and {1} settle it as terminal dinosaurs. Stats decide the winner."
+msgstr "{0}와 {1}이(가) 터미널 공룡이 되어 결판을 냅니다. 승부는 기록이 결정합니다."
+
 #. placeholder {0}: formatTokens(me.tokens - below.tokens)
 msgid "{0} behind you"
 msgstr "{0} 차이로 뒤"
@@ -424,6 +429,11 @@ msgstr "#{1}을 제치려면 {0}"
 msgid "{0} tokens in the last 30 days. Publishing as <0>{handle}</0>."
 msgstr "최근 30일간 토큰 {0}개. <0>{handle}</0>(으)로 게시 중."
 
+#. placeholder {0}: formatTokens(cell.tokens)
+#. placeholder {1}: cell.day
+msgid "{0} tokens on {1}"
+msgstr "{1}에 {0} 토큰"
+
 #. placeholder {0}: formatTokens(calendar.total)
 #. placeholder {1}: String(calendar.activeDays)
 msgid "{0} tokens over {1} active days"
@@ -437,9 +447,24 @@ msgstr "{0} 제거됨"
 msgid "{0} updated"
 msgstr "{0} 업데이트됨"
 
+#. placeholder {0}: left.name
+#. placeholder {1}: right.name
+msgid "{0} vs {1}"
+msgstr "{0} 대 {1}"
+
 #. placeholder {0}: file.path
 msgid "{0} was deleted in this change."
 msgstr "{0}은(는) 이 변경에서 삭제되었습니다."
+
+#. placeholder {0}: winner?.name
+#. placeholder {1}: result.events.length
+msgid "{0} wins in {1} turns"
+msgstr "{0} 승리, {1}턴 만에"
+
+#. placeholder {0}: winner?.name
+#. placeholder {1}: result.events.length
+msgid "{0} wins on damage after {1} turns"
+msgstr "{1}턴 종료, {0} 판정승"
 
 #. placeholder {0}: check.name
 #. placeholder {1}: took ? `, ${took}` : ""
@@ -800,6 +825,9 @@ msgstr "{teardownFailureCount, plural, one {그래도 삭제하면 해당 워크
 
 msgid "{teardownFailureCount, plural, one {Delete anyway} other {Delete # anyway}}"
 msgstr "{teardownFailureCount, plural, one {그래도 #개 삭제} other {그래도 #개 삭제}}"
+
+msgid "{threshold, plural, one {# agent PR merged} other {# agent PRs merged}}"
+msgstr "{threshold, plural, other {에이전트 PR # 건 머지}}"
 
 msgid "{toolName} interrupted"
 msgstr "{toolName} 중단됨"
@@ -2168,9 +2196,6 @@ msgstr "내 리뷰 대기 중"
 
 msgid "Awaiting review from you or your team"
 msgstr "나 또는 팀의 리뷰 대기 중"
-
-msgid "Axes are medians over the trailing 30 days"
-msgstr "각 축은 최근 30일의 중앙값입니다"
 
 msgid "Back"
 msgstr "뒤로"
@@ -3646,6 +3671,9 @@ msgstr "복사 실패"
 msgid "Copy failed. Select the text and copy it manually."
 msgstr "복사하지 못했습니다. 텍스트를 선택해 직접 복사하세요."
 
+msgid "copy fight link"
+msgstr "대전 링크 복사"
+
 msgid "Copy file name"
 msgstr "파일 이름 복사"
 
@@ -3959,6 +3987,9 @@ msgstr "풀 리퀘스트를 불러오지 못했습니다: {msg}"
 
 msgid "Couldn't load review comments"
 msgstr "리뷰 코멘트를 불러오지 못했습니다"
+
+msgid "Couldn't load your profile, so editing is disabled."
+msgstr "프로필을 불러오지 못해 편집이 비활성화되었습니다."
 
 msgid "Couldn't merge pull request"
 msgstr "풀 리퀘스트를 머지하지 못했습니다"
@@ -5277,8 +5308,8 @@ msgstr "매주 금요일 오후 4시에 이번 주 머지된 PR로 릴리스 노
 msgid "Every minute"
 msgstr "1분마다"
 
-msgid "Every objective is carrying its weight for the next rung. Medians over the trailing 30 days."
-msgstr "모든 목표가 다음 단계를 향해 제 몫을 하고 있습니다. 최근 30일 중앙값입니다."
+msgid "Every objective is carrying its weight for the next rung. Measured over the trailing 30 days."
+msgstr "모든 목표가 다음 단계를 향해 제 몫을 하고 있습니다. 최근 30일 기준입니다."
 
 msgid "Every star on <0>{repoSlug}</0>, plotted since launch."
 msgstr "출시 이후 <0>{repoSlug}</0>의 모든 스타를 그래프로 나타냈습니다."
@@ -7551,6 +7582,9 @@ msgstr "클론하려면 먼저 프로젝트에 GitHub 리포지토리를 연결�
 msgid "Link by Stripe"
 msgstr "Link by Stripe"
 
+msgid "link copied"
+msgstr "링크를 복사했습니다"
+
 msgid "Link copied"
 msgstr "링크 복사됨"
 
@@ -7934,6 +7968,9 @@ msgstr "MCP 서버"
 
 msgid "Mean"
 msgstr "평균"
+
+msgid "Measured over the trailing 30 days"
+msgstr "최근 30일 기준"
 
 msgid "Measuring resource usage…"
 msgstr "리소스 사용량을 측정하는 중…"
@@ -8343,6 +8380,9 @@ msgstr "새 브라우저"
 
 msgid "New Browser Tab"
 msgstr "새 브라우저 탭"
+
+msgid "new challengers"
+msgstr "다른 상대"
 
 msgid "New chat"
 msgstr "새 채팅"
@@ -10105,6 +10145,9 @@ msgstr "{hostName}에서 프로젝트 worktree 폴더를 선택하세요."
 msgid "Pick the worktree folder on {hostName}."
 msgstr "{hostName}에서 worktree 폴더를 선택하세요."
 
+msgid "Pick two developers, watch their agent usage stats fight it out as terminal dinosaurs. Same two handles always produce the same fight."
+msgstr "개발자 두 명을 고르면 에이전트 사용 기록이 터미널 공룡이 되어 겨룹니다. 같은 핸들 조합은 언제나 같은 대전을 만듭니다."
+
 msgid "Pick your agent for a one-line install, or copy the config by hand. Every client, including OAuth and API key setup, is covered in the <0>full MCP server docs</0>."
 msgstr "한 줄 설치를 위해 에이전트를 고르거나 설정을 직접 복사하세요. OAuth와 API 키 설정을 포함한 모든 클라이언트는 <0>전체 MCP 서버 문서</0>에서 다룹니다."
 
@@ -10910,6 +10953,9 @@ msgstr "프로젝트를 이동할까요?"
 
 msgid "Relocating…"
 msgstr "이동하는 중…"
+
+msgid "rematch"
+msgstr "재대결"
 
 msgid "remote"
 msgstr "원격"
@@ -13064,6 +13110,9 @@ msgstr "요약"
 msgid "sun 11:00"
 msgstr "일 11:00"
 
+msgid "Super Fights"
+msgstr "슈퍼 파이트"
+
 msgid "superseded"
 msgstr "대체됨"
 
@@ -14908,6 +14957,11 @@ msgstr "VS Code"
 msgid "Wait for workspace setup before starting agents"
 msgstr "에이전트를 시작하기 전에 워크스페이스 설정 기다리기"
 
+#. placeholder {0}: names.a
+#. placeholder {1}: names.b
+msgid "waiting for {0} and {1}…"
+msgstr "{0}와 {1}을(를) 기다리는 중…"
+
 msgid "Waiting for Checks"
 msgstr "검사 대기 중"
 
@@ -15466,11 +15520,15 @@ msgstr "조직의 플랜은 소유자가 {0}에서 관리합니다."
 msgid "Your rank"
 msgstr "내 순위"
 
-msgid "Your rung is a weighted score across all five objectives, so a strong one offsets a weak one. Medians over the trailing 30 days."
-msgstr "등급은 다섯 가지 목표 전체의 가중 점수라, 강한 항목이 약한 항목을 보완합니다. 최근 30일 중앙값입니다."
+#. placeholder {0}: String(gaps.length)
+msgid "Your rung is a weighted score across the {0} objectives measured for you, so a strong one offsets a weak one. Measured over the trailing 30 days."
+msgstr "등급은 측정된 {0}개 목표의 가중 점수라서 강한 항목이 약한 항목을 보완합니다. 최근 30일 기준입니다."
 
 msgid "Your Slack account has been linked to Superset. You can close this tab and return to Slack."
 msgstr "Slack 계정이 Superset에 연결되었습니다. 이 탭을 닫고 Slack으로 돌아가셔도 됩니다."
+
+msgid "Your stats, settled in combat"
+msgstr "당신의 기록으로, 대결로 가리다"
 
 msgid "Your subscription has been activated. You can now access all Pro features."
 msgstr "구독이 활성화되었습니다. 이제 모든 Pro 기능을 사용할 수 있습니다."
@@ -15484,8 +15542,9 @@ msgstr "Superset 다운로드가 시작됩니다."
 msgid "Your terminal sessions won't be interrupted."
 msgstr "터미널 세션은 중단되지 않습니다."
 
-msgid "Your tier is a weighted score across all five axes, so a strong axis offsets a weak one. The axes below are the ones lagging."
-msgstr "등급은 다섯 축 전체의 가중 점수라, 강한 축이 약한 축을 보완합니다. 아래는 뒤처진 축입니다."
+#. placeholder {0}: String(gaps.length)
+msgid "Your tier is a weighted score across the {0} axes measured for you, so a strong axis offsets a weak one. The axes below are the ones lagging."
+msgstr "티어는 측정된 {0}개 축의 가중 점수라서 강한 축이 약한 축을 보완합니다. 아래는 뒤처진 축입니다."
 
 msgid "Your tokens"
 msgstr "내 토큰"

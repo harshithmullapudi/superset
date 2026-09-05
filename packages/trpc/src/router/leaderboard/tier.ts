@@ -83,9 +83,10 @@ export function factoryScore(values: AxisValues): FactoryScore {
 		cost: axisScore(values.cost, ANCHORS.cost[0], ANCHORS.cost[1], true),
 	};
 
-	const hasPrs = values.output > 0;
 	const scored = (Object.keys(parts) as AxisName[]).filter(
-		(axis) => hasPrs || (axis !== "output" && axis !== "cost"),
+		(axis) =>
+			(axis !== "output" || values.output > 0) &&
+			(axis !== "cost" || values.cost > 0),
 	);
 
 	let weighted = 0;
@@ -245,7 +246,7 @@ export function computeTier(
 				: banded;
 	}
 
-	if (windowPrs > 0) {
+	if (axisCost > 0) {
 		const capped = Math.max(1, costTier(axisCost)) as Tier;
 		if (capped < tier) tier = capped;
 	}
@@ -278,11 +279,12 @@ export interface AxisGap {
 	current: number;
 	needed: number;
 	met: boolean;
+	scored: boolean;
 	lowerIsBetter: boolean;
 }
 
 export function tierGap(values: AxisValues, tier: Tier): AxisGap[] {
-	const { parts } = factoryScore(values);
+	const { parts, scored } = factoryScore(values);
 	const target =
 		(BANDS[Math.min(BANDS.length - 1, Math.max(0, tier - 1))] ?? 0) / 100;
 
@@ -296,9 +298,14 @@ export function tierGap(values: AxisValues, tier: Tier): AxisGap[] {
 			current: values[axis],
 			needed: Number(needed.toFixed(axis === "depth" ? 0 : 2)),
 			met: tier >= 4 || parts[axis] >= target,
+			scored: scored.includes(axis),
 			lowerIsBetter,
 		};
 	});
+}
+
+export function scoredGaps(values: AxisValues, tier: Tier): AxisGap[] {
+	return tierGap(values, tier).filter((gap) => gap.scored);
 }
 
 export function blockingAxes(values: AxisValues, tier: Tier): AxisName[] {

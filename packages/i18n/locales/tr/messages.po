@@ -294,6 +294,11 @@ msgstr "{0} → {1} bekliyor"
 msgid "{0} actions"
 msgstr "{0} eylemleri"
 
+#. placeholder {0}: left.name
+#. placeholder {1}: right.name
+msgid "{0} and {1} settle it as terminal dinosaurs. Stats decide the winner."
+msgstr "{0} ve {1} bu işi terminal dinozorları olarak çözüyor. Kazananı istatistikler belirliyor."
+
 #. placeholder {0}: formatTokens(me.tokens - below.tokens)
 msgid "{0} behind you"
 msgstr "{0} arkanızda"
@@ -424,6 +429,11 @@ msgstr "#{1} sırasını geçmek için {0}"
 msgid "{0} tokens in the last 30 days. Publishing as <0>{handle}</0>."
 msgstr "Son 30 günde {0} token. <0>{handle}</0> olarak yayınlanıyor."
 
+#. placeholder {0}: formatTokens(cell.tokens)
+#. placeholder {1}: cell.day
+msgid "{0} tokens on {1}"
+msgstr "{1} tarihinde {0} token"
+
 #. placeholder {0}: formatTokens(calendar.total)
 #. placeholder {1}: String(calendar.activeDays)
 msgid "{0} tokens over {1} active days"
@@ -437,9 +447,24 @@ msgstr "{0} kaldırıldı"
 msgid "{0} updated"
 msgstr "{0} güncellendi"
 
+#. placeholder {0}: left.name
+#. placeholder {1}: right.name
+msgid "{0} vs {1}"
+msgstr "{0} - {1}"
+
 #. placeholder {0}: file.path
 msgid "{0} was deleted in this change."
 msgstr "{0} bu değişiklikte silindi."
+
+#. placeholder {0}: winner?.name
+#. placeholder {1}: result.events.length
+msgid "{0} wins in {1} turns"
+msgstr "{0}, {1} turda kazanıyor"
+
+#. placeholder {0}: winner?.name
+#. placeholder {1}: result.events.length
+msgid "{0} wins on damage after {1} turns"
+msgstr "{1} turun ardından {0} hasar üstünlüğüyle kazanıyor"
 
 #. placeholder {0}: check.name
 #. placeholder {1}: took ? `, ${took}` : ""
@@ -800,6 +825,9 @@ msgstr "{teardownFailureCount, plural, one {Yine de sil, etkilenen çalışma al
 
 msgid "{teardownFailureCount, plural, one {Delete anyway} other {Delete # anyway}}"
 msgstr "{teardownFailureCount, plural, one {Yine de sil} other {Yine de # tanesini sil}}"
+
+msgid "{threshold, plural, one {# agent PR merged} other {# agent PRs merged}}"
+msgstr "{threshold, plural, one {# ajan PR'ı birleştirildi} other {# ajan PR'ı birleştirildi}}"
 
 msgid "{toolName} interrupted"
 msgstr "{toolName} kesildi"
@@ -2169,9 +2197,6 @@ msgstr "Sizden inceleme bekliyor"
 msgid "Awaiting review from you or your team"
 msgstr "Sizden veya takımınızdan inceleme bekliyor"
 
-msgid "Axes are medians over the trailing 30 days"
-msgstr "Eksenler son 30 günün medyanlarıdır"
-
 msgid "Back"
 msgstr "Geri"
 
@@ -2922,7 +2947,7 @@ msgid "Cleared {succeededLabels} — could not clear {failedLabels}"
 msgstr "{succeededLabels} temizlendi — {failedLabels} temizlenemedi"
 
 msgid "Cleared Operator inside the Run 01 window"
-msgstr "Run 01 penceresinde Operator'a ulaşıldı"
+msgstr "Run 01 penceresinde Operator tamamlandı"
 
 msgid "Cleared terminal history"
 msgstr "Terminal geçmişi temizlendi"
@@ -3646,6 +3671,9 @@ msgstr "Kopyalanamadı"
 msgid "Copy failed. Select the text and copy it manually."
 msgstr "Kopyalanamadı. Metni seçip elle kopyalayın."
 
+msgid "copy fight link"
+msgstr "dövüş bağlantısını kopyala"
+
 msgid "Copy file name"
 msgstr "Dosya adını kopyala"
 
@@ -3959,6 +3987,9 @@ msgstr "Pull request'ler yüklenemedi: {msg}"
 
 msgid "Couldn't load review comments"
 msgstr "İnceleme yorumları yüklenemedi"
+
+msgid "Couldn't load your profile, so editing is disabled."
+msgstr "Profilin yüklenemedi, bu yüzden düzenleme devre dışı."
 
 msgid "Couldn't merge pull request"
 msgstr "Pull request birleştirilemedi"
@@ -5277,8 +5308,8 @@ msgstr "Her cuma 16.00'da bu haftanın birleştirilen PR'larından sürüm notla
 msgid "Every minute"
 msgstr "Her dakika"
 
-msgid "Every objective is carrying its weight for the next rung. Medians over the trailing 30 days."
-msgstr "Her hedef bir sonraki basamak için üzerine düşeni yapıyor. Son 30 günün medyanları."
+msgid "Every objective is carrying its weight for the next rung. Measured over the trailing 30 days."
+msgstr "Tüm hedefler bir sonraki basamak için üzerine düşeni yapıyor. Son 30 gün üzerinden ölçülür."
 
 msgid "Every star on <0>{repoSlug}</0>, plotted since launch."
 msgstr "<0>{repoSlug}</0> üzerindeki her yıldız, lansmandan bu yana grafikte."
@@ -7551,6 +7582,9 @@ msgstr "Klonlamayı etkinleştirmek için önce projeye bir GitHub deposu bağla
 msgid "Link by Stripe"
 msgstr "Link by Stripe"
 
+msgid "link copied"
+msgstr "bağlantı kopyalandı"
+
 msgid "Link copied"
 msgstr "Bağlantı kopyalandı"
 
@@ -7934,6 +7968,9 @@ msgstr "MCP sunucusu"
 
 msgid "Mean"
 msgstr "Ortalama"
+
+msgid "Measured over the trailing 30 days"
+msgstr "Son 30 gün üzerinden ölçülür"
 
 msgid "Measuring resource usage…"
 msgstr "Kaynak kullanımı ölçülüyor…"
@@ -8343,6 +8380,9 @@ msgstr "Yeni tarayıcı"
 
 msgid "New Browser Tab"
 msgstr "Yeni tarayıcı sekmesi"
+
+msgid "new challengers"
+msgstr "yeni rakipler"
 
 msgid "New chat"
 msgstr "Yeni sohbet"
@@ -10105,6 +10145,9 @@ msgstr "{hostName} üzerindeki proje worktree klasörünü seçin."
 msgid "Pick the worktree folder on {hostName}."
 msgstr "{hostName} üzerindeki worktree klasörünü seçin."
 
+msgid "Pick two developers, watch their agent usage stats fight it out as terminal dinosaurs. Same two handles always produce the same fight."
+msgstr "İki geliştirici seç ve ajan kullanım istatistiklerinin terminal dinozorları olarak dövüşmesini izle. Aynı iki kullanıcı adı her zaman aynı dövüşü üretir."
+
 msgid "Pick your agent for a one-line install, or copy the config by hand. Every client, including OAuth and API key setup, is covered in the <0>full MCP server docs</0>."
 msgstr "Tek satırlık kurulum için ajanınızı seçin veya yapılandırmayı elle kopyalayın. OAuth ve API anahtarı kurulumu dahil her istemci, <0>tam MCP sunucusu belgelerinde</0> anlatılıyor."
 
@@ -10910,6 +10953,9 @@ msgstr "Proje taşınsın mı?"
 
 msgid "Relocating…"
 msgstr "Taşınıyor…"
+
+msgid "rematch"
+msgstr "rövanş"
 
 msgid "remote"
 msgstr "uzak"
@@ -13064,6 +13110,9 @@ msgstr "Özet"
 msgid "sun 11:00"
 msgstr "paz 11.00"
 
+msgid "Super Fights"
+msgstr "Süper Dövüşler"
+
 msgid "superseded"
 msgstr "geçersiz kılındı"
 
@@ -14908,6 +14957,11 @@ msgstr "VS Code"
 msgid "Wait for workspace setup before starting agents"
 msgstr "Ajanları başlatmadan önce çalışma alanı kurulumunu bekle"
 
+#. placeholder {0}: names.a
+#. placeholder {1}: names.b
+msgid "waiting for {0} and {1}…"
+msgstr "{0} ve {1} bekleniyor…"
+
 msgid "Waiting for Checks"
 msgstr "Kontroller bekleniyor"
 
@@ -15466,11 +15520,15 @@ msgstr "Kuruluşunuzun planı, {0} adresinde sahibi tarafından yönetiliyor."
 msgid "Your rank"
 msgstr "Sıralamanız"
 
-msgid "Your rung is a weighted score across all five objectives, so a strong one offsets a weak one. Medians over the trailing 30 days."
-msgstr "Basamağın beş hedefin tamamı üzerinden ağırlıklı bir puandır, güçlü bir hedef zayıf olanı dengeler. Son 30 günün medyanları."
+#. placeholder {0}: String(gaps.length)
+msgid "Your rung is a weighted score across the {0} objectives measured for you, so a strong one offsets a weak one. Measured over the trailing 30 days."
+msgstr "Basamağın, senin için ölçülen {0} hedefin ağırlıklı puanıdır; güçlü bir hedef zayıf olanı dengeler. Son 30 gün üzerinden ölçülür."
 
 msgid "Your Slack account has been linked to Superset. You can close this tab and return to Slack."
 msgstr "Slack hesabınız Superset'e bağlandı. Bu sekmeyi kapatıp Slack'e dönebilirsiniz."
+
+msgid "Your stats, settled in combat"
+msgstr "İstatistiklerin, dövüşte belli olsun"
 
 msgid "Your subscription has been activated. You can now access all Pro features."
 msgstr "Aboneliğiniz etkinleştirildi. Artık tüm Pro özelliklerine erişebilirsiniz."
@@ -15484,8 +15542,9 @@ msgstr "Superset indirmeniz başlıyor."
 msgid "Your terminal sessions won't be interrupted."
 msgstr "Terminal oturumlarınız kesintiye uğramaz."
 
-msgid "Your tier is a weighted score across all five axes, so a strong axis offsets a weak one. The axes below are the ones lagging."
-msgstr "Katmanın beş eksenin tamamı üzerinden ağırlıklı bir puandır, güçlü bir eksen zayıf olanı dengeler. Aşağıdakiler geride kalan eksenler."
+#. placeholder {0}: String(gaps.length)
+msgid "Your tier is a weighted score across the {0} axes measured for you, so a strong axis offsets a weak one. The axes below are the ones lagging."
+msgstr "Seviyen, senin için ölçülen {0} eksenin ağırlıklı puanıdır; güçlü bir eksen zayıf olanı dengeler. Aşağıdakiler geride kalan eksenler."
 
 msgid "Your tokens"
 msgstr "Token'larınız"

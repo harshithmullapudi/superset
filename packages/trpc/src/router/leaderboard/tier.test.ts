@@ -107,6 +107,17 @@ describe("computeTier", () => {
 		expect(tierName(result.tier)).toBe("Henry Ford");
 	});
 
+	test("holds a tier through a small dip, then lets it go", () => {
+		const holds = computeTier(days(20, { parallelSessions: 5 }), 3);
+		expect(holds.score).toBeGreaterThanOrEqual((BANDS[1] ?? 0) - 3);
+		expect(holds.score).toBeLessThan(BANDS[1] ?? 0);
+		expect(holds.tier).toBe(3);
+
+		const drops = computeTier(days(20, { parallelSessions: 4 }), 3);
+		expect(drops.score).toBeLessThan((BANDS[1] ?? 0) - 3);
+		expect(drops.tier).toBe(2);
+	});
+
 	test("activeDays caps the tier however good the days are", () => {
 		const strong = {
 			parallelSessions: 12,

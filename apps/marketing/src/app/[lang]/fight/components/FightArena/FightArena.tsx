@@ -1,5 +1,7 @@
 "use client";
 
+import { Trans, useLingui } from "@lingui/react/macro";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { tierRgb } from "@/app/[lang]/components/TierBadge";
 import { fetchViewer } from "@/app/[lang]/utils/fetchViewer";
@@ -37,6 +39,7 @@ interface FightArenaProps {
 }
 
 export function FightArena({ initialA, initialB }: FightArenaProps) {
+	const { t } = useLingui();
 	const [a, setA] = useState<Fighter | null>(initialA);
 	const [b, setB] = useState<Fighter | null>(initialB);
 	const [phase, setPhase] = useState<Phase>("select");
@@ -57,7 +60,9 @@ export function FightArena({ initialA, initialB }: FightArenaProps) {
 			if (!live || !viewer) return;
 			const self = fromViewer(viewer);
 			setViewer(self);
-			if (!initialA && initialB?.handle !== self.handle) setA(self);
+			if (!initialA && initialB?.handle !== self.handle) {
+				setA((current) => current ?? self);
+			}
 		});
 		return () => {
 			live = false;
@@ -299,6 +304,7 @@ export function FightArena({ initialA, initialB }: FightArenaProps) {
 	}
 
 	const winner = result.winner === "a" ? a : b;
+	const knockedOut = finalHp.a <= 0 || finalHp.b <= 0;
 
 	return (
 		<div className="flex flex-col gap-6" ref={arena}>
@@ -593,13 +599,22 @@ export function FightArena({ initialA, initialB }: FightArenaProps) {
 					{phase === "done" && (
 						<div className="absolute inset-x-0 top-0 flex flex-col items-center gap-1.5 pt-7 pointer-events-none z-40">
 							<span className="fight-stamp font-mono text-4xl md:text-6xl font-bold tracking-[0.24em] text-brand drop-shadow-[0_0_18px_rgba(210,86,17,0.6)]">
-								K.O.
+								{knockedOut ? "K.O." : "TIME"}
 							</span>
 							<span
 								className="text-sm text-foreground"
 								style={{ textShadow: "0 1px 6px rgba(0,0,0,0.9)" }}
 							>
-								{winner?.name} wins in {result.events.length} turns
+								{knockedOut ? (
+									<Trans>
+										{winner?.name} wins in {result.events.length} turns
+									</Trans>
+								) : (
+									<Trans>
+										{winner?.name} wins on damage after {result.events.length}{" "}
+										turns
+									</Trans>
+								)}
 							</span>
 							<span
 								className="font-mono text-[0.6rem] uppercase tracking-[0.12em] text-muted-foreground text-center px-6"
@@ -629,24 +644,28 @@ export function FightArena({ initialA, initialB }: FightArenaProps) {
 							onClick={start}
 							className="border border-border px-6 py-2.5 font-mono text-[0.62rem] uppercase tracking-[0.18em] text-foreground hover:border-brand/60 hover:text-brand transition-colors"
 						>
-							rematch
+							<Trans>rematch</Trans>
 						</button>
 						<button
 							type="button"
 							onClick={() => {
-								navigator.clipboard?.writeText(window.location.href);
-								setCopied(true);
+								navigator.clipboard
+									?.writeText(window.location.href)
+									.then(() => setCopied(true))
+									.catch(() => setCopied(false));
 							}}
 							className="border border-brand/70 bg-brand/10 px-6 py-2.5 font-mono text-[0.62rem] uppercase tracking-[0.18em] text-brand hover:bg-brand/20 transition-colors"
 						>
-							{copied ? "link copied" : "copy fight link"}
+							{copied
+								? t({ message: "link copied" })
+								: t({ message: "copy fight link" })}
 						</button>
 						<button
 							type="button"
 							onClick={reset}
 							className="border border-border px-6 py-2.5 font-mono text-[0.62rem] uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition-colors"
 						>
-							new challengers
+							<Trans>new challengers</Trans>
 						</button>
 					</div>
 				</>

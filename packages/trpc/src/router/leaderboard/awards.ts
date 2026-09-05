@@ -1,4 +1,5 @@
 import {
+	type AchievementDef,
 	type AchievementMeasure,
 	CATALOG,
 	earnedTier,
@@ -17,10 +18,13 @@ export interface EarnedAward {
 	value: number;
 }
 
-export function evaluateAwards(input: AwardInput): EarnedAward[] {
+export function evaluateAwards(
+	input: AwardInput,
+	catalog: readonly AchievementDef[] = CATALOG,
+): EarnedAward[] {
 	const earned: EarnedAward[] = [];
 
-	for (const def of CATALOG) {
+	for (const def of catalog) {
 		if (isRetired(def, input.on)) continue;
 
 		const value = input[def.measure];

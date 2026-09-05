@@ -83,10 +83,17 @@ describe("evaluateAwards", () => {
 	});
 
 	test("respects retirement", () => {
-		const retired = { ...NOTHING, lifetimeAgentPrs: 5, on: "2030-01-01" };
-		expect(evaluateAwards(retired).some((a) => a.slug === "ship-it")).toBe(
-			true,
-		);
+		const input = { ...NOTHING, lifetimeAgentPrs: 5 };
+		const shipIt = CATALOG.find((def) => def.slug === "ship-it");
+		if (!shipIt) throw new Error("ship-it missing from the catalog");
+		const catalog = [{ ...shipIt, retiredAt: "2026-09-30" }];
+
+		expect(
+			evaluateAwards({ ...input, on: "2026-09-29" }, catalog).some(
+				(a) => a.slug === "ship-it",
+			),
+		).toBe(true);
+		expect(evaluateAwards({ ...input, on: "2026-10-01" }, catalog)).toEqual([]);
 	});
 });
 

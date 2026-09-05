@@ -294,6 +294,11 @@ msgstr "{0} → {1} in behandeling"
 msgid "{0} actions"
 msgstr "Acties voor {0}"
 
+#. placeholder {0}: left.name
+#. placeholder {1}: right.name
+msgid "{0} and {1} settle it as terminal dinosaurs. Stats decide the winner."
+msgstr "{0} en {1} beslechten het als terminaldinosaurussen. De statistieken bepalen de winnaar."
+
 #. placeholder {0}: formatTokens(me.tokens - below.tokens)
 msgid "{0} behind you"
 msgstr "{0} achter je"
@@ -424,6 +429,11 @@ msgstr "{0} om #{1} voorbij te gaan"
 msgid "{0} tokens in the last 30 days. Publishing as <0>{handle}</0>."
 msgstr "{0} tokens in de laatste 30 dagen. Gepubliceerd als <0>{handle}</0>."
 
+#. placeholder {0}: formatTokens(cell.tokens)
+#. placeholder {1}: cell.day
+msgid "{0} tokens on {1}"
+msgstr "{0} tokens op {1}"
+
 #. placeholder {0}: formatTokens(calendar.total)
 #. placeholder {1}: String(calendar.activeDays)
 msgid "{0} tokens over {1} active days"
@@ -437,9 +447,24 @@ msgstr "{0} verwijderd"
 msgid "{0} updated"
 msgstr "{0} bijgewerkt"
 
+#. placeholder {0}: left.name
+#. placeholder {1}: right.name
+msgid "{0} vs {1}"
+msgstr "{0} tegen {1}"
+
 #. placeholder {0}: file.path
 msgid "{0} was deleted in this change."
 msgstr "{0} is verwijderd in deze wijziging."
+
+#. placeholder {0}: winner?.name
+#. placeholder {1}: result.events.length
+msgid "{0} wins in {1} turns"
+msgstr "{0} wint in {1} beurten"
+
+#. placeholder {0}: winner?.name
+#. placeholder {1}: result.events.length
+msgid "{0} wins on damage after {1} turns"
+msgstr "{0} wint op schade na {1} beurten"
 
 #. placeholder {0}: check.name
 #. placeholder {1}: took ? `, ${took}` : ""
@@ -800,6 +825,9 @@ msgstr "{teardownFailureCount, plural, one {Toch verwijderen slaat het teardown-
 
 msgid "{teardownFailureCount, plural, one {Delete anyway} other {Delete # anyway}}"
 msgstr "{teardownFailureCount, plural, one {Toch verwijderen} other {Toch # verwijderen}}"
+
+msgid "{threshold, plural, one {# agent PR merged} other {# agent PRs merged}}"
+msgstr "{threshold, plural, one {# agent-PR gemerged} other {# agent-PR's gemerged}}"
 
 msgid "{toolName} interrupted"
 msgstr "{toolName} onderbroken"
@@ -1237,7 +1265,7 @@ msgid "active days"
 msgstr "actieve dagen"
 
 msgid "Active days in the last 30"
-msgstr "Actieve dagen in de laatste 30"
+msgstr "Actieve dagen in de laatste 30 dagen"
 
 msgid "Active organization required to create an API key"
 msgstr "Actieve organisatie vereist om een API-sleutel aan te maken"
@@ -2168,9 +2196,6 @@ msgstr "Wacht op review van jou"
 
 msgid "Awaiting review from you or your team"
 msgstr "Wacht op review van jou of je team"
-
-msgid "Axes are medians over the trailing 30 days"
-msgstr "De assen zijn medianen over de laatste 30 dagen"
 
 msgid "Back"
 msgstr "Terug"
@@ -3646,6 +3671,9 @@ msgstr "Kopiëren mislukt"
 msgid "Copy failed. Select the text and copy it manually."
 msgstr "Kopiëren mislukt. Selecteer de tekst en kopieer handmatig."
 
+msgid "copy fight link"
+msgstr "gevechtslink kopiëren"
+
 msgid "Copy file name"
 msgstr "Bestandsnaam kopiëren"
 
@@ -3959,6 +3987,9 @@ msgstr "Kan pull requests niet laden: {msg}"
 
 msgid "Couldn't load review comments"
 msgstr "Kan reviewopmerkingen niet laden"
+
+msgid "Couldn't load your profile, so editing is disabled."
+msgstr "Je profiel kon niet worden geladen, daarom is bewerken uitgeschakeld."
 
 msgid "Couldn't merge pull request"
 msgstr "Kan pull request niet mergen"
@@ -5277,8 +5308,8 @@ msgstr "Elke vrijdag om 16.00 uur: stel release notes op uit de gemergede PR's v
 msgid "Every minute"
 msgstr "Elke minuut"
 
-msgid "Every objective is carrying its weight for the next rung. Medians over the trailing 30 days."
-msgstr "Elk doel draagt zijn deel bij voor de volgende trede. Medianen over de laatste 30 dagen."
+msgid "Every objective is carrying its weight for the next rung. Measured over the trailing 30 days."
+msgstr "Alle doelen dragen bij aan de volgende trede. Gemeten over de laatste 30 dagen."
 
 msgid "Every star on <0>{repoSlug}</0>, plotted since launch."
 msgstr "Elke ster op <0>{repoSlug}</0>, uitgezet sinds de lancering."
@@ -7551,6 +7582,9 @@ msgstr "Koppel eerst een GitHub-repository aan het project om te kunnen klonen."
 msgid "Link by Stripe"
 msgstr "Link by Stripe"
 
+msgid "link copied"
+msgstr "link gekopieerd"
+
 msgid "Link copied"
 msgstr "Link gekopieerd"
 
@@ -7934,6 +7968,9 @@ msgstr "MCP-server"
 
 msgid "Mean"
 msgstr "Gemiddelde"
+
+msgid "Measured over the trailing 30 days"
+msgstr "Gemeten over de laatste 30 dagen"
 
 msgid "Measuring resource usage…"
 msgstr "Resourcegebruik meten…"
@@ -8343,6 +8380,9 @@ msgstr "Nieuwe browser"
 
 msgid "New Browser Tab"
 msgstr "Nieuw browsertabblad"
+
+msgid "new challengers"
+msgstr "nieuwe uitdagers"
 
 msgid "New chat"
 msgstr "Nieuwe chat"
@@ -10105,6 +10145,9 @@ msgstr "Kies de worktree-map van het project op {hostName}."
 msgid "Pick the worktree folder on {hostName}."
 msgstr "Kies de worktree-map op {hostName}."
 
+msgid "Pick two developers, watch their agent usage stats fight it out as terminal dinosaurs. Same two handles always produce the same fight."
+msgstr "Kies twee ontwikkelaars en kijk hoe hun agentgebruiksstatistieken het uitvechten als terminaldinosaurussen. Dezelfde twee handles leveren altijd hetzelfde gevecht op."
+
 msgid "Pick your agent for a one-line install, or copy the config by hand. Every client, including OAuth and API key setup, is covered in the <0>full MCP server docs</0>."
 msgstr "Kies je agent voor een installatie in één regel, of kopieer de configuratie handmatig. Elke client, inclusief OAuth en API-sleutels, staat in de <0>volledige MCP-serverdocumentatie</0>."
 
@@ -10910,6 +10953,9 @@ msgstr "Project verplaatsen?"
 
 msgid "Relocating…"
 msgstr "Verplaatsen…"
+
+msgid "rematch"
+msgstr "revanche"
 
 msgid "remote"
 msgstr "remote"
@@ -13064,6 +13110,9 @@ msgstr "Samenvatting"
 msgid "sun 11:00"
 msgstr "zo 11:00"
 
+msgid "Super Fights"
+msgstr "Supergevechten"
+
 msgid "superseded"
 msgstr "vervangen"
 
@@ -14908,6 +14957,11 @@ msgstr "VS Code"
 msgid "Wait for workspace setup before starting agents"
 msgstr "Wachten op werkruimte-setup voordat agents starten"
 
+#. placeholder {0}: names.a
+#. placeholder {1}: names.b
+msgid "waiting for {0} and {1}…"
+msgstr "wachten op {0} en {1}…"
+
 msgid "Waiting for Checks"
 msgstr "Wachten op checks"
 
@@ -15466,11 +15520,15 @@ msgstr "Het plan van je organisatie wordt beheerd door de eigenaar op {0}."
 msgid "Your rank"
 msgstr "Je positie"
 
-msgid "Your rung is a weighted score across all five objectives, so a strong one offsets a weak one. Medians over the trailing 30 days."
-msgstr "Je trede is een gewogen score over alle vijf de doelen, dus een sterk doel compenseert een zwak doel. Medianen over de laatste 30 dagen."
+#. placeholder {0}: String(gaps.length)
+msgid "Your rung is a weighted score across the {0} objectives measured for you, so a strong one offsets a weak one. Measured over the trailing 30 days."
+msgstr "Je trede is een gewogen score over de {0} doelen die voor jou gemeten zijn, dus een sterk doel compenseert een zwak doel. Gemeten over de laatste 30 dagen."
 
 msgid "Your Slack account has been linked to Superset. You can close this tab and return to Slack."
 msgstr "Je Slack-account is gekoppeld aan Superset. Je kunt dit tabblad sluiten en terug naar Slack gaan."
+
+msgid "Your stats, settled in combat"
+msgstr "Jouw statistieken, beslecht in een gevecht"
 
 msgid "Your subscription has been activated. You can now access all Pro features."
 msgstr "Je abonnement is geactiveerd. Je hebt nu toegang tot alle Pro-functies."
@@ -15484,8 +15542,9 @@ msgstr "Je Superset-download start."
 msgid "Your terminal sessions won't be interrupted."
 msgstr "Je terminalsessies worden niet onderbroken."
 
-msgid "Your tier is a weighted score across all five axes, so a strong axis offsets a weak one. The axes below are the ones lagging."
-msgstr "Je niveau is een gewogen score over alle vijf de assen, dus een sterke as compenseert een zwakke. Hieronder staan de assen die achterlopen."
+#. placeholder {0}: String(gaps.length)
+msgid "Your tier is a weighted score across the {0} axes measured for you, so a strong axis offsets a weak one. The axes below are the ones lagging."
+msgstr "Je niveau is een gewogen score over de {0} assen die voor jou gemeten zijn, dus een sterke as compenseert een zwakke. De assen hieronder blijven achter."
 
 msgid "Your tokens"
 msgstr "Je tokens"

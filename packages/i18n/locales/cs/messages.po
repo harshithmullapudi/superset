@@ -294,6 +294,11 @@ msgstr "čeká {0} → {1}"
 msgid "{0} actions"
 msgstr "Akce {0}"
 
+#. placeholder {0}: left.name
+#. placeholder {1}: right.name
+msgid "{0} and {1} settle it as terminal dinosaurs. Stats decide the winner."
+msgstr "{0} a {1} si to vyříkají jako termináloví dinosauři. O vítězi rozhodnou statistiky."
+
 #. placeholder {0}: formatTokens(me.tokens - below.tokens)
 msgid "{0} behind you"
 msgstr "{0} za vámi"
@@ -424,6 +429,11 @@ msgstr "{0} k předstižení #{1}"
 msgid "{0} tokens in the last 30 days. Publishing as <0>{handle}</0>."
 msgstr "{0} tokenů za posledních 30 dní. Publikuje se jako <0>{handle}</0>."
 
+#. placeholder {0}: formatTokens(cell.tokens)
+#. placeholder {1}: cell.day
+msgid "{0} tokens on {1}"
+msgstr "{0} tokenů dne {1}"
+
 #. placeholder {0}: formatTokens(calendar.total)
 #. placeholder {1}: String(calendar.activeDays)
 msgid "{0} tokens over {1} active days"
@@ -437,9 +447,24 @@ msgstr "{0} odinstalováno"
 msgid "{0} updated"
 msgstr "{0} aktualizován"
 
+#. placeholder {0}: left.name
+#. placeholder {1}: right.name
+msgid "{0} vs {1}"
+msgstr "{0} proti {1}"
+
 #. placeholder {0}: file.path
 msgid "{0} was deleted in this change."
 msgstr "{0} byl v této změně smazán."
+
+#. placeholder {0}: winner?.name
+#. placeholder {1}: result.events.length
+msgid "{0} wins in {1} turns"
+msgstr "{0} vítězí za {1} kol"
+
+#. placeholder {0}: winner?.name
+#. placeholder {1}: result.events.length
+msgid "{0} wins on damage after {1} turns"
+msgstr "{0} vítězí na poškození po {1} kolech"
 
 #. placeholder {0}: check.name
 #. placeholder {1}: took ? `, ${took}` : ""
@@ -800,6 +825,9 @@ msgstr "{teardownFailureCount, plural, one {„Přesto smazat“ přeskočí tea
 
 msgid "{teardownFailureCount, plural, one {Delete anyway} other {Delete # anyway}}"
 msgstr "{teardownFailureCount, plural, one {Přesto smazat} few {Přesto smazat #} many {Přesto smazat #} other {Přesto smazat #}}"
+
+msgid "{threshold, plural, one {# agent PR merged} other {# agent PRs merged}}"
+msgstr "{threshold, plural, one {sloučen # PR agenta} few {sloučeny # PR agenta} many {sloučeno # PR agenta} other {sloučeno # PR agenta}}"
 
 msgid "{toolName} interrupted"
 msgstr "{toolName} přerušeno"
@@ -2168,9 +2196,6 @@ msgstr "Čeká na vaši revizi"
 
 msgid "Awaiting review from you or your team"
 msgstr "Čeká na revizi od vás nebo vašeho týmu"
-
-msgid "Axes are medians over the trailing 30 days"
-msgstr "Osy jsou mediány za posledních 30 dní"
 
 msgid "Back"
 msgstr "Zpět"
@@ -3646,6 +3671,9 @@ msgstr "Kopírování selhalo"
 msgid "Copy failed. Select the text and copy it manually."
 msgstr "Kopírování selhalo. Označte text a zkopírujte ho ručně."
 
+msgid "copy fight link"
+msgstr "zkopírovat odkaz na souboj"
+
 msgid "Copy file name"
 msgstr "Kopírovat název souboru"
 
@@ -3959,6 +3987,9 @@ msgstr "Nepodařilo se načíst pull requesty: {msg}"
 
 msgid "Couldn't load review comments"
 msgstr "Nepodařilo se načíst komentáře k revizi"
+
+msgid "Couldn't load your profile, so editing is disabled."
+msgstr "Tvůj profil se nepodařilo načíst, úpravy jsou proto vypnuté."
 
 msgid "Couldn't merge pull request"
 msgstr "Pull request se nepodařilo sloučit"
@@ -5277,8 +5308,8 @@ msgstr "Každý pátek v 16:00 sepiš poznámky k vydání ze sloučených PR za
 msgid "Every minute"
 msgstr "Každou minutu"
 
-msgid "Every objective is carrying its weight for the next rung. Medians over the trailing 30 days."
-msgstr "Každý cíl táhne na další příčku. Mediány za posledních 30 dní."
+msgid "Every objective is carrying its weight for the next rung. Measured over the trailing 30 days."
+msgstr "Všechny cíle táhnou k dalšímu stupni. Měřeno za posledních 30 dní."
 
 msgid "Every star on <0>{repoSlug}</0>, plotted since launch."
 msgstr "Každá hvězda na <0>{repoSlug}</0>, vynesená od spuštění."
@@ -7551,6 +7582,9 @@ msgstr "Klonování zapnete tím, že k projektu nejprve propojíte GitHub repoz
 msgid "Link by Stripe"
 msgstr "Link by Stripe"
 
+msgid "link copied"
+msgstr "odkaz zkopírován"
+
 msgid "Link copied"
 msgstr "Odkaz zkopírován"
 
@@ -7934,6 +7968,9 @@ msgstr "MCP server"
 
 msgid "Mean"
 msgstr "Průměr"
+
+msgid "Measured over the trailing 30 days"
+msgstr "Měřeno za posledních 30 dní"
 
 msgid "Measuring resource usage…"
 msgstr "Měřím využití prostředků…"
@@ -8343,6 +8380,9 @@ msgstr "Nový prohlížeč"
 
 msgid "New Browser Tab"
 msgstr "Nová karta prohlížeče"
+
+msgid "new challengers"
+msgstr "noví vyzyvatelé"
 
 msgid "New chat"
 msgstr "Nový chat"
@@ -10105,6 +10145,9 @@ msgstr "Vyberte složku pro worktree projektu na {hostName}."
 msgid "Pick the worktree folder on {hostName}."
 msgstr "Vyberte složku pro worktree na {hostName}."
 
+msgid "Pick two developers, watch their agent usage stats fight it out as terminal dinosaurs. Same two handles always produce the same fight."
+msgstr "Vyber dva vývojáře a sleduj, jak jejich statistiky využití agentů bojují jako termináloví dinosauři. Stejná dvojice jmen vždy vytvoří stejný souboj."
+
 msgid "Pick your agent for a one-line install, or copy the config by hand. Every client, including OAuth and API key setup, is covered in the <0>full MCP server docs</0>."
 msgstr "Vyberte svého agenta pro instalaci na jeden řádek, nebo konfiguraci zkopírujte ručně. Všechny klienty, včetně nastavení OAuth a API klíčů, pokrývá <0>kompletní dokumentace MCP serveru</0>."
 
@@ -10910,6 +10953,9 @@ msgstr "Přesunout projekt?"
 
 msgid "Relocating…"
 msgstr "Přesouvám…"
+
+msgid "rematch"
+msgstr "odveta"
 
 msgid "remote"
 msgstr "vzdálená"
@@ -13064,6 +13110,9 @@ msgstr "Souhrn"
 msgid "sun 11:00"
 msgstr "ne 11:00"
 
+msgid "Super Fights"
+msgstr "Super souboje"
+
 msgid "superseded"
 msgstr "nahrazeno"
 
@@ -14908,6 +14957,11 @@ msgstr "VS Code"
 msgid "Wait for workspace setup before starting agents"
 msgstr "Před spuštěním agentů počkat na setup pracovního prostoru"
 
+#. placeholder {0}: names.a
+#. placeholder {1}: names.b
+msgid "waiting for {0} and {1}…"
+msgstr "čeká se na {0} a {1}…"
+
 msgid "Waiting for Checks"
 msgstr "Čeká na kontroly"
 
@@ -15466,11 +15520,15 @@ msgstr "Tarif vaší organizace spravuje její vlastník na {0}."
 msgid "Your rank"
 msgstr "Vaše pozice"
 
-msgid "Your rung is a weighted score across all five objectives, so a strong one offsets a weak one. Medians over the trailing 30 days."
-msgstr "Vaše příčka je vážené skóre ze všech pěti cílů, takže silný cíl vyrovná slabý. Mediány za posledních 30 dní."
+#. placeholder {0}: String(gaps.length)
+msgid "Your rung is a weighted score across the {0} objectives measured for you, so a strong one offsets a weak one. Measured over the trailing 30 days."
+msgstr "Tvůj stupeň je vážené skóre z cílů, kterých bylo změřeno {0}, takže silný cíl vyváží slabý. Měřeno za posledních 30 dní."
 
 msgid "Your Slack account has been linked to Superset. You can close this tab and return to Slack."
 msgstr "Váš účet Slack byl propojen se Superset. Tuto kartu můžete zavřít a vrátit se do Slacku."
+
+msgid "Your stats, settled in combat"
+msgstr "Tvoje statistiky, rozhodnuté v souboji"
 
 msgid "Your subscription has been activated. You can now access all Pro features."
 msgstr "Vaše předplatné bylo aktivováno. Teď máte přístup ke všem funkcím Pro."
@@ -15484,8 +15542,9 @@ msgstr "Vaše stahování Supersetu se spouští."
 msgid "Your terminal sessions won't be interrupted."
 msgstr "Vaše relace v terminálu nebudou přerušeny."
 
-msgid "Your tier is a weighted score across all five axes, so a strong axis offsets a weak one. The axes below are the ones lagging."
-msgstr "Vaše úroveň je vážené skóre ze všech pěti os, takže silná osa vyrovná slabou. Níže jsou osy, které zaostávají."
+#. placeholder {0}: String(gaps.length)
+msgid "Your tier is a weighted score across the {0} axes measured for you, so a strong axis offsets a weak one. The axes below are the ones lagging."
+msgstr "Tvoje úroveň je vážené skóre z os, kterých bylo změřeno {0}, takže silná osa vyváží slabou. Níže jsou osy, které zaostávají."
 
 msgid "Your tokens"
 msgstr "Vaše tokeny"

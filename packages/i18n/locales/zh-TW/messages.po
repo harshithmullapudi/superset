@@ -294,6 +294,11 @@ msgstr "{0} → {1}待更新"
 msgid "{0} actions"
 msgstr "{0}的操作"
 
+#. placeholder {0}: left.name
+#. placeholder {1}: right.name
+msgid "{0} and {1} settle it as terminal dinosaurs. Stats decide the winner."
+msgstr "{0}與{1}化身終端恐龍一決勝負。數據決定輸贏。"
+
 #. placeholder {0}: formatTokens(me.tokens - below.tokens)
 msgid "{0} behind you"
 msgstr "落後你 {0}"
@@ -424,6 +429,11 @@ msgstr "再 {0} 即可超越 #{1}"
 msgid "{0} tokens in the last 30 days. Publishing as <0>{handle}</0>."
 msgstr "最近30天 {0} 個 tokens。以 <0>{handle}</0> 身分發布。"
 
+#. placeholder {0}: formatTokens(cell.tokens)
+#. placeholder {1}: cell.day
+msgid "{0} tokens on {1}"
+msgstr "{1} 的 {0} 個 token"
+
 #. placeholder {0}: formatTokens(calendar.total)
 #. placeholder {1}: String(calendar.activeDays)
 msgid "{0} tokens over {1} active days"
@@ -437,9 +447,24 @@ msgstr "{0}已解除安裝"
 msgid "{0} updated"
 msgstr "{0} 已更新"
 
+#. placeholder {0}: left.name
+#. placeholder {1}: right.name
+msgid "{0} vs {1}"
+msgstr "{0} 對戰 {1}"
+
 #. placeholder {0}: file.path
 msgid "{0} was deleted in this change."
 msgstr "{0}已在此更改中被刪除。"
+
+#. placeholder {0}: winner?.name
+#. placeholder {1}: result.events.length
+msgid "{0} wins in {1} turns"
+msgstr "{0} 在第 {1} 回合獲勝"
+
+#. placeholder {0}: winner?.name
+#. placeholder {1}: result.events.length
+msgid "{0} wins on damage after {1} turns"
+msgstr "{1} 回合結束，{0} 以傷害判定獲勝"
 
 #. placeholder {0}: check.name
 #. placeholder {1}: took ? `, ${took}` : ""
@@ -800,6 +825,9 @@ msgstr "{teardownFailureCount, plural, one {「仍然刪除」會跳過受影響
 
 msgid "{teardownFailureCount, plural, one {Delete anyway} other {Delete # anyway}}"
 msgstr "{teardownFailureCount, plural, one {仍然刪除} other {仍然刪除#個}}"
+
+msgid "{threshold, plural, one {# agent PR merged} other {# agent PRs merged}}"
+msgstr "{threshold, plural, other {已合併 # 個智慧代理 PR}}"
 
 msgid "{toolName} interrupted"
 msgstr "{toolName}已中斷"
@@ -2168,9 +2196,6 @@ msgstr "等待你的審查"
 
 msgid "Awaiting review from you or your team"
 msgstr "等待你或你團隊的審查"
-
-msgid "Axes are medians over the trailing 30 days"
-msgstr "各維度取近 30 天的中位數"
 
 msgid "Back"
 msgstr "返回"
@@ -3646,6 +3671,9 @@ msgstr "複製失敗"
 msgid "Copy failed. Select the text and copy it manually."
 msgstr "複製失敗。請選中文字手動複製。"
 
+msgid "copy fight link"
+msgstr "複製對戰連結"
+
 msgid "Copy file name"
 msgstr "複製檔名"
 
@@ -3959,6 +3987,9 @@ msgstr "無法載入拉取請求：{msg}"
 
 msgid "Couldn't load review comments"
 msgstr "無法載入審查評論"
+
+msgid "Couldn't load your profile, so editing is disabled."
+msgstr "無法載入你的個人檔案，編輯已停用。"
 
 msgid "Couldn't merge pull request"
 msgstr "無法合併拉取請求"
@@ -5277,8 +5308,8 @@ msgstr "每週五下午4點，根據本週合併的PR起草釋出說明。"
 msgid "Every minute"
 msgstr "每分鐘"
 
-msgid "Every objective is carrying its weight for the next rung. Medians over the trailing 30 days."
-msgstr "每項目標都在為下一級出力。取近 30 天的中位數。"
+msgid "Every objective is carrying its weight for the next rung. Measured over the trailing 30 days."
+msgstr "所有目標都在為下一階發力。以最近 30 天計算。"
 
 msgid "Every star on <0>{repoSlug}</0>, plotted since launch."
 msgstr "<0>{repoSlug}</0>的每一個星標，自發布起繪製。"
@@ -7551,6 +7582,9 @@ msgstr "請先為專案關聯GitHub儲存庫才能克隆。"
 msgid "Link by Stripe"
 msgstr "Link by Stripe"
 
+msgid "link copied"
+msgstr "連結已複製"
+
 msgid "Link copied"
 msgstr "連結已複製"
 
@@ -7934,6 +7968,9 @@ msgstr "MCP伺服器"
 
 msgid "Mean"
 msgstr "平均"
+
+msgid "Measured over the trailing 30 days"
+msgstr "以最近 30 天計算"
 
 msgid "Measuring resource usage…"
 msgstr "正在測量資源佔用…"
@@ -8343,6 +8380,9 @@ msgstr "新建瀏覽器"
 
 msgid "New Browser Tab"
 msgstr "新瀏覽器分頁"
+
+msgid "new challengers"
+msgstr "換對手"
 
 msgid "New chat"
 msgstr "新建聊天"
@@ -10105,6 +10145,9 @@ msgstr "在{hostName}上選擇專案的worktree資料夾。"
 msgid "Pick the worktree folder on {hostName}."
 msgstr "在{hostName}上選擇worktree資料夾。"
 
+msgid "Pick two developers, watch their agent usage stats fight it out as terminal dinosaurs. Same two handles always produce the same fight."
+msgstr "挑選兩位開發者，看他們的智慧代理使用數據化為終端恐龍一決勝負。相同的兩個帳號名稱永遠產生相同的對戰。"
+
 msgid "Pick your agent for a one-line install, or copy the config by hand. Every client, including OAuth and API key setup, is covered in the <0>full MCP server docs</0>."
 msgstr "選擇你的代理程式獲取一行安裝命令，或者手動複製配置。所有客戶端（含OAuth和API金鑰設定）都在<0>完整的MCP伺服器文件</0>裡。"
 
@@ -10910,6 +10953,9 @@ msgstr "遷移專案？"
 
 msgid "Relocating…"
 msgstr "正在遷移…"
+
+msgid "rematch"
+msgstr "再來一局"
 
 msgid "remote"
 msgstr "遠端"
@@ -13064,6 +13110,9 @@ msgstr "摘要"
 msgid "sun 11:00"
 msgstr "週日11:00"
 
+msgid "Super Fights"
+msgstr "超級對戰"
+
 msgid "superseded"
 msgstr "已被取代"
 
@@ -14908,6 +14957,11 @@ msgstr "VS Code"
 msgid "Wait for workspace setup before starting agents"
 msgstr "啟動代理程式前等待工作區設定完成"
 
+#. placeholder {0}: names.a
+#. placeholder {1}: names.b
+msgid "waiting for {0} and {1}…"
+msgstr "正在等待 {0} 和 {1}…"
+
 msgid "Waiting for Checks"
 msgstr "等待檢查"
 
@@ -15466,11 +15520,15 @@ msgstr "你所在組織的方案由擁有者在{0}管理。"
 msgid "Your rank"
 msgstr "你的排名"
 
-msgid "Your rung is a weighted score across all five objectives, so a strong one offsets a weak one. Medians over the trailing 30 days."
-msgstr "你的等級是全部五項目標的加權分數，強項可以彌補弱項。取近 30 天的中位數。"
+#. placeholder {0}: String(gaps.length)
+msgid "Your rung is a weighted score across the {0} objectives measured for you, so a strong one offsets a weak one. Measured over the trailing 30 days."
+msgstr "你的階級是為你測得的 {0} 項目標的加權分數，強項可以彌補弱項。以最近 30 天計算。"
 
 msgid "Your Slack account has been linked to Superset. You can close this tab and return to Slack."
 msgstr "你的Slack帳戶已關聯到Superset。你可以關閉這個分頁並返回Slack。"
+
+msgid "Your stats, settled in combat"
+msgstr "用你的數據，在對戰中見真章"
 
 msgid "Your subscription has been activated. You can now access all Pro features."
 msgstr "你的訂閱已啟用。現在可以使用全部Pro功能。"
@@ -15484,8 +15542,9 @@ msgstr "您的 Superset 下載即將開始。"
 msgid "Your terminal sessions won't be interrupted."
 msgstr "你的終端會話不會被中斷。"
 
-msgid "Your tier is a weighted score across all five axes, so a strong axis offsets a weak one. The axes below are the ones lagging."
-msgstr "你的等級是全部五個維度的加權分數，強的維度可以彌補弱的維度。下面列出的是落後的維度。"
+#. placeholder {0}: String(gaps.length)
+msgid "Your tier is a weighted score across the {0} axes measured for you, so a strong axis offsets a weak one. The axes below are the ones lagging."
+msgstr "你的等級是為你測得的 {0} 個面向的加權分數，強項可以彌補弱項。以下是落後的面向。"
 
 msgid "Your tokens"
 msgstr "你的 token 數"

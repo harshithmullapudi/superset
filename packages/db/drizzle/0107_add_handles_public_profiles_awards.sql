@@ -8,12 +8,13 @@ CREATE TABLE "handles" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "handles_user_key" UNIQUE("user_id"),
 	CONSTRAINT "handles_organization_key" UNIQUE("organization_id"),
+	CONSTRAINT "handles_user_owner_key" UNIQUE("handle","user_id"),
 	CONSTRAINT "handles_owner_matches_type" CHECK ((
 				("handles"."owner_type" = 'user' and "handles"."user_id" is not null and "handles"."organization_id" is null)
 				or ("handles"."owner_type" = 'organization' and "handles"."organization_id" is not null and "handles"."user_id" is null)
 				or ("handles"."owner_type" = 'reserved' and "handles"."user_id" is null and "handles"."organization_id" is null)
 			)),
-	CONSTRAINT "handles_shape" CHECK ("handles"."handle" ~ '^[a-z0-9][a-z0-9-]{0,38}$')
+	CONSTRAINT "handles_shape" CHECK (length("handles"."handle") between 2 and 39 and "handles"."handle" ~ '^[a-z0-9]+(-[a-z0-9]+)*$')
 );
 --> statement-breakpoint
 CREATE TABLE "profile_awards" (
@@ -72,8 +73,8 @@ ALTER TABLE "handles" ADD CONSTRAINT "handles_user_id_users_id_fk" FOREIGN KEY (
 ALTER TABLE "handles" ADD CONSTRAINT "handles_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "auth"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "profile_awards" ADD CONSTRAINT "profile_awards_user_id_public_profiles_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."public_profiles"("user_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "public_profiles" ADD CONSTRAINT "public_profiles_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "public_profiles" ADD CONSTRAINT "public_profiles_handle_handles_handle_fk" FOREIGN KEY ("handle") REFERENCES "public"."handles"("handle") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "public_profiles" ADD CONSTRAINT "public_profiles_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "auth"."organizations"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "public_profiles" ADD CONSTRAINT "public_profiles_handle_owner_fk" FOREIGN KEY ("handle","user_id") REFERENCES "public"."handles"("handle","user_id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
 CREATE INDEX "handles_owner_type_idx" ON "handles" USING btree ("owner_type");--> statement-breakpoint
 CREATE INDEX "profile_awards_user_idx" ON "profile_awards" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "profile_awards_slug_idx" ON "profile_awards" USING btree ("slug","awarded_at");--> statement-breakpoint

@@ -1,6 +1,6 @@
 {
-  "id": "2805bd0c-84d7-4391-bb8a-ef502815953b",
-  "prevId": "1ad9a092-024d-43a3-b6bb-55f770241423",
+  "id": "17924df2-e302-44f4-8192-7561a1cc09a0",
+  "prevId": "4a0dd18b-5b3d-4857-b107-729296884ced",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -3969,6 +3969,14 @@
           "columns": [
             "organization_id"
           ]
+        },
+        "handles_user_owner_key": {
+          "name": "handles_user_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "handle",
+            "user_id"
+          ]
         }
       },
       "policies": {},
@@ -3979,7 +3987,7 @@
         },
         "handles_shape": {
           "name": "handles_shape",
-          "value": "\"handles\".\"handle\" ~ '^[a-z0-9][a-z0-9-]{0,38}$'"
+          "value": "length(\"handles\".\"handle\") between 2 and 39 and \"handles\".\"handle\" ~ '^[a-z0-9]+(-[a-z0-9]+)*$'"
         }
       },
       "isRLSEnabled": false
@@ -4419,19 +4427,6 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "public_profiles_handle_handles_handle_fk": {
-          "name": "public_profiles_handle_handles_handle_fk",
-          "tableFrom": "public_profiles",
-          "tableTo": "handles",
-          "columnsFrom": [
-            "handle"
-          ],
-          "columnsTo": [
-            "handle"
-          ],
-          "onDelete": "restrict",
-          "onUpdate": "cascade"
-        },
         "public_profiles_organization_id_organizations_id_fk": {
           "name": "public_profiles_organization_id_organizations_id_fk",
           "tableFrom": "public_profiles",
@@ -4445,6 +4440,21 @@
           ],
           "onDelete": "set null",
           "onUpdate": "no action"
+        },
+        "public_profiles_handle_owner_fk": {
+          "name": "public_profiles_handle_owner_fk",
+          "tableFrom": "public_profiles",
+          "tableTo": "handles",
+          "columnsFrom": [
+            "handle",
+            "user_id"
+          ],
+          "columnsTo": [
+            "handle",
+            "user_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
         }
       },
       "compositePrimaryKeys": {},

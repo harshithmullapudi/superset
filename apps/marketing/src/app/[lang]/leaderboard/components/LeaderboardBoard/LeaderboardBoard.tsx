@@ -85,9 +85,14 @@ export function LeaderboardBoard({
 		}
 
 		const controller = new AbortController();
+		setResults(null);
 		setSearching(true);
 		const timer = setTimeout(() => {
-			fetchSearch(term, controller.signal)
+			fetchSearch(
+				term,
+				buildStandingsQuery(selection, metric),
+				controller.signal,
+			)
 				.then((rows) => {
 					if (!controller.signal.aborted) setResults(rows);
 				})
@@ -100,7 +105,7 @@ export function LeaderboardBoard({
 			clearTimeout(timer);
 			controller.abort();
 		};
-	}, [search]);
+	}, [search, selection, metric]);
 
 	useEffect(() => {
 		let live = true;

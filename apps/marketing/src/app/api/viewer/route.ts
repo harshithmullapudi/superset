@@ -10,7 +10,29 @@ export const dynamic = "force-dynamic";
 
 const PRIVATE = { "cache-control": "private, no-store" } as const;
 
+const LOOPBACK = new Set(["localhost", "127.0.0.1", "[::1]", "::1"]);
+
+function forwardsOverCleartext(rawUrl: string): boolean {
+	const url = new URL(rawUrl);
+	if (url.protocol === "https:") return false;
+	return !(
+		LOOPBACK.has(url.hostname) ||
+		url.hostname.endsWith(".localhost") ||
+		url.hostname.endsWith(".localtest.me")
+	);
+}
+
 export async function GET() {
+	if (forwardsOverCleartext(env.NEXT_PUBLIC_API_URL)) {
+		console.error(
+			"[marketing/viewer] refusing to forward the session cookie to a non-HTTPS API origin",
+		);
+		return NextResponse.json(
+			{ viewer: null },
+			{ status: 500, headers: PRIVATE },
+		);
+	}
+
 	const incoming = await headers();
 
 	let session = null;

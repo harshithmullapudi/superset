@@ -1,3 +1,4 @@
+import { Trans } from "@lingui/react/macro";
 import type { FightEvent } from "../../utils/simulateFight";
 
 interface CombatLogProps {
@@ -38,7 +39,9 @@ export function CombatLog({ events, names }: CombatLogProps) {
 				))}
 				{shown.length === 0 && (
 					<li className="font-mono text-[0.62rem] text-muted-foreground/50">
-						waiting for {names.a} and {names.b}…
+						<Trans>
+							waiting for {names.a} and {names.b}…
+						</Trans>
 					</li>
 				)}
 			</ol>

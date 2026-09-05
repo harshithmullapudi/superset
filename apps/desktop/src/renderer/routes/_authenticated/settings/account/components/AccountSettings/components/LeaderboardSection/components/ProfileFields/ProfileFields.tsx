@@ -10,6 +10,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { apiTrpcClient } from "renderer/lib/api-trpc-client";
 
+interface Draft {
+	handle: string;
+	bio: string;
+	xHandle: string;
+	websiteUrl: string;
+}
+
 export function ProfileFields({ handle }: { handle: string }) {
 	const { t } = useLingui();
 
@@ -24,17 +31,29 @@ export function ProfileFields({ handle }: { handle: string }) {
 		retry: false,
 	});
 
-	const [bio, setBio] = useState("");
-	const [xHandle, setXHandle] = useState("");
-	const [websiteUrl, setWebsiteUrl] = useState("");
+	const [draft, setDraft] = useState<Draft | null>(null);
 	const [saving, setSaving] = useState(false);
 
 	useEffect(() => {
-		if (!profile.data) return;
-		setBio(profile.data.bio ?? "");
-		setXHandle(profile.data.xHandle ?? "");
-		setWebsiteUrl(profile.data.websiteUrl ?? "");
-	}, [profile.data]);
+		const loaded = profile.data;
+		if (!loaded) return;
+		setDraft((current) =>
+			current?.handle === handle
+				? current
+				: {
+						handle,
+						bio: loaded.bio ?? "",
+						xHandle: loaded.xHandle ?? "",
+						websiteUrl: loaded.websiteUrl ?? "",
+					},
+		);
+	}, [profile.data, handle]);
+
+	const bio = draft?.bio ?? "";
+	const xHandle = draft?.xHandle ?? "";
+	const websiteUrl = draft?.websiteUrl ?? "";
+	const edit = (patch: Partial<Omit<Draft, "handle">>) =>
+		setDraft((current) => (current ? { ...current, ...patch } : current));
 
 	const save = async () => {
 		setSaving(true);
@@ -68,7 +87,7 @@ export function ProfileFields({ handle }: { handle: string }) {
 					value={bio}
 					maxLength={BIO_MAX}
 					rows={2}
-					onChange={(event) => setBio(event.target.value)}
+					onChange={(event) => edit({ bio: event.target.value })}
 					placeholder={t({
 						message: "One line about how you work",
 					})}
@@ -88,7 +107,7 @@ export function ProfileFields({ handle }: { handle: string }) {
 					<Input
 						id="leaderboard-x"
 						value={xHandle}
-						onChange={(event) => setXHandle(event.target.value)}
+						onChange={(event) => edit({ xHandle: event.target.value })}
 						placeholder="yourhandle"
 					/>
 				</div>
@@ -99,7 +118,7 @@ export function ProfileFields({ handle }: { handle: string }) {
 					<Input
 						id="leaderboard-site"
 						value={websiteUrl}
-						onChange={(event) => setWebsiteUrl(event.target.value)}
+						onChange={(event) => edit({ websiteUrl: event.target.value })}
 						placeholder="https://example.com"
 					/>
 				</div>
@@ -112,9 +131,20 @@ export function ProfileFields({ handle }: { handle: string }) {
 				</Trans>
 			</p>
 
-			<Button size="sm" onClick={save} disabled={saving || profile.isLoading}>
-				{saving ? <Trans>Saving…</Trans> : <Trans>Save profile</Trans>}
-			</Button>
+			{profile.isError ? (
+				<div className="flex items-center gap-3">
+					<p className="text-[0.7rem] text-destructive">
+						<Trans>Couldn't load your profile, so editing is disabled.</Trans>
+					</p>
+					<Button size="sm" variant="outline" onClick={() => profile.refetch()}>
+						<Trans>Retry</Trans>
+					</Button>
+				</div>
+			) : (
+				<Button size="sm" onClick={save} disabled={saving || !draft}>
+					{saving ? <Trans>Saving…</Trans> : <Trans>Save profile</Trans>}
+				</Button>
+			)}
 		</div>
 	);
 }

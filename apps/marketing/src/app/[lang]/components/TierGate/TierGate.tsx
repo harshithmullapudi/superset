@@ -1,37 +1,13 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import {
-	type AxisGap,
-	type AxisName,
 	type AxisValues,
+	scoredGaps,
 	type Tier,
-	tierGap,
 } from "@superset/trpc/leaderboard-tier";
 import { MeterBar } from "@/app/[lang]/components/MeterBar";
 import { tierLabel, tierRgb } from "@/app/[lang]/components/TierBadge";
-import {
-	formatCount,
-	formatTokens,
-	formatUsd,
-} from "@/app/[lang]/utils/formatUsage";
+import { axisValue, fill } from "@/app/[lang]/utils/axisGaps";
 import { AXIS_HINTS, AXIS_LABELS, AXIS_UNITS } from "./constants";
-
-function axisValue(axis: AxisName, value: number): string {
-	if (value <= 0 && axis === "cost") return "—";
-	if (axis === "depth") return formatTokens(value);
-	if (axis === "cost") return formatUsd(value);
-	if (axis === "width") return value.toFixed(1);
-	if (axis === "output") return String(Math.round(value));
-	return formatCount(value);
-}
-
-function fill(gap: AxisGap): number {
-	if (gap.needed <= 0) return 1;
-	if (gap.lowerIsBetter) {
-		if (gap.current <= 0) return 0;
-		return Math.min(1, gap.needed / gap.current);
-	}
-	return Math.min(1, gap.current / gap.needed);
-}
 
 interface TierGateProps {
 	tier: number;
@@ -40,7 +16,7 @@ interface TierGateProps {
 
 export function TierGate({ tier, axes }: TierGateProps) {
 	const { t } = useLingui();
-	const gaps = tierGap(axes, tier as Tier);
+	const gaps = scoredGaps(axes, tier as Tier);
 	const atTop = tier >= 4;
 	const nextLabel = t(tierLabel(Math.min(4, tier + 1)));
 	const met = gaps.filter((gap) => gap.met).length;
@@ -76,8 +52,9 @@ export function TierGate({ tier, axes }: TierGateProps) {
 					</Trans>
 				) : (
 					<Trans>
-						Your tier is a weighted score across all five axes, so a strong axis
-						offsets a weak one. The axes below are the ones lagging.
+						Your tier is a weighted score across the {String(gaps.length)} axes
+						measured for you, so a strong axis offsets a weak one. The axes
+						below are the ones lagging.
 					</Trans>
 				)}
 			</p>
@@ -125,7 +102,7 @@ export function TierGate({ tier, axes }: TierGateProps) {
 			</div>
 
 			<p className="font-mono text-[0.56rem] uppercase tracking-[0.1em] text-muted-foreground/60 border-t border-border pt-2.5 mt-4">
-				<Trans>Axes are medians over the trailing 30 days</Trans>
+				<Trans>Measured over the trailing 30 days</Trans>
 			</p>
 		</div>
 	);

@@ -1,5 +1,8 @@
 import { Trans } from "@lingui/react/macro";
-import { CATALOG_BY_SLUG } from "@superset/trpc/leaderboard-achievements";
+import {
+	CATALOG_BY_SLUG,
+	highestPerSlug,
+} from "@superset/trpc/leaderboard-achievements";
 import { AchievementMedal } from "@/app/[lang]/components/AchievementMedal";
 import { MilestoneChip } from "@/app/[lang]/components/MilestoneChip";
 
@@ -11,26 +14,6 @@ interface Award {
 
 interface AchievementShelfProps {
 	awards: readonly Award[];
-}
-
-function highestPerSlug(awards: readonly Award[]): Award[] {
-	const best = new Map<string, Award>();
-
-	for (const award of awards) {
-		const held = best.get(award.slug);
-		if (!held) {
-			best.set(award.slug, award);
-			continue;
-		}
-		best.set(award.slug, {
-			slug: award.slug,
-			tier: Math.max(held.tier, award.tier),
-			awardedOn:
-				held.awardedOn < award.awardedOn ? held.awardedOn : award.awardedOn,
-		});
-	}
-
-	return [...best.values()];
 }
 
 export function AchievementShelf({ awards }: AchievementShelfProps) {

@@ -19,8 +19,11 @@ export interface RangeQuery {
 	to?: string;
 }
 
-export interface StandingsQuery extends RangeQuery {
+export interface MetricQuery extends RangeQuery {
 	metric?: LeaderboardMetric;
+}
+
+export interface StandingsQuery extends MetricQuery {
 	limit?: number;
 	offset?: number;
 }
@@ -76,7 +79,7 @@ export async function fetchParticipant(
 
 export async function fetchStanding(
 	handle: string,
-	options: StandingsQuery = {},
+	options: MetricQuery = {},
 	signal?: AbortSignal,
 ): Promise<StandingRow | null> {
 	try {
@@ -93,11 +96,12 @@ export async function fetchStanding(
 
 export async function fetchSearch(
 	query: string,
+	options: MetricQuery = {},
 	signal?: AbortSignal,
 ): Promise<StandingRow[]> {
 	try {
 		return await leaderboardClient.leaderboard.public.search.query(
-			{ query },
+			{ query, ...options },
 			{ signal },
 		);
 	} catch (error) {
@@ -110,10 +114,5 @@ export async function fetchSearch(
 export async function fetchPublicHandles(): Promise<
 	Array<{ handle: string; lastPublishedAt: Date | null }>
 > {
-	try {
-		return await leaderboardClient.leaderboard.public.handles.query();
-	} catch (error) {
-		console.error("[marketing/leaderboard] handles error:", error);
-		return [];
-	}
+	return await leaderboardClient.leaderboard.public.handles.query();
 }

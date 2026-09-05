@@ -59,7 +59,7 @@ export function FighterStage({
 					<div
 						className={`flex items-baseline gap-2 ${right ? "flex-row-reverse" : ""}`}
 					>
-						<p className="text-lg md:text-2xl text-foreground leading-tight">
+						<p className="min-w-0 break-words text-lg md:text-2xl text-foreground leading-tight">
 							{fighter.name}
 						</p>
 						{isViewer && (

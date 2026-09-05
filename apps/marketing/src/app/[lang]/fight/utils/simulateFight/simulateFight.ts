@@ -1,3 +1,5 @@
+import { ANCHORS, axisScore } from "@superset/trpc/leaderboard-tier";
+
 export interface FighterAxes {
 	width: number;
 	depth: number;
@@ -68,6 +70,9 @@ function mulberry32(seed: number): () => number {
 	};
 }
 
+const costScore = (cost: number) =>
+	axisScore(cost, ANCHORS.cost[0], ANCHORS.cost[1], true);
+
 export function buildKit(fighter: Fighter): Kit {
 	const { width, depth, output, sustain, cost } = fighter.axes;
 	const hp = Math.round(70 + clamp(sustain, 0, 30) * 3.5);
@@ -76,7 +81,7 @@ export function buildKit(fighter: Fighter): Kit {
 		(4 + clamp(depth / 1e6, 0, 40) * 0.3) * (1 + (hits - 1) * 0.3) * 1.8,
 	);
 	const crit = clamp(output * 0.035, 0, 0.4);
-	const armor = cost > 0 ? clamp((15 - cost) / 15, 0, 1) * 0.3 : 0;
+	const armor = costScore(cost) * 0.3;
 	const expectedSwing = swing * (1 + crit * 0.8);
 	const effectiveHp = hp / (1 - armor);
 	const rating = Math.round((expectedSwing * effectiveHp) / 10);
@@ -234,22 +239,21 @@ const EPITAPHS = [
 	"%L blames the flaky test.",
 ];
 
-const AXIS_CEILING: Record<AxisName, number> = {
+const AXIS_CEILING: Record<Exclude<AxisName, "cost">, number> = {
 	width: 12,
 	depth: 40_000_000,
 	output: 14,
 	sustain: 30,
-	cost: 15,
 };
 
 function axisScores(fighter: Fighter): Record<AxisName, number> {
 	const { width, depth, output, sustain, cost } = fighter.axes;
 	return {
-		width: width / AXIS_CEILING.width,
-		depth: depth / AXIS_CEILING.depth,
-		output: output / AXIS_CEILING.output,
-		sustain: sustain / AXIS_CEILING.sustain,
-		cost: cost > 0 ? (AXIS_CEILING.cost - cost) / AXIS_CEILING.cost : 0,
+		width: clamp(width / AXIS_CEILING.width, 0, 1),
+		depth: clamp(depth / AXIS_CEILING.depth, 0, 1),
+		output: clamp(output / AXIS_CEILING.output, 0, 1),
+		sustain: clamp(sustain / AXIS_CEILING.sustain, 0, 1),
+		cost: costScore(cost),
 	};
 }
 
@@ -282,6 +286,16 @@ const fill = (
 		.replaceAll("%S", String(Math.round(attacker.axes.sustain)))
 		.replaceAll("%C", attacker.axes.cost.toFixed(2));
 
+function openingSide(
+	a: Fighter,
+	b: Fighter,
+	ratingA: number,
+	ratingB: number,
+): Side {
+	if (ratingA !== ratingB) return ratingA > ratingB ? "a" : "b";
+	return a.handle <= b.handle ? "a" : "b";
+}
+
 export function simulateFight(a: Fighter, b: Fighter): FightResult {
 	const kits: Record<Side, Kit> = { a: buildKit(a), b: buildKit(b) };
 	const fighters: Record<Side, Fighter> = { a, b };
@@ -290,7 +304,7 @@ export function simulateFight(a: Fighter, b: Fighter): FightResult {
 	const hp: Record<Side, number> = { a: kits.a.hp, b: kits.b.hp };
 	const events: FightEvent[] = [];
 
-	let attacker: Side = kits.a.rating >= kits.b.rating ? "a" : "b";
+	let attacker: Side = openingSide(a, b, kits.a.rating, kits.b.rating);
 	let turn = 1;
 	const lastMove: Record<Side, number> = { a: -1, b: -1 };
 
@@ -336,9 +350,7 @@ export function simulateFight(a: Fighter, b: Fighter): FightResult {
 
 	const winner: Side =
 		hp.a === hp.b
-			? kits.a.rating >= kits.b.rating
-				? "a"
-				: "b"
+			? openingSide(a, b, kits.a.rating, kits.b.rating)
 			: hp.a > hp.b
 				? "a"
 				: "b";

@@ -15,11 +15,16 @@ const GAP = 2;
 
 const LEVEL_ALPHA = [0.06, 0.28, 0.5, 0.72, 1];
 
-const WEEKDAY_ROWS = [
-	{ label: "Mon", offset: CELL + GAP },
-	{ label: "Wed", offset: CELL + GAP },
-	{ label: "Fri", offset: CELL + GAP },
-];
+const WEEKDAY_SAMPLES = ["2024-01-01", "2024-01-03", "2024-01-05"] as const;
+
+const weekdayRows = () =>
+	WEEKDAY_SAMPLES.map((day) => ({
+		label: formatDate(new Date(`${day}T00:00:00Z`), {
+			weekday: "short",
+			timeZone: "UTC",
+		}),
+		offset: CELL + GAP,
+	}));
 
 function monthLabel(weeks: CalendarCell[][], index: number): string {
 	const first = weeks[index]?.[0];
@@ -82,7 +87,7 @@ export function ContributionGraph({
 						className="flex flex-col shrink-0 pr-1"
 						style={{ gap: GAP, marginTop: CELL + GAP }}
 					>
-						{WEEKDAY_ROWS.map((row) => (
+						{weekdayRows().map((row) => (
 							<span
 								key={row.label}
 								className="font-mono text-[0.55rem] uppercase tracking-[0.08em] text-muted-foreground/50 leading-none"
@@ -111,7 +116,9 @@ export function ContributionGraph({
 										<button
 											type="button"
 											key={cell.day}
-											aria-label={`${formatTokens(cell.tokens)} tokens on ${cell.day}`}
+											aria-label={t({
+												message: `${formatTokens(cell.tokens)} tokens on ${cell.day}`,
+											})}
 											onMouseEnter={() => setActive(cell)}
 											onFocus={() => setActive(cell)}
 											onMouseLeave={() => clear(cell)}

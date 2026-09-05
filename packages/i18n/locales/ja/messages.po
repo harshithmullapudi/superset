@@ -294,6 +294,11 @@ msgstr "{0} → {1} 保留中"
 msgid "{0} actions"
 msgstr "{0}の操作"
 
+#. placeholder {0}: left.name
+#. placeholder {1}: right.name
+msgid "{0} and {1} settle it as terminal dinosaurs. Stats decide the winner."
+msgstr "{0}と{1}がターミナル恐竜となって決着をつけます。勝敗を決めるのは統計です。"
+
 #. placeholder {0}: formatTokens(me.tokens - below.tokens)
 msgid "{0} behind you"
 msgstr "{0}差で後続"
@@ -424,10 +429,15 @@ msgstr "#{1}を抜くまで{0}"
 msgid "{0} tokens in the last 30 days. Publishing as <0>{handle}</0>."
 msgstr "直近30日間で{0}トークン。<0>{handle}</0>として公開中。"
 
+#. placeholder {0}: formatTokens(cell.tokens)
+#. placeholder {1}: cell.day
+msgid "{0} tokens on {1}"
+msgstr "{1}に{0}トークン"
+
 #. placeholder {0}: formatTokens(calendar.total)
 #. placeholder {1}: String(calendar.activeDays)
 msgid "{0} tokens over {1} active days"
-msgstr "{1} 日のアクティブ日で {0} トークン"
+msgstr "アクティブ日数{1}日で{0}トークン"
 
 #. placeholder {0}: displayName(variables.name)
 msgid "{0} uninstalled"
@@ -437,9 +447,24 @@ msgstr "{0}をアンインストールしました"
 msgid "{0} updated"
 msgstr "{0} を更新しました"
 
+#. placeholder {0}: left.name
+#. placeholder {1}: right.name
+msgid "{0} vs {1}"
+msgstr "{0} 対 {1}"
+
 #. placeholder {0}: file.path
 msgid "{0} was deleted in this change."
 msgstr "{0}はこの変更で削除されました。"
+
+#. placeholder {0}: winner?.name
+#. placeholder {1}: result.events.length
+msgid "{0} wins in {1} turns"
+msgstr "{0}が{1}ターンで勝利"
+
+#. placeholder {0}: winner?.name
+#. placeholder {1}: result.events.length
+msgid "{0} wins on damage after {1} turns"
+msgstr "{1}ターン終了、{0}がダメージ判定で勝利"
 
 #. placeholder {0}: check.name
 #. placeholder {1}: took ? `, ${took}` : ""
@@ -800,6 +825,9 @@ msgstr "{teardownFailureCount, plural, one {「それでも削除」は該当ワ
 
 msgid "{teardownFailureCount, plural, one {Delete anyway} other {Delete # anyway}}"
 msgstr "{teardownFailureCount, plural, one {それでも削除} other {それでも#件削除}}"
+
+msgid "{threshold, plural, one {# agent PR merged} other {# agent PRs merged}}"
+msgstr "{threshold, plural, other {#件のエージェントPRをマージ}}"
 
 msgid "{toolName} interrupted"
 msgstr "{toolName}が中断されました"
@@ -2168,9 +2196,6 @@ msgstr "自分のレビュー待ち"
 
 msgid "Awaiting review from you or your team"
 msgstr "自分またはチームのレビュー待ち"
-
-msgid "Axes are medians over the trailing 30 days"
-msgstr "軸は直近30日の中央値です"
 
 msgid "Back"
 msgstr "戻る"
@@ -3646,6 +3671,9 @@ msgstr "コピーに失敗しました"
 msgid "Copy failed. Select the text and copy it manually."
 msgstr "コピーできませんでした。テキストを選択して手動でコピーしてください。"
 
+msgid "copy fight link"
+msgstr "対戦リンクをコピー"
+
 msgid "Copy file name"
 msgstr "ファイル名をコピー"
 
@@ -3959,6 +3987,9 @@ msgstr "プルリクエストを読み込めませんでした: {msg}"
 
 msgid "Couldn't load review comments"
 msgstr "レビューコメントを読み込めませんでした"
+
+msgid "Couldn't load your profile, so editing is disabled."
+msgstr "プロフィールを読み込めなかったため、編集は無効です。"
 
 msgid "Couldn't merge pull request"
 msgstr "プルリクエストをマージできませんでした"
@@ -5277,8 +5308,8 @@ msgstr "毎週金曜午後4時に、今週マージされたPRからリリース
 msgid "Every minute"
 msgstr "毎分"
 
-msgid "Every objective is carrying its weight for the next rung. Medians over the trailing 30 days."
-msgstr "すべての目標が次の段のために働いています。直近30日の中央値です。"
+msgid "Every objective is carrying its weight for the next rung. Measured over the trailing 30 days."
+msgstr "すべての目標が次の段に向けて力を発揮しています。直近30日間で計測。"
 
 msgid "Every star on <0>{repoSlug}</0>, plotted since launch."
 msgstr "<0>{repoSlug}</0>のすべてのスターを、公開時からプロットしています。"
@@ -7551,6 +7582,9 @@ msgstr "クローンを有効にするには、先にプロジェクトにGitHub
 msgid "Link by Stripe"
 msgstr "Link by Stripe"
 
+msgid "link copied"
+msgstr "リンクをコピーしました"
+
 msgid "Link copied"
 msgstr "リンクをコピーしました"
 
@@ -7934,6 +7968,9 @@ msgstr "MCPサーバー"
 
 msgid "Mean"
 msgstr "平均"
+
+msgid "Measured over the trailing 30 days"
+msgstr "直近30日間で計測"
 
 msgid "Measuring resource usage…"
 msgstr "リソース使用量を計測中…"
@@ -8343,6 +8380,9 @@ msgstr "新規ブラウザ"
 
 msgid "New Browser Tab"
 msgstr "新しいブラウザタブ"
+
+msgid "new challengers"
+msgstr "別の対戦相手"
 
 msgid "New chat"
 msgstr "新しいチャット"
@@ -10105,6 +10145,9 @@ msgstr "{hostName}のプロジェクトのワークツリーフォルダを選�
 msgid "Pick the worktree folder on {hostName}."
 msgstr "{hostName}のワークツリーフォルダを選択してください。"
 
+msgid "Pick two developers, watch their agent usage stats fight it out as terminal dinosaurs. Same two handles always produce the same fight."
+msgstr "開発者を2人選ぶと、エージェントの使用統計をもとにターミナル恐竜として戦います。同じハンドルの組み合わせなら常に同じ試合になります。"
+
 msgid "Pick your agent for a one-line install, or copy the config by hand. Every client, including OAuth and API key setup, is covered in the <0>full MCP server docs</0>."
 msgstr "エージェントを選べば1行でインストールできます。設定を手でコピーしても構いません。OAuthやAPIキーの設定を含む各クライアントの手順は<0>MCPサーバーの完全なドキュメント</0>にあります。"
 
@@ -10910,6 +10953,9 @@ msgstr "プロジェクトを移動しますか?"
 
 msgid "Relocating…"
 msgstr "移動中…"
+
+msgid "rematch"
+msgstr "再戦"
 
 msgid "remote"
 msgstr "リモート"
@@ -12255,7 +12301,7 @@ msgid "shadcn/ui tooltip recipe"
 msgstr "shadcn/uiのtooltipレシピ"
 
 msgid "Shade is relative to this developer's busiest day"
-msgstr "濃さはこの開発者の最も多い日を基準にしています"
+msgstr "濃さはこの開発者の最も活動量が多い日を基準にしています"
 
 msgid "Share"
 msgstr "共有"
@@ -13063,6 +13109,9 @@ msgstr "概要"
 
 msgid "sun 11:00"
 msgstr "日 11:00"
+
+msgid "Super Fights"
+msgstr "スーパーファイト"
 
 msgid "superseded"
 msgstr "置き換え済み"
@@ -14908,6 +14957,11 @@ msgstr "VS Code"
 msgid "Wait for workspace setup before starting agents"
 msgstr "エージェント起動前にワークスペースのセットアップを待つ"
 
+#. placeholder {0}: names.a
+#. placeholder {1}: names.b
+msgid "waiting for {0} and {1}…"
+msgstr "{0}と{1}を待っています…"
+
 msgid "Waiting for Checks"
 msgstr "チェックを待機中"
 
@@ -15466,11 +15520,15 @@ msgstr "組織のプランは{0}でオーナーが管理しています。"
 msgid "Your rank"
 msgstr "あなたのランク"
 
-msgid "Your rung is a weighted score across all five objectives, so a strong one offsets a weak one. Medians over the trailing 30 days."
-msgstr "あなたの段は5つの目標すべての加重スコアで決まるため、強い目標が弱い目標を補います。直近30日の中央値です。"
+#. placeholder {0}: String(gaps.length)
+msgid "Your rung is a weighted score across the {0} objectives measured for you, so a strong one offsets a weak one. Measured over the trailing 30 days."
+msgstr "あなたの段位は、計測できた{0}項目の加重スコアです。強い項目が弱い項目を補います。直近30日間で計測。"
 
 msgid "Your Slack account has been linked to Superset. You can close this tab and return to Slack."
 msgstr "SlackアカウントをSupersetに紐付けました。このタブを閉じてSlackに戻れます。"
+
+msgid "Your stats, settled in combat"
+msgstr "あなたの統計で、戦って決着を"
 
 msgid "Your subscription has been activated. You can now access all Pro features."
 msgstr "サブスクリプションが有効になりました。すべてのPro機能を利用できます。"
@@ -15484,8 +15542,9 @@ msgstr "Supersetのダウンロードを開始しています。"
 msgid "Your terminal sessions won't be interrupted."
 msgstr "ターミナルセッションは中断されません。"
 
-msgid "Your tier is a weighted score across all five axes, so a strong axis offsets a weak one. The axes below are the ones lagging."
-msgstr "あなたのティアは5つの軸すべての加重スコアで決まるため、強い軸が弱い軸を補います。下の軸が遅れているものです。"
+#. placeholder {0}: String(gaps.length)
+msgid "Your tier is a weighted score across the {0} axes measured for you, so a strong axis offsets a weak one. The axes below are the ones lagging."
+msgstr "あなたのティアは、計測できた{0}軸の加重スコアです。強い軸が弱い軸を補います。以下は遅れている軸です。"
 
 msgid "Your tokens"
 msgstr "あなたのトークン"

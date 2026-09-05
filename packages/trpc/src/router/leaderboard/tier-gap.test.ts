@@ -5,6 +5,7 @@ import {
 	BANDS,
 	blockingAxes,
 	factoryScore,
+	scoredGaps,
 	type Tier,
 	tierGap,
 } from "./tier";
@@ -125,5 +126,49 @@ describe("tierGap", () => {
 			cost: 1,
 		};
 		expect(blockingAxes(strong, 1)).toEqual([]);
+	});
+});
+
+describe("scored axes track output and cost independently", () => {
+	const measured: AxisValues = {
+		width: 4,
+		depth: 8_000_000,
+		output: 3,
+		sustain: 20,
+		cost: 400,
+	};
+
+	test("a profile with no merged PRs is scored on the three axes it has", () => {
+		const { scored } = factoryScore({ ...measured, output: 0, cost: 0 });
+		expect(scored).toEqual(["width", "depth", "sustain"]);
+		expect(scoredGaps({ ...measured, output: 0, cost: 0 }, 1)).toHaveLength(3);
+	});
+
+	test("a zero output median does not drop a real cost from the score", () => {
+		const { scored } = factoryScore({ ...measured, output: 0 });
+		expect(scored).toEqual(["width", "depth", "sustain", "cost"]);
+		expect(
+			scoredGaps({ ...measured, output: 0 }, 1).map((gap) => gap.axis),
+		).toContain("cost");
+	});
+
+	test("cost still scores on its own when output is present", () => {
+		expect(factoryScore(measured).scored).toEqual([
+			"width",
+			"depth",
+			"output",
+			"sustain",
+			"cost",
+		]);
+	});
+
+	test("tierGap flags which axes were scored without dropping the rest", () => {
+		const gaps = tierGap({ ...measured, output: 0, cost: 0 }, 1);
+		expect(gaps).toHaveLength(5);
+		expect(gaps.filter((gap) => gap.scored).map((gap) => gap.axis)).toEqual([
+			"width",
+			"depth",
+			"sustain",
+		]);
 	});
 });

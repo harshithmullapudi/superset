@@ -18,7 +18,9 @@ import { NextResponse } from "next/server";
  */
 export function proxy(request: NextRequest) {
 	const { pathname } = request.nextUrl;
-	const [, first = "", ...rest] = pathname.split("/");
+	const segments = pathname.split("/").slice(1);
+	if (segments.length > 1 && segments.at(-1) === "") segments.pop();
+	const [first = "", ...rest] = segments;
 
 	if (first === "en") {
 		const url = request.nextUrl.clone();

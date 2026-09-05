@@ -379,7 +379,7 @@ async function collectAwardInput(userId: string): Promise<AwardInput | null> {
 			.select({
 				day: leaderboardDailyFactory.day,
 				parallelSessions: sql<string>`max(${leaderboardDailyFactory.parallelSessions})`,
-				agentPrsMerged: sql<number>`max(${leaderboardDailyFactory.agentPrsMerged})::int`,
+				agentPrsMerged: sql<number>`sum(${leaderboardDailyFactory.agentPrsMerged})::int`,
 			})
 			.from(leaderboardDailyFactory)
 			.where(eq(leaderboardDailyFactory.userId, userId))
@@ -902,7 +902,8 @@ export const leaderboardRouter = createTRPCRouter({
 			.input(searchSchema)
 			.query(async ({ ctx, input }) => {
 				await enforcePublicRead(ctx.headers);
-				return await searchParticipants(input.query);
+				const { query, ...window } = input;
+				return await searchParticipants(query, window);
 			}),
 
 		participant: publicProcedure

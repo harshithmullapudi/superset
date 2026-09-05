@@ -1,6 +1,6 @@
 "use client";
 
-import { Trans, useLingui } from "@lingui/react/macro";
+import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { formatDate } from "@superset/i18n/format";
 import { CATALOG_BY_SLUG } from "@superset/trpc/leaderboard-achievements";
 import {
@@ -62,9 +62,17 @@ export function AchievementMedal({
 				</div>
 
 				<p className="font-mono text-[0.62rem] uppercase tracking-[0.09em] text-muted-foreground mt-1.5 leading-relaxed">
-					{threshold === undefined
-						? t(copy.detail)
-						: `${thresholdLabel(slug, threshold)} ${t(copy.detail)}`}
+					{threshold === undefined ? (
+						t(copy.detail)
+					) : slug === "ship-it" ? (
+						<Plural
+							value={threshold}
+							one="# agent PR merged"
+							other="# agent PRs merged"
+						/>
+					) : (
+						`${thresholdLabel(slug, threshold)} ${t(copy.detail)}`
+					)}
 				</p>
 
 				<p className="font-mono text-[0.56rem] uppercase tracking-[0.09em] text-muted-foreground/60 mt-2.5 border-t border-border pt-2">

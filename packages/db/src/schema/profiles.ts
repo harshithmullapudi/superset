@@ -4,6 +4,7 @@ import {
 	boolean,
 	check,
 	date,
+	foreignKey,
 	index,
 	integer,
 	numeric,
@@ -51,6 +52,7 @@ export const handles = pgTable(
 	(table) => [
 		unique("handles_user_key").on(table.userId),
 		unique("handles_organization_key").on(table.organizationId),
+		unique("handles_user_owner_key").on(table.handle, table.userId),
 		index("handles_owner_type_idx").on(table.ownerType),
 		check(
 			"handles_owner_matches_type",
@@ -60,7 +62,10 @@ export const handles = pgTable(
 				or (${table.ownerType} = 'reserved' and ${table.userId} is null and ${table.organizationId} is null)
 			)`,
 		),
-		check("handles_shape", sql`${table.handle} ~ '^[a-z0-9][a-z0-9-]{0,38}$'`),
+		check(
+			"handles_shape",
+			sql`length(${table.handle}) between 2 and 39 and ${table.handle} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`,
+		),
 	],
 );
 
@@ -74,13 +79,7 @@ export const publicProfiles = pgTable(
 			.primaryKey()
 			.references(() => users.id, { onDelete: "cascade" }),
 
-		handle: text()
-			.notNull()
-			.unique()
-			.references(() => handles.handle, {
-				onDelete: "restrict",
-				onUpdate: "cascade",
-			}),
+		handle: text().notNull().unique(),
 		visibility: leaderboardVisibility().notNull().default("public"),
 
 		bio: text(),
@@ -154,6 +153,13 @@ export const publicProfiles = pgTable(
 			.$onUpdate(() => new Date()),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.handle, table.userId],
+			foreignColumns: [handles.handle, handles.userId],
+			name: "public_profiles_handle_owner_fk",
+		})
+			.onDelete("cascade")
+			.onUpdate("cascade"),
 		index("public_profiles_tokens_idx").on(table.tokens),
 		index("public_profiles_org_idx").on(table.organizationId),
 		index("public_profiles_usd_idx").on(table.usd),

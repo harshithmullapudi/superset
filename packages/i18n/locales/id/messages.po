@@ -294,6 +294,11 @@ msgstr "{0} → {1} tertunda"
 msgid "{0} actions"
 msgstr "Aksi {0}"
 
+#. placeholder {0}: left.name
+#. placeholder {1}: right.name
+msgid "{0} and {1} settle it as terminal dinosaurs. Stats decide the winner."
+msgstr "{0} dan {1} menyelesaikannya sebagai dinosaurus terminal. Statistik yang menentukan pemenangnya."
+
 #. placeholder {0}: formatTokens(me.tokens - below.tokens)
 msgid "{0} behind you"
 msgstr "{0} di belakang Anda"
@@ -424,6 +429,11 @@ msgstr "{0} lagi untuk melewati #{1}"
 msgid "{0} tokens in the last 30 days. Publishing as <0>{handle}</0>."
 msgstr "{0} token dalam 30 hari terakhir. Dipublikasikan sebagai <0>{handle}</0>."
 
+#. placeholder {0}: formatTokens(cell.tokens)
+#. placeholder {1}: cell.day
+msgid "{0} tokens on {1}"
+msgstr "{0} token pada {1}"
+
 #. placeholder {0}: formatTokens(calendar.total)
 #. placeholder {1}: String(calendar.activeDays)
 msgid "{0} tokens over {1} active days"
@@ -437,9 +447,24 @@ msgstr "{0} dicopot"
 msgid "{0} updated"
 msgstr "{0} diperbarui"
 
+#. placeholder {0}: left.name
+#. placeholder {1}: right.name
+msgid "{0} vs {1}"
+msgstr "{0} melawan {1}"
+
 #. placeholder {0}: file.path
 msgid "{0} was deleted in this change."
 msgstr "{0} dihapus dalam perubahan ini."
+
+#. placeholder {0}: winner?.name
+#. placeholder {1}: result.events.length
+msgid "{0} wins in {1} turns"
+msgstr "{0} menang dalam {1} giliran"
+
+#. placeholder {0}: winner?.name
+#. placeholder {1}: result.events.length
+msgid "{0} wins on damage after {1} turns"
+msgstr "{0} menang berdasarkan kerusakan setelah {1} giliran"
 
 #. placeholder {0}: check.name
 #. placeholder {1}: took ? `, ${took}` : ""
@@ -800,6 +825,9 @@ msgstr "{teardownFailureCount, plural, one {Tetap hapus akan melewati skrip tear
 
 msgid "{teardownFailureCount, plural, one {Delete anyway} other {Delete # anyway}}"
 msgstr "{teardownFailureCount, plural, one {Tetap hapus} other {Tetap hapus #}}"
+
+msgid "{threshold, plural, one {# agent PR merged} other {# agent PRs merged}}"
+msgstr "{threshold, plural, other {# PR agen digabungkan}}"
 
 msgid "{toolName} interrupted"
 msgstr "{toolName} dihentikan"
@@ -2168,9 +2196,6 @@ msgstr "Menunggu review dari Anda"
 
 msgid "Awaiting review from you or your team"
 msgstr "Menunggu review dari Anda atau tim Anda"
-
-msgid "Axes are medians over the trailing 30 days"
-msgstr "Sumbu dihitung sebagai median selama 30 hari terakhir"
 
 msgid "Back"
 msgstr "Kembali"
@@ -3646,6 +3671,9 @@ msgstr "Gagal menyalin"
 msgid "Copy failed. Select the text and copy it manually."
 msgstr "Gagal menyalin. Pilih teksnya dan salin manual."
 
+msgid "copy fight link"
+msgstr "salin tautan pertarungan"
+
 msgid "Copy file name"
 msgstr "Salin nama file"
 
@@ -3959,6 +3987,9 @@ msgstr "Tidak bisa memuat pull request: {msg}"
 
 msgid "Couldn't load review comments"
 msgstr "Tidak bisa memuat komentar review"
+
+msgid "Couldn't load your profile, so editing is disabled."
+msgstr "Profil Anda tidak dapat dimuat, sehingga penyuntingan dinonaktifkan."
 
 msgid "Couldn't merge pull request"
 msgstr "Tidak bisa merge pull request"
@@ -4923,7 +4954,7 @@ msgid "Download Superset"
 msgstr "Unduh Superset"
 
 msgid "Download Superset and publish yours"
-msgstr "Unduh Superset dan publikasikan milikmu"
+msgstr "Unduh Superset dan publikasikan milik Anda"
 
 #. placeholder {0}: COMPANY.DOMAIN
 msgid "Download Superset at <0>{0}/download</0>."
@@ -5277,8 +5308,8 @@ msgstr "Tiap Jumat jam 4 sore, susun draf catatan rilis dari PR yang di-merge mi
 msgid "Every minute"
 msgstr "Tiap menit"
 
-msgid "Every objective is carrying its weight for the next rung. Medians over the trailing 30 days."
-msgstr "Setiap sasaran sudah menopang untuk anak tangga berikutnya. Median selama 30 hari terakhir."
+msgid "Every objective is carrying its weight for the next rung. Measured over the trailing 30 days."
+msgstr "Semua sasaran sudah berkontribusi sesuai bobotnya untuk tingkat berikutnya. Diukur selama 30 hari terakhir."
 
 msgid "Every star on <0>{repoSlug}</0>, plotted since launch."
 msgstr "Tiap star di <0>{repoSlug}</0>, diplot sejak peluncuran."
@@ -7462,7 +7493,7 @@ msgid "Legal"
 msgstr "Legal"
 
 msgid "Less"
-msgstr "Sedikit"
+msgstr "Lebih sedikit"
 
 msgid "less than a minute ago"
 msgstr "kurang dari semenit lalu"
@@ -7550,6 +7581,9 @@ msgstr "Tautkan dulu repositori GitHub ke proyeknya agar bisa di-clone."
 
 msgid "Link by Stripe"
 msgstr "Link by Stripe"
+
+msgid "link copied"
+msgstr "tautan disalin"
 
 msgid "Link copied"
 msgstr "Tautan disalin"
@@ -7934,6 +7968,9 @@ msgstr "Server MCP"
 
 msgid "Mean"
 msgstr "Rata-rata"
+
+msgid "Measured over the trailing 30 days"
+msgstr "Diukur selama 30 hari terakhir"
 
 msgid "Measuring resource usage…"
 msgstr "Mengukur penggunaan sumber daya…"
@@ -8343,6 +8380,9 @@ msgstr "Browser Baru"
 
 msgid "New Browser Tab"
 msgstr "Tab browser baru"
+
+msgid "new challengers"
+msgstr "penantang baru"
 
 msgid "New chat"
 msgstr "Chat baru"
@@ -9212,7 +9252,7 @@ msgid "One human drives at most one agent at a time."
 msgstr "Satu manusia mengendalikan paling banyak satu agen sekaligus."
 
 msgid "One line about how you work"
-msgstr "Satu baris tentang caramu bekerja"
+msgstr "Satu baris tentang cara Anda bekerja"
 
 msgid "One of the first hundred on the board"
 msgstr "Termasuk seratus orang pertama di papan"
@@ -10105,6 +10145,9 @@ msgstr "Pilih folder worktree proyek di {hostName}."
 msgid "Pick the worktree folder on {hostName}."
 msgstr "Pilih folder worktree di {hostName}."
 
+msgid "Pick two developers, watch their agent usage stats fight it out as terminal dinosaurs. Same two handles always produce the same fight."
+msgstr "Pilih dua pengembang, lalu saksikan statistik penggunaan agen mereka bertarung sebagai dinosaurus terminal. Dua nama pengguna yang sama selalu menghasilkan pertarungan yang sama."
+
 msgid "Pick your agent for a one-line install, or copy the config by hand. Every client, including OAuth and API key setup, is covered in the <0>full MCP server docs</0>."
 msgstr "Pilih agen Anda untuk pemasangan satu baris, atau salin konfigurasinya secara manual. Semua klien, termasuk penyiapan OAuth dan kunci API, dibahas di <0>dokumentasi lengkap server MCP</0>."
 
@@ -10695,7 +10738,7 @@ msgid "Rank"
 msgstr "Peringkat"
 
 msgid "rank #{rank} of {total}"
-msgstr "peringkat {rank} dari {total}"
+msgstr "peringkat #{rank} dari {total}"
 
 msgid "Rank by"
 msgstr "Urutkan berdasarkan"
@@ -10910,6 +10953,9 @@ msgstr "Pindahkan proyek?"
 
 msgid "Relocating…"
 msgstr "Memindahkan…"
+
+msgid "rematch"
+msgstr "tanding ulang"
 
 msgid "remote"
 msgstr "remote"
@@ -12294,7 +12340,7 @@ msgid "Shimmer · Shimmer Label"
 msgstr "Shimmer · Label Shimmer"
 
 msgid "Ship It"
-msgstr "Terkirim"
+msgstr "Rilis"
 
 msgid "Shortcut already in use"
 msgstr "Pintasan sudah dipakai"
@@ -13063,6 +13109,9 @@ msgstr "Ringkasan"
 
 msgid "sun 11:00"
 msgstr "min 11:00"
+
+msgid "Super Fights"
+msgstr "Pertarungan Super"
 
 msgid "superseded"
 msgstr "digantikan"
@@ -14908,6 +14957,11 @@ msgstr "VS Code"
 msgid "Wait for workspace setup before starting agents"
 msgstr "Tunggu setup workspace sebelum menjalankan agen"
 
+#. placeholder {0}: names.a
+#. placeholder {1}: names.b
+msgid "waiting for {0} and {1}…"
+msgstr "menunggu {0} dan {1}…"
+
 msgid "Waiting for Checks"
 msgstr "Menunggu Check"
 
@@ -15125,7 +15179,7 @@ msgid "Where to look next"
 msgstr "Ke mana mencari berikutnya"
 
 msgid "Where you actually are"
-msgstr "Posisimu yang sebenarnya"
+msgstr "Posisi Anda yang sebenarnya"
 
 msgid "Which agents are supported?"
 msgstr "Agen mana saja yang didukung?"
@@ -15451,7 +15505,7 @@ msgid "Your download starts automatically. If it didn't, grab it here."
 msgstr "Unduhan Anda dimulai otomatis. Jika tidak, ambil di sini."
 
 msgid "Your GitHub link comes from the account you signed in with, so it shows as verified and cannot be edited here."
-msgstr "Tautan GitHub-mu berasal dari akun yang kamu pakai untuk masuk, jadi ditampilkan sebagai terverifikasi dan tidak bisa diubah di sini."
+msgstr "Tautan GitHub Anda berasal dari akun yang Anda gunakan untuk masuk, jadi ditampilkan sebagai terverifikasi dan tidak bisa diubah di sini."
 
 msgid "Your name"
 msgstr "Nama Anda"
@@ -15466,11 +15520,15 @@ msgstr "Paket organisasi Anda dikelola oleh pemiliknya di {0}."
 msgid "Your rank"
 msgstr "Peringkat Anda"
 
-msgid "Your rung is a weighted score across all five objectives, so a strong one offsets a weak one. Medians over the trailing 30 days."
-msgstr "Anak tanggamu adalah skor berbobot dari kelima sasaran, jadi yang kuat menutupi yang lemah. Median selama 30 hari terakhir."
+#. placeholder {0}: String(gaps.length)
+msgid "Your rung is a weighted score across the {0} objectives measured for you, so a strong one offsets a weak one. Measured over the trailing 30 days."
+msgstr "Tingkat Anda adalah skor berbobot dari {0} sasaran yang terukur untuk Anda, sehingga sasaran yang kuat mengimbangi yang lemah. Diukur selama 30 hari terakhir."
 
 msgid "Your Slack account has been linked to Superset. You can close this tab and return to Slack."
 msgstr "Akun Slack Anda sudah ditautkan ke Superset. Anda bisa menutup tab ini dan kembali ke Slack."
+
+msgid "Your stats, settled in combat"
+msgstr "Statistik Anda, diadu dalam pertarungan"
 
 msgid "Your subscription has been activated. You can now access all Pro features."
 msgstr "Langganan Anda sudah aktif. Sekarang Anda bisa mengakses semua fitur Pro."
@@ -15484,8 +15542,9 @@ msgstr "Unduhan Superset Anda sedang dimulai."
 msgid "Your terminal sessions won't be interrupted."
 msgstr "Sesi terminal Anda tidak akan terganggu."
 
-msgid "Your tier is a weighted score across all five axes, so a strong axis offsets a weak one. The axes below are the ones lagging."
-msgstr "Tingkatmu adalah skor berbobot dari kelima sumbu, jadi sumbu yang kuat menutupi yang lemah. Di bawah ini sumbu yang tertinggal."
+#. placeholder {0}: String(gaps.length)
+msgid "Your tier is a weighted score across the {0} axes measured for you, so a strong axis offsets a weak one. The axes below are the ones lagging."
+msgstr "Peringkat Anda adalah skor berbobot dari {0} sumbu yang terukur untuk Anda, sehingga sumbu yang kuat mengimbangi yang lemah. Sumbu di bawah ini yang tertinggal."
 
 msgid "Your tokens"
 msgstr "Token Anda"

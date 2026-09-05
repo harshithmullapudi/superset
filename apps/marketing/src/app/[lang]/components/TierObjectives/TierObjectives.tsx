@@ -1,12 +1,9 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import { formatList } from "@superset/i18n/format";
 import {
-	type AxisGap,
-	type AxisName,
 	type AxisValues,
-	blockingAxes,
+	scoredGaps,
 	type Tier,
-	tierGap,
 } from "@superset/trpc/leaderboard-tier";
 import { MeterBar } from "@/app/[lang]/components/MeterBar";
 import { tierLabel } from "@/app/[lang]/components/TierBadge";
@@ -14,29 +11,7 @@ import {
 	AXIS_LABELS,
 	AXIS_UNITS,
 } from "@/app/[lang]/components/TierGate/constants";
-import {
-	formatCount,
-	formatTokens,
-	formatUsd,
-} from "@/app/[lang]/utils/formatUsage";
-
-function axisValue(axis: AxisName, value: number): string {
-	if (value <= 0 && axis === "cost") return "—";
-	if (axis === "depth") return formatTokens(value);
-	if (axis === "cost") return formatUsd(value);
-	if (axis === "width") return value.toFixed(1);
-	if (axis === "output") return String(Math.round(value));
-	return formatCount(value);
-}
-
-function fill(gap: AxisGap): number {
-	if (gap.needed <= 0) return 1;
-	if (gap.lowerIsBetter) {
-		if (gap.current <= 0) return 0;
-		return Math.min(1, gap.needed / gap.current);
-	}
-	return Math.min(1, gap.current / gap.needed);
-}
+import { axisValue, fill, laggingGaps } from "@/app/[lang]/utils/axisGaps";
 
 interface TierObjectivesProps {
 	tier: number;
@@ -45,21 +20,20 @@ interface TierObjectivesProps {
 
 export function TierObjectives({ tier, axes }: TierObjectivesProps) {
 	const { t } = useLingui();
-	const gaps = tierGap(axes, tier as Tier);
+	const gaps = scoredGaps(axes, tier as Tier);
 	const atTop = tier >= 4;
 	const nextLabel = t(tierLabel(Math.min(4, tier + 1)));
 	const met = gaps.filter((gap) => gap.met).length;
 
 	const BRAND = "210,86,17";
 
-	const lagging = blockingAxes(axes, tier as Tier).slice(0, 2);
 	const laggingLabels = formatList(
-		lagging.map((axis) => t(AXIS_LABELS[axis]).toLowerCase()),
+		laggingGaps(gaps, 2).map((gap) => t(AXIS_LABELS[gap.axis]).toLowerCase()),
 	);
 
 	return (
 		<details className="group px-5 py-4 [&_summary::-webkit-details-marker]:hidden">
-			<summary className="flex cursor-pointer list-none items-center gap-3 outline-none">
+			<summary className="flex cursor-pointer list-none items-center gap-3 outline-none focus-visible:ring-1 focus-visible:ring-brand">
 				<span
 					aria-hidden="true"
 					className="flex shrink-0 items-center text-muted-foreground/50 transition-transform group-open:rotate-90"
@@ -155,13 +129,14 @@ export function TierObjectives({ tier, axes }: TierObjectivesProps) {
 					<Trans>Top tier. Nothing left to clear.</Trans>
 				) : met === gaps.length ? (
 					<Trans>
-						Every objective is carrying its weight for the next rung. Medians
+						Every objective is carrying its weight for the next rung. Measured
 						over the trailing 30 days.
 					</Trans>
 				) : (
 					<Trans>
-						Your rung is a weighted score across all five objectives, so a
-						strong one offsets a weak one. Medians over the trailing 30 days.
+						Your rung is a weighted score across the {String(gaps.length)}{" "}
+						objectives measured for you, so a strong one offsets a weak one.
+						Measured over the trailing 30 days.
 					</Trans>
 				)}
 			</p>

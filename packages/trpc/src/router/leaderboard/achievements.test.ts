@@ -113,9 +113,20 @@ describe("totalAwardableRows", () => {
 	});
 
 	test("shrinks once a family retires, so maxed profiles stay maxed", () => {
-		const before = totalAwardableRows("2026-09-03");
-		expect(before).toBeGreaterThan(0);
-		expect(totalAwardableRows("2026-09-03")).toBe(before);
+		const shipIt = CATALOG.find((def) => def.slug === "ship-it");
+		if (!shipIt) throw new Error("ship-it missing from the catalog");
+		const catalog = [
+			...CATALOG,
+			{ ...shipIt, slug: "ship-it-legacy", retiredAt: "2026-09-30" },
+		];
+
+		const before = totalAwardableRows("2026-09-29", catalog);
+		const after = totalAwardableRows("2026-10-01", catalog);
+		expect(before).toBe(
+			totalAwardableRows("2026-09-29") + shipIt.thresholds.length,
+		);
+		expect(after).toBeLessThan(before);
+		expect(after).toBe(totalAwardableRows("2026-10-01"));
 	});
 });
 

@@ -294,6 +294,11 @@ msgstr "{0} → {1} đang chờ"
 msgid "{0} actions"
 msgstr "Hành động {0}"
 
+#. placeholder {0}: left.name
+#. placeholder {1}: right.name
+msgid "{0} and {1} settle it as terminal dinosaurs. Stats decide the winner."
+msgstr "{0} và {1} phân định thắng thua trong hình hài khủng long terminal. Thống kê quyết định người thắng."
+
 #. placeholder {0}: formatTokens(me.tokens - below.tokens)
 msgid "{0} behind you"
 msgstr "{0} phía sau bạn"
@@ -424,6 +429,11 @@ msgstr "{0} để vượt #{1}"
 msgid "{0} tokens in the last 30 days. Publishing as <0>{handle}</0>."
 msgstr "{0} token trong 30 ngày qua. Đang công khai dưới tên <0>{handle}</0>."
 
+#. placeholder {0}: formatTokens(cell.tokens)
+#. placeholder {1}: cell.day
+msgid "{0} tokens on {1}"
+msgstr "{0} token vào {1}"
+
 #. placeholder {0}: formatTokens(calendar.total)
 #. placeholder {1}: String(calendar.activeDays)
 msgid "{0} tokens over {1} active days"
@@ -437,9 +447,24 @@ msgstr "Đã gỡ {0}"
 msgid "{0} updated"
 msgstr "Đã cập nhật {0}"
 
+#. placeholder {0}: left.name
+#. placeholder {1}: right.name
+msgid "{0} vs {1}"
+msgstr "{0} đấu {1}"
+
 #. placeholder {0}: file.path
 msgid "{0} was deleted in this change."
 msgstr "{0} đã bị xóa trong thay đổi này."
+
+#. placeholder {0}: winner?.name
+#. placeholder {1}: result.events.length
+msgid "{0} wins in {1} turns"
+msgstr "{0} thắng sau {1} lượt"
+
+#. placeholder {0}: winner?.name
+#. placeholder {1}: result.events.length
+msgid "{0} wins on damage after {1} turns"
+msgstr "{0} thắng nhờ sát thương sau {1} lượt"
 
 #. placeholder {0}: check.name
 #. placeholder {1}: took ? `, ${took}` : ""
@@ -800,6 +825,9 @@ msgstr "{teardownFailureCount, plural, one {Vẫn xóa sẽ bỏ qua script tear
 
 msgid "{teardownFailureCount, plural, one {Delete anyway} other {Delete # anyway}}"
 msgstr "{teardownFailureCount, plural, one {Vẫn xóa} other {Vẫn xóa #}}"
+
+msgid "{threshold, plural, one {# agent PR merged} other {# agent PRs merged}}"
+msgstr "{threshold, plural, other {đã hợp nhất # PR của tác nhân}}"
 
 msgid "{toolName} interrupted"
 msgstr "{toolName} bị gián đoạn"
@@ -2168,9 +2196,6 @@ msgstr "Đang chờ bạn review"
 
 msgid "Awaiting review from you or your team"
 msgstr "Đang chờ bạn hoặc nhóm bạn review"
-
-msgid "Axes are medians over the trailing 30 days"
-msgstr "Các trục là trung vị của 30 ngày gần nhất"
 
 msgid "Back"
 msgstr "Quay lại"
@@ -3646,6 +3671,9 @@ msgstr "Sao chép thất bại"
 msgid "Copy failed. Select the text and copy it manually."
 msgstr "Sao chép thất bại. Hãy bôi đen văn bản và sao chép thủ công."
 
+msgid "copy fight link"
+msgstr "sao chép liên kết trận đấu"
+
 msgid "Copy file name"
 msgstr "Sao chép tên tệp"
 
@@ -3959,6 +3987,9 @@ msgstr "Không thể tải pull request: {msg}"
 
 msgid "Couldn't load review comments"
 msgstr "Không thể tải bình luận review"
+
+msgid "Couldn't load your profile, so editing is disabled."
+msgstr "Không tải được hồ sơ của bạn nên chức năng chỉnh sửa đã bị tắt."
 
 msgid "Couldn't merge pull request"
 msgstr "Không thể merge pull request"
@@ -5277,8 +5308,8 @@ msgstr "Mỗi thứ Sáu lúc 4h chiều, soạn ghi chú phát hành từ các 
 msgid "Every minute"
 msgstr "Mỗi phút"
 
-msgid "Every objective is carrying its weight for the next rung. Medians over the trailing 30 days."
-msgstr "Mọi mục tiêu đều đang góp sức cho nấc tiếp theo. Trung vị của 30 ngày gần nhất."
+msgid "Every objective is carrying its weight for the next rung. Measured over the trailing 30 days."
+msgstr "Mọi mục tiêu đều đang đóng góp cho bậc kế tiếp. Đo trong 30 ngày gần nhất."
 
 msgid "Every star on <0>{repoSlug}</0>, plotted since launch."
 msgstr "Mọi star trên <0>{repoSlug}</0>, vẽ từ ngày ra mắt."
@@ -7551,6 +7582,9 @@ msgstr "Hãy liên kết một repository GitHub với dự án trước để c
 msgid "Link by Stripe"
 msgstr "Link by Stripe"
 
+msgid "link copied"
+msgstr "đã sao chép liên kết"
+
 msgid "Link copied"
 msgstr "Đã sao chép liên kết"
 
@@ -7934,6 +7968,9 @@ msgstr "Server MCP"
 
 msgid "Mean"
 msgstr "Trung bình"
+
+msgid "Measured over the trailing 30 days"
+msgstr "Đo trong 30 ngày gần nhất"
 
 msgid "Measuring resource usage…"
 msgstr "Đang đo mức dùng tài nguyên…"
@@ -8343,6 +8380,9 @@ msgstr "Trình duyệt mới"
 
 msgid "New Browser Tab"
 msgstr "Tab trình duyệt mới"
+
+msgid "new challengers"
+msgstr "đối thủ mới"
 
 msgid "New chat"
 msgstr "Chat mới"
@@ -10105,6 +10145,9 @@ msgstr "Chọn thư mục worktree của dự án trên {hostName}."
 msgid "Pick the worktree folder on {hostName}."
 msgstr "Chọn thư mục worktree trên {hostName}."
 
+msgid "Pick two developers, watch their agent usage stats fight it out as terminal dinosaurs. Same two handles always produce the same fight."
+msgstr "Chọn hai nhà phát triển và xem thống kê sử dụng tác nhân của họ so tài trong hình hài khủng long terminal. Cùng một cặp tên luôn tạo ra cùng một trận đấu."
+
 msgid "Pick your agent for a one-line install, or copy the config by hand. Every client, including OAuth and API key setup, is covered in the <0>full MCP server docs</0>."
 msgstr "Chọn agent của bạn để cài bằng một dòng lệnh, hoặc tự sao chép cấu hình. Mọi client, kể cả thiết lập OAuth và khóa API, đều có trong <0>tài liệu đầy đủ về server MCP</0>."
 
@@ -10910,6 +10953,9 @@ msgstr "Chuyển vị trí dự án?"
 
 msgid "Relocating…"
 msgstr "Đang chuyển…"
+
+msgid "rematch"
+msgstr "tái đấu"
 
 msgid "remote"
 msgstr "remote"
@@ -13064,6 +13110,9 @@ msgstr "Tóm tắt"
 msgid "sun 11:00"
 msgstr "CN 11:00"
 
+msgid "Super Fights"
+msgstr "Siêu Đấu"
+
 msgid "superseded"
 msgstr "bị thay thế"
 
@@ -14908,6 +14957,11 @@ msgstr "VS Code"
 msgid "Wait for workspace setup before starting agents"
 msgstr "Chờ setup workspace xong rồi mới khởi động agent"
 
+#. placeholder {0}: names.a
+#. placeholder {1}: names.b
+msgid "waiting for {0} and {1}…"
+msgstr "đang chờ {0} và {1}…"
+
 msgid "Waiting for Checks"
 msgstr "Đang chờ check"
 
@@ -15466,11 +15520,15 @@ msgstr "Gói của tổ chức bạn do chủ sở hữu quản lý tại {0}."
 msgid "Your rank"
 msgstr "Thứ hạng của bạn"
 
-msgid "Your rung is a weighted score across all five objectives, so a strong one offsets a weak one. Medians over the trailing 30 days."
-msgstr "Nấc của bạn là điểm có trọng số trên cả năm mục tiêu, nên mục tiêu mạnh bù cho mục tiêu yếu. Trung vị của 30 ngày gần nhất."
+#. placeholder {0}: String(gaps.length)
+msgid "Your rung is a weighted score across the {0} objectives measured for you, so a strong one offsets a weak one. Measured over the trailing 30 days."
+msgstr "Bậc của bạn là điểm số có trọng số trên {0} mục tiêu đo được cho bạn, nên mục tiêu mạnh bù cho mục tiêu yếu. Đo trong 30 ngày gần nhất."
 
 msgid "Your Slack account has been linked to Superset. You can close this tab and return to Slack."
 msgstr "Tài khoản Slack của bạn đã được liên kết với Superset. Bạn có thể đóng tab này và quay lại Slack."
+
+msgid "Your stats, settled in combat"
+msgstr "Thống kê của bạn, phân định bằng trận đấu"
 
 msgid "Your subscription has been activated. You can now access all Pro features."
 msgstr "Gói đăng ký của bạn đã được kích hoạt. Bây giờ bạn có thể dùng mọi tính năng Pro."
@@ -15484,8 +15542,9 @@ msgstr "Bản tải xuống Superset của bạn đang bắt đầu."
 msgid "Your terminal sessions won't be interrupted."
 msgstr "Các phiên terminal của bạn sẽ không bị gián đoạn."
 
-msgid "Your tier is a weighted score across all five axes, so a strong axis offsets a weak one. The axes below are the ones lagging."
-msgstr "Hạng của bạn là điểm có trọng số trên cả năm trục, nên trục mạnh bù cho trục yếu. Dưới đây là những trục đang tụt lại."
+#. placeholder {0}: String(gaps.length)
+msgid "Your tier is a weighted score across the {0} axes measured for you, so a strong axis offsets a weak one. The axes below are the ones lagging."
+msgstr "Hạng của bạn là điểm số có trọng số trên {0} trục đo được cho bạn, nên trục mạnh bù cho trục yếu. Các trục dưới đây đang tụt lại."
 
 msgid "Your tokens"
 msgstr "Token của bạn"

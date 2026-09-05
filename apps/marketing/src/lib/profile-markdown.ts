@@ -2,14 +2,19 @@ import { COMPANY } from "@superset/shared/constants";
 import {
 	type AchievementDef,
 	CATALOG_BY_SLUG,
+	highestPerSlug,
+	isCurrencyAward,
 } from "@superset/trpc/leaderboard-achievements";
 import {
 	type AxisName,
+	scoredGaps,
 	TIER_NAMES,
 	type Tier,
-	tierGap,
 } from "@superset/trpc/leaderboard-tier";
 import type { ParticipantProfile } from "@/app/[lang]/utils/fetchLeaderboard";
+
+const cell = (value: string) =>
+	value.replace(/\r?\n/g, " ").replace(/\|/g, "\\|").trim();
 
 const AXIS_MEANING: Record<AxisName, string> = {
 	width: "agents running at once",
@@ -50,38 +55,33 @@ function achievementLine(
 	const reached =
 		threshold === undefined
 			? ""
-			: ` at ${def.slug === "efficient" ? `$${threshold}` : compact(threshold)}`;
+			: ` at ${isCurrencyAward(def) ? `$${threshold}` : compact(threshold)}`;
 	return `- **${def.slug}**${level}${reached}, earned ${awardedOn}`;
 }
 
 export function renderProfileMarkdown(profile: ParticipantProfile): string {
 	const tier = profile.factory?.tier ?? 0;
-	const gaps = tierGap(profile.axes, tier as Tier);
+	const gaps = scoredGaps(profile.axes, tier as Tier);
 	const next = Math.min(4, tier + 1);
 
-	const activeDays = profile.daily.filter((day) => day.tokens > 0).length;
+	const yearAgo = new Date(Date.now() - 365 * 86_400_000)
+		.toISOString()
+		.slice(0, 10);
+	const activeDays = profile.daily.filter(
+		(day) => day.tokens > 0 && day.day >= yearAgo,
+	).length;
 	const busiest = profile.daily.reduce(
 		(best, day) => (day.tokens > best.tokens ? day : best),
 		{ day: "—", tokens: 0, usd: "0" },
 	);
 
-	const held = new Map<string, { tier: number; awardedOn: string }>();
-	for (const award of profile.awards) {
-		const existing = held.get(award.slug);
-		held.set(award.slug, {
-			tier: Math.max(existing?.tier ?? 0, award.tier),
-			awardedOn:
-				existing && existing.awardedOn < award.awardedOn
-					? existing.awardedOn
-					: award.awardedOn,
-		});
-	}
+	const held = highestPerSlug(profile.awards);
 
-	const badges = [...held].filter(
-		([slug]) => CATALOG_BY_SLUG[slug]?.kind === "badge",
+	const badges = held.filter(
+		(award) => CATALOG_BY_SLUG[award.slug]?.kind === "badge",
 	);
-	const milestones = [...held].filter(
-		([slug]) => CATALOG_BY_SLUG[slug]?.kind === "milestone",
+	const milestones = held.filter(
+		(award) => CATALOG_BY_SLUG[award.slug]?.kind === "milestone",
 	);
 
 	const lines: string[] = [
@@ -99,7 +99,7 @@ export function renderProfileMarkdown(profile: ParticipantProfile): string {
 	];
 
 	if (profile.bio) {
-		lines.push("## Bio", "", profile.bio, "");
+		lines.push("## Bio", "", `> ${cell(profile.bio)}`, "");
 	}
 
 	const links = [
@@ -117,8 +117,8 @@ export function renderProfileMarkdown(profile: ParticipantProfile): string {
 	lines.push(
 		"## How this tier was reached",
 		"",
-		`Tier is the weakest of five axes, so ${tierName(next)} needs all five at once.`,
-		"All axes are medians over the trailing 30 days.",
+		`Tier is a weighted score across the axes measured for you, so a strong axis offsets a weak one. ${tierName(next)} needs a higher combined score, and cost also caps the tier on its own.`,
+		`Scored on ${gaps.length} ${gaps.length === 1 ? "axis" : "axes"}, measured over the trailing 30 days.`,
 		"",
 		"| Axis | Current | Needed | Met | Measures |",
 		"| --- | --- | --- | --- | --- |",
@@ -137,11 +137,11 @@ export function renderProfileMarkdown(profile: ParticipantProfile): string {
 		lines.push(
 			"## Achievements",
 			"",
-			...badges.map(([slug, award]) => {
-				const def = CATALOG_BY_SLUG[slug];
+			...badges.map((award) => {
+				const def = CATALOG_BY_SLUG[award.slug];
 				return def
 					? achievementLine(def, award.tier, award.awardedOn)
-					: `- ${slug}`;
+					: `- ${award.slug}`;
 			}),
 			"",
 		);
@@ -151,10 +151,12 @@ export function renderProfileMarkdown(profile: ParticipantProfile): string {
 		lines.push(
 			"## Milestones",
 			"",
-			...milestones.map(([slug, award]) => {
+			...milestones.map((award) => {
 				const threshold =
-					CATALOG_BY_SLUG[slug]?.thresholds[Math.max(0, award.tier - 1)];
-				return `- ${slug}: ${threshold === undefined ? "—" : compact(threshold)}`;
+					CATALOG_BY_SLUG[award.slug]?.thresholds[Math.max(0, award.tier - 1)];
+				return `- ${award.slug}: ${
+					threshold === undefined ? "—" : compact(threshold)
+				}`;
 			}),
 			"",
 		);
@@ -172,7 +174,7 @@ export function renderProfileMarkdown(profile: ParticipantProfile): string {
 		"| --- | --- | --- | --- |",
 		...profile.models.map(
 			(model) =>
-				`| ${model.provider} | ${model.model} | ${compact(model.tokens)} | $${Number(model.usd).toFixed(2)} |`,
+				`| ${cell(model.provider)} | ${cell(model.model)} | ${compact(model.tokens)} | $${Number(model.usd).toFixed(2)} |`,
 		),
 		"",
 		"## Token breakdown",

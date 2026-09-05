@@ -1,3 +1,6 @@
+import { i18n } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
+import { Trans } from "@lingui/react/macro";
 import { COMPANY } from "@superset/shared/constants";
 import type { Metadata } from "next";
 import { Silkscreen } from "next/font/google";
@@ -41,12 +44,8 @@ async function resolveFighter(handle?: string): Promise<Fighter | null> {
 	const house = HOUSE_FIGHTERS.find((entry) => entry.handle === normalized);
 	if (house) return house;
 
-	try {
-		const profile = await fetchParticipant(normalized, { period: "30d" });
-		return profile ? fromParticipant(profile) : null;
-	} catch {
-		return null;
-	}
+	const profile = await fetchParticipant(normalized, { period: "30d" });
+	return profile ? fromParticipant(profile) : null;
 }
 
 export async function generateMetadata({
@@ -57,11 +56,26 @@ export async function generateMetadata({
 	const [left, right] = await resolveMatchup(a, b);
 
 	const title =
-		left && right ? `${left.name} vs ${right.name}` : "Super Fights";
+		left && right
+			? i18n._(
+					msg({
+						message: `${left.name} vs ${right.name}`,
+					}),
+				)
+			: i18n._(msg({ message: "Super Fights" }));
 	const description =
 		left && right
-			? `${left.name} and ${right.name} settle it as terminal dinosaurs. Stats decide the winner.`
-			: "Pick two developers, watch their agent usage stats fight it out as terminal dinosaurs. Same two handles always produce the same fight.";
+			? i18n._(
+					msg({
+						message: `${left.name} and ${right.name} settle it as terminal dinosaurs. Stats decide the winner.`,
+					}),
+				)
+			: i18n._(
+					msg({
+						message:
+							"Pick two developers, watch their agent usage stats fight it out as terminal dinosaurs. Same two handles always produce the same fight.",
+					}),
+				);
 
 	return {
 		title,
@@ -95,10 +109,10 @@ export default async function FightPage({ searchParams }: PageProps) {
 					<h1
 						className={`${pixel.className} text-3xl md:text-4xl text-foreground`}
 					>
-						Super Fights
+						<Trans>Super Fights</Trans>
 					</h1>
 					<p className="font-mono text-[0.68rem] uppercase tracking-[0.14em] text-muted-foreground mt-5">
-						Your stats, settled in combat
+						<Trans>Your stats, settled in combat</Trans>
 					</p>
 				</header>
 

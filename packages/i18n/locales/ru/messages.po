@@ -294,6 +294,11 @@ msgstr "{0} → {1} ожидается"
 msgid "{0} actions"
 msgstr "Действия {0}"
 
+#. placeholder {0}: left.name
+#. placeholder {1}: right.name
+msgid "{0} and {1} settle it as terminal dinosaurs. Stats decide the winner."
+msgstr "{0} и {1} выясняют отношения в облике терминальных динозавров. Победителя решает статистика."
+
 #. placeholder {0}: formatTokens(me.tokens - below.tokens)
 msgid "{0} behind you"
 msgstr "{0} позади вас"
@@ -424,10 +429,15 @@ msgstr "{0} чтобы обогнать #{1}"
 msgid "{0} tokens in the last 30 days. Publishing as <0>{handle}</0>."
 msgstr "{0} токенов за последние 30 дней. Публикация как <0>{handle}</0>."
 
+#. placeholder {0}: formatTokens(cell.tokens)
+#. placeholder {1}: cell.day
+msgid "{0} tokens on {1}"
+msgstr "{0} токенов за {1}"
+
 #. placeholder {0}: formatTokens(calendar.total)
 #. placeholder {1}: String(calendar.activeDays)
 msgid "{0} tokens over {1} active days"
-msgstr "{0} токенов за {1} активных дней"
+msgstr "{0} токенов · {1} дн. активности"
 
 #. placeholder {0}: displayName(variables.name)
 msgid "{0} uninstalled"
@@ -437,9 +447,24 @@ msgstr "{0} удалён"
 msgid "{0} updated"
 msgstr "{0} обновлён"
 
+#. placeholder {0}: left.name
+#. placeholder {1}: right.name
+msgid "{0} vs {1}"
+msgstr "{0} против {1}"
+
 #. placeholder {0}: file.path
 msgid "{0} was deleted in this change."
 msgstr "{0} был удалён в этом изменении."
+
+#. placeholder {0}: winner?.name
+#. placeholder {1}: result.events.length
+msgid "{0} wins in {1} turns"
+msgstr "{0} побеждает за {1} ходов"
+
+#. placeholder {0}: winner?.name
+#. placeholder {1}: result.events.length
+msgid "{0} wins on damage after {1} turns"
+msgstr "{0} побеждает по урону после {1} ходов"
 
 #. placeholder {0}: check.name
 #. placeholder {1}: took ? `, ${took}` : ""
@@ -800,6 +825,9 @@ msgstr "{teardownFailureCount, plural, one {«Всё равно удалить»
 
 msgid "{teardownFailureCount, plural, one {Delete anyway} other {Delete # anyway}}"
 msgstr "{teardownFailureCount, plural, one {Всё равно удалить} few {Всё равно удалить #} many {Всё равно удалить #} other {Всё равно удалить #}}"
+
+msgid "{threshold, plural, one {# agent PR merged} other {# agent PRs merged}}"
+msgstr "{threshold, plural, one {влит # PR агента} few {влито # PR агента} many {влито # PR агента} other {влито # PR агента}}"
 
 msgid "{toolName} interrupted"
 msgstr "{toolName} прерван"
@@ -1237,7 +1265,7 @@ msgid "active days"
 msgstr "активных дней"
 
 msgid "Active days in the last 30"
-msgstr "Активных дней за последние 30"
+msgstr "Активных дней за последние 30 дней"
 
 msgid "Active organization required to create an API key"
 msgstr "Для создания ключа API нужна активная организация"
@@ -1596,7 +1624,7 @@ msgid "All in current tab (split panes)"
 msgstr "Все в текущей вкладке (разделённые панели)"
 
 msgid "All objectives cleared. Top rung, nothing left to reach for."
-msgstr "Все цели взяты. Верхняя ступень, дальше некуда."
+msgstr "Все цели выполнены. Верхняя ступень, дальше некуда."
 
 msgid "All of the organization's data will be permanently deleted — this cannot be undone."
 msgstr "Все данные организации будут безвозвратно удалены — это нельзя отменить."
@@ -2168,9 +2196,6 @@ msgstr "Ожидает вашего ревью"
 
 msgid "Awaiting review from you or your team"
 msgstr "Ожидает ревью от вас или вашей команды"
-
-msgid "Axes are medians over the trailing 30 days"
-msgstr "Оси — это медианы за последние 30 дней"
 
 msgid "Back"
 msgstr "Назад"
@@ -3646,6 +3671,9 @@ msgstr "Не удалось скопировать"
 msgid "Copy failed. Select the text and copy it manually."
 msgstr "Не удалось скопировать. Выделите текст и скопируйте вручную."
 
+msgid "copy fight link"
+msgstr "скопировать ссылку на бой"
+
 msgid "Copy file name"
 msgstr "Скопировать имя файла"
 
@@ -3959,6 +3987,9 @@ msgstr "Не удалось загрузить пул-реквесты: {msg}"
 
 msgid "Couldn't load review comments"
 msgstr "Не удалось загрузить комментарии ревью"
+
+msgid "Couldn't load your profile, so editing is disabled."
+msgstr "Не удалось загрузить профиль, поэтому редактирование отключено."
 
 msgid "Couldn't merge pull request"
 msgstr "Не удалось объединить пул-реквест"
@@ -5277,8 +5308,8 @@ msgstr "Каждую пятницу в 16:00 готовь черновик relea
 msgid "Every minute"
 msgstr "Каждую минуту"
 
-msgid "Every objective is carrying its weight for the next rung. Medians over the trailing 30 days."
-msgstr "Каждая цель работает на следующую ступень. Медианы за последние 30 дней."
+msgid "Every objective is carrying its weight for the next rung. Measured over the trailing 30 days."
+msgstr "Все цели работают на следующую ступень. Измерено за последние 30 дней."
 
 msgid "Every star on <0>{repoSlug}</0>, plotted since launch."
 msgstr "Каждая звезда на <0>{repoSlug}</0> с момента запуска."
@@ -7551,6 +7582,9 @@ msgstr "Сначала свяжите проект с репозиторием G
 msgid "Link by Stripe"
 msgstr "Link от Stripe"
 
+msgid "link copied"
+msgstr "ссылка скопирована"
+
 msgid "Link copied"
 msgstr "Ссылка скопирована"
 
@@ -7934,6 +7968,9 @@ msgstr "Сервер MCP"
 
 msgid "Mean"
 msgstr "Среднее"
+
+msgid "Measured over the trailing 30 days"
+msgstr "Измерено за последние 30 дней"
 
 msgid "Measuring resource usage…"
 msgstr "Измерение потребления ресурсов…"
@@ -8343,6 +8380,9 @@ msgstr "Новый браузер"
 
 msgid "New Browser Tab"
 msgstr "Новая вкладка браузера"
+
+msgid "new challengers"
+msgstr "другие соперники"
 
 msgid "New chat"
 msgstr "Новый чат"
@@ -9215,7 +9255,7 @@ msgid "One line about how you work"
 msgstr "Одна строка о том, как вы работаете"
 
 msgid "One of the first hundred on the board"
-msgstr "Один из первой сотни в рейтинге"
+msgstr "В числе первых ста в рейтинге"
 
 msgid "one of the selected repositories"
 msgstr "один из выбранных репозиториев"
@@ -10105,6 +10145,9 @@ msgstr "Выберите папку worktree проекта на {hostName}."
 msgid "Pick the worktree folder on {hostName}."
 msgstr "Выберите папку worktree на {hostName}."
 
+msgid "Pick two developers, watch their agent usage stats fight it out as terminal dinosaurs. Same two handles always produce the same fight."
+msgstr "Выберите двух разработчиков и посмотрите, как их статистика использования агентов сразится в облике терминальных динозавров. Одна и та же пара имён всегда даёт один и тот же бой."
+
 msgid "Pick your agent for a one-line install, or copy the config by hand. Every client, including OAuth and API key setup, is covered in the <0>full MCP server docs</0>."
 msgstr "Выберите агента для установки одной строкой или скопируйте конфигурацию вручную. Все клиенты, включая настройку OAuth и ключей API, описаны в <0>полной документации сервера MCP</0>."
 
@@ -10910,6 +10953,9 @@ msgstr "Переместить проект?"
 
 msgid "Relocating…"
 msgstr "Перемещение…"
+
+msgid "rematch"
+msgstr "реванш"
 
 msgid "remote"
 msgstr "удалённая"
@@ -12294,7 +12340,7 @@ msgid "Shimmer · Shimmer Label"
 msgstr "Мерцание · метка мерцания"
 
 msgid "Ship It"
-msgstr "Доставлено"
+msgstr "Выпущено"
 
 msgid "Shortcut already in use"
 msgstr "Сочетание уже используется"
@@ -13063,6 +13109,9 @@ msgstr "Сводка"
 
 msgid "sun 11:00"
 msgstr "вс 11:00"
+
+msgid "Super Fights"
+msgstr "Супербои"
 
 msgid "superseded"
 msgstr "заменён"
@@ -14908,6 +14957,11 @@ msgstr "VS Code"
 msgid "Wait for workspace setup before starting agents"
 msgstr "Ждать настройки рабочей области перед запуском агентов"
 
+#. placeholder {0}: names.a
+#. placeholder {1}: names.b
+msgid "waiting for {0} and {1}…"
+msgstr "ожидание {0} и {1}…"
+
 msgid "Waiting for Checks"
 msgstr "Ожидание проверок"
 
@@ -15466,11 +15520,15 @@ msgstr "Тарифом вашей организации управляет её
 msgid "Your rank"
 msgstr "Ваше место"
 
-msgid "Your rung is a weighted score across all five objectives, so a strong one offsets a weak one. Medians over the trailing 30 days."
-msgstr "Ваша ступень — взвешенная оценка по всем пяти целям, поэтому сильная цель компенсирует слабую. Медианы за последние 30 дней."
+#. placeholder {0}: String(gaps.length)
+msgid "Your rung is a weighted score across the {0} objectives measured for you, so a strong one offsets a weak one. Measured over the trailing 30 days."
+msgstr "Ваша ступень — взвешенная оценка по целям, которых измерено {0}, поэтому сильная цель компенсирует слабую. Измерено за последние 30 дней."
 
 msgid "Your Slack account has been linked to Superset. You can close this tab and return to Slack."
 msgstr "Ваш аккаунт Slack связан с Superset. Можно закрыть эту вкладку и вернуться в Slack."
+
+msgid "Your stats, settled in combat"
+msgstr "Ваша статистика, решённая в бою"
 
 msgid "Your subscription has been activated. You can now access all Pro features."
 msgstr "Ваша подписка активирована. Теперь доступны все возможности Pro."
@@ -15484,8 +15542,9 @@ msgstr "Загрузка Superset начинается."
 msgid "Your terminal sessions won't be interrupted."
 msgstr "Сессии терминала не будут прерваны."
 
-msgid "Your tier is a weighted score across all five axes, so a strong axis offsets a weak one. The axes below are the ones lagging."
-msgstr "Ваш уровень — взвешенная оценка по всем пяти осям, поэтому сильная ось компенсирует слабую. Ниже перечислены отстающие оси."
+#. placeholder {0}: String(gaps.length)
+msgid "Your tier is a weighted score across the {0} axes measured for you, so a strong axis offsets a weak one. The axes below are the ones lagging."
+msgstr "Ваш уровень — взвешенная оценка по осям, которых измерено {0}, поэтому сильная ось компенсирует слабую. Ниже перечислены отстающие оси."
 
 msgid "Your tokens"
 msgstr "Ваши токены"

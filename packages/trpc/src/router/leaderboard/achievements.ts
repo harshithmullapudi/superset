@@ -280,9 +280,42 @@ export function isRetired(def: AchievementDef, on: string): boolean {
 	return def.retiredAt !== null && on > def.retiredAt;
 }
 
-export function totalAwardableRows(on: string): number {
-	return CATALOG.filter((def) => !isRetired(def, on)).reduce(
-		(sum, def) => sum + Math.max(1, def.thresholds.length),
-		0,
-	);
+export function totalAwardableRows(
+	on: string,
+	catalog: readonly AchievementDef[] = CATALOG,
+): number {
+	return catalog
+		.filter((def) => !isRetired(def, on))
+		.reduce((sum, def) => sum + Math.max(1, def.thresholds.length), 0);
 }
+
+export interface HeldAward {
+	slug: string;
+	tier: number;
+	awardedOn: string;
+}
+
+export function highestPerSlug(awards: readonly HeldAward[]): HeldAward[] {
+	const best = new Map<string, HeldAward>();
+
+	for (const award of awards) {
+		const held = best.get(award.slug);
+		if (!held) {
+			best.set(award.slug, award);
+			continue;
+		}
+		best.set(award.slug, {
+			slug: award.slug,
+			tier: Math.max(held.tier, award.tier),
+			awardedOn:
+				held.awardedOn < award.awardedOn ? held.awardedOn : award.awardedOn,
+		});
+	}
+
+	return [...best.values()];
+}
+
+const CURRENCY_MEASURES = new Set<AchievementMeasure>(["axisCost", "usd"]);
+
+export const isCurrencyAward = (def: AchievementDef): boolean =>
+	CURRENCY_MEASURES.has(def.measure);

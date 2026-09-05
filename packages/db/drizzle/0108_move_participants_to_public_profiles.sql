@@ -1,7 +1,28 @@
+DO $$
+DECLARE
+	offenders text;
+	offender_count bigint;
+BEGIN
+	SELECT count(*), string_agg(quote_literal("handle"), ', ' ORDER BY "handle")
+	INTO offender_count, offenders
+	FROM "leaderboard_participants"
+	WHERE length("handle") NOT BETWEEN 2 AND 39
+		OR "handle" !~ '^[a-z0-9]+(-[a-z0-9]+)*$';
+
+	IF offender_count > 0 THEN
+		RAISE EXCEPTION
+			'Cannot migrate leaderboard_participants: % handle(s) violate the canonical handle grammar: %',
+			offender_count, offenders
+		USING HINT =
+			'Reconcile these handles in leaderboard_participants before applying 0108.';
+	END IF;
+END $$;
+--> statement-breakpoint
+
 INSERT INTO "handles" ("handle", "owner_type", "user_id", "created_at", "updated_at")
 SELECT "handle", 'user', "user_id", "opted_in_at", now()
 FROM "leaderboard_participants"
-ON CONFLICT ("handle") DO NOTHING;
+ON CONFLICT DO NOTHING;
 --> statement-breakpoint
 
 INSERT INTO "public_profiles" (
@@ -28,7 +49,50 @@ SELECT
 	"axis_width", "axis_depth", "axis_output", "axis_cost",
 	"created_at", "updated_at"
 FROM "leaderboard_participants"
-ON CONFLICT ("user_id") DO NOTHING;
+ON CONFLICT DO NOTHING;
+--> statement-breakpoint
+
+DO $$
+DECLARE
+	missing_handles bigint;
+	missing_profiles bigint;
+	orphan_daily bigint;
+	orphan_factory bigint;
+BEGIN
+	SELECT count(*) INTO missing_handles
+	FROM "leaderboard_participants" p
+	WHERE NOT EXISTS (
+		SELECT 1 FROM "handles" h
+		WHERE h."handle" = p."handle" AND h."user_id" = p."user_id"
+	);
+
+	SELECT count(*) INTO missing_profiles
+	FROM "leaderboard_participants" p
+	WHERE NOT EXISTS (
+		SELECT 1 FROM "public_profiles" pp WHERE pp."user_id" = p."user_id"
+	);
+
+	SELECT count(*) INTO orphan_daily
+	FROM "leaderboard_daily" d
+	WHERE NOT EXISTS (
+		SELECT 1 FROM "public_profiles" pp WHERE pp."user_id" = d."user_id"
+	);
+
+	SELECT count(*) INTO orphan_factory
+	FROM "leaderboard_daily_factory" f
+	WHERE NOT EXISTS (
+		SELECT 1 FROM "public_profiles" pp WHERE pp."user_id" = f."user_id"
+	);
+
+	IF missing_handles > 0 OR missing_profiles > 0
+		OR orphan_daily > 0 OR orphan_factory > 0 THEN
+		RAISE EXCEPTION
+			'Participant copy incomplete: % handle(s) and % profile(s) not copied, leaving % leaderboard_daily and % leaderboard_daily_factory row(s) orphaned',
+			missing_handles, missing_profiles, orphan_daily, orphan_factory
+		USING HINT =
+			'A handle or user_id already belonged to a different owner; reconcile it and re-run.';
+	END IF;
+END $$;
 --> statement-breakpoint
 
 ALTER TABLE "leaderboard_daily" DROP CONSTRAINT "leaderboard_daily_user_id_leaderboard_participants_user_id_fk";

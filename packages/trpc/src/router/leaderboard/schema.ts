@@ -48,10 +48,6 @@ export const profileSchema = z.object({
 		.nullable(),
 });
 
-export const searchSchema = z.object({
-	query: z.string().trim().min(1).max(64),
-});
-
 export const joinSchema = z.object({
 	handle: handleSchema,
 	visibility: visibilitySchema.default("public"),
@@ -130,6 +126,11 @@ export const standingsSchema = windowSchema.extend({
 
 export const standingForSchema = windowSchema.extend({
 	handle: handleSchema,
+	metric: metricSchema.default("tokens"),
+});
+
+export const searchSchema = windowSchema.extend({
+	query: z.string().trim().min(1).max(64),
 	metric: metricSchema.default("tokens"),
 });
 

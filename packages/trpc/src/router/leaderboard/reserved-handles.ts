@@ -51,6 +51,7 @@ const WELL_KNOWN = [
 	"opengraph-image",
 	"robots.txt",
 	"schemamap.xml",
+	"schemas",
 	"sitemap.xml",
 	"well-known",
 ] as const;

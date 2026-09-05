@@ -39,7 +39,7 @@ export function LeaderboardTable({
 		);
 	}
 
-	if (rows.length === 0) {
+	if (rows.length === 0 && !pinnedRow) {
 		return (
 			<div className="border border-border p-12 text-center">
 				<p className="text-sm text-muted-foreground">

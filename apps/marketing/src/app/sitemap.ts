@@ -212,16 +212,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 	// Every page exists once per locale (English at the bare URL, others under
 	// /{locale}), and every entry names its siblings via hreflang alternates —
 	// this is what makes the localized tree discoverable to search engines.
-	const profilePages: MetadataRoute.Sitemap = (await fetchPublicHandles()).map(
-		(profile) => ({
-			url: `${baseUrl}/${profile.handle}`,
-			lastModified: profile.lastPublishedAt ?? new Date(),
-			changeFrequency: "daily" as const,
-			priority: 0.6,
-		}),
-	);
-
-	const localized = pages.flatMap((entry) => {
+	const expand = (entry: MetadataRoute.Sitemap[number]) => {
 		const path = entry.url === baseUrl ? "/" : entry.url.slice(baseUrl.length);
 		const languages: Record<string, string> = {
 			"x-default": localeUrl("en", path),
@@ -234,7 +225,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 			url: localeUrl(locale, path),
 			alternates: { languages },
 		}));
-	});
+	};
 
-	return [...localized, ...profilePages];
+	const profilePages: MetadataRoute.Sitemap = (await fetchPublicHandles()).map(
+		(profile) => ({
+			url: `${baseUrl}/${profile.handle}`,
+			lastModified: profile.lastPublishedAt ?? new Date(),
+			changeFrequency: "daily" as const,
+			priority: 0.6,
+		}),
+	);
+
+	return [...pages.flatMap(expand), ...profilePages.flatMap(expand)];
 }

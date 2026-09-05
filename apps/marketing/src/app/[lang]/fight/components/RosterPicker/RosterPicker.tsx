@@ -34,14 +34,17 @@ export function RosterPicker({ seated, onPick }: RosterPickerProps) {
 			abort.current?.abort();
 			const controller = new AbortController();
 			abort.current = controller;
-			fetchSearch(term, controller.signal).then((rows) => {
+			fetchSearch(term, { period: "all" }, controller.signal).then((rows) => {
 				if (controller.signal.aborted) return;
 				setResults(rows.map(fromStandingRow));
 				setBusy(false);
 			});
 		}, DEBOUNCE_MS);
 
-		return () => clearTimeout(timer);
+		return () => {
+			clearTimeout(timer);
+			abort.current?.abort();
+		};
 	}, [query]);
 
 	useEffect(() => () => abort.current?.abort(), []);

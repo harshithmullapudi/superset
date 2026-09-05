@@ -5,18 +5,7 @@ import {
 	publicProfiles,
 	users,
 } from "@superset/db/schema";
-import {
-	and,
-	desc,
-	eq,
-	gt,
-	gte,
-	ilike,
-	isNull,
-	lte,
-	or,
-	sql,
-} from "drizzle-orm";
+import { and, desc, eq, gt, gte, isNull, lte, sql } from "drizzle-orm";
 import { type LeaderboardPeriod, resolveWindow } from "./periods";
 import { type Tier, tierProgress } from "./tier";
 import type {
@@ -265,7 +254,11 @@ export async function getStandingFor(
 				and p.flagged_at is null
 				and u.deleted_at is null
 				and p.tokens > 0
-				and ${byCost ? sql`p.usd > ${profile.usd}` : sql`p.tokens > ${tokens}`}
+				and ${
+					byCost
+						? sql`(p.usd > ${profile.usd} or (p.usd = ${profile.usd} and p.user_id < ${profile.userId}))`
+						: sql`(p.tokens > ${tokens} or (p.tokens = ${tokens} and p.user_id < ${profile.userId}))`
+				}
 		`);
 
 		return {
@@ -313,7 +306,11 @@ export async function getStandingFor(
 		)
 		select count(*)::int as ahead
 		from totals
-		where ${byCost ? sql`usd > ${usd}` : sql`tokens > ${tokens}`}
+		where ${
+			byCost
+				? sql`(usd > ${usd} or (usd = ${usd} and user_id < ${profile.userId}))`
+				: sql`(tokens > ${tokens} or (tokens = ${tokens} and user_id < ${profile.userId}))`
+		}
 	`);
 
 	return {
@@ -342,7 +339,13 @@ export async function getViewerProfile(
 		})
 		.from(publicProfiles)
 		.innerJoin(users, eq(users.id, publicProfiles.userId))
-		.where(and(eq(publicProfiles.userId, userId), onTheBoard))
+		.where(
+			and(
+				eq(publicProfiles.userId, userId),
+				onTheBoard,
+				isNull(users.deletedAt),
+			),
+		)
 		.limit(1);
 
 	if (!row) return null;
@@ -374,54 +377,108 @@ export async function listPublicHandles(): Promise<
 		.limit(SITEMAP_LIMIT);
 }
 
+export const SEARCH_MIN_LENGTH = 2;
+
+const escapeLike = (value: string) =>
+	value.replace(/[\\%_]/g, (char) => `\\${char}`);
+
+interface SearchRow extends Record<string, unknown> {
+	handle: string;
+	name: string | null;
+	tokens: string | number;
+	usd: string;
+	sessions: number;
+	approximate: boolean;
+	tier: number;
+	axisWidth: string;
+	axisDepth: number;
+	axisOutput: string;
+	axisCost: string;
+	activeDays: number;
+	rank: number;
+}
+
 export async function searchParticipants(
 	term: string,
+	opts: WindowOpts & { metric: LeaderboardMetric },
 	limit = SEARCH_LIMIT,
 ): Promise<StandingRow[]> {
 	const query = term.trim().toLowerCase();
-	if (query.length === 0) return [];
+	if (query.length < SEARCH_MIN_LENGTH) return [];
 
-	const rows = await db
-		.select({
-			handle: publicProfiles.handle,
-			name: users.name,
-			tokens: publicProfiles.tokens,
-			usd: publicProfiles.usd,
-			sessions: publicProfiles.sessions,
-			approximate: publicProfiles.approximate,
-			tier: publicProfiles.tier,
-			axisWidth: publicProfiles.axisWidth,
-			axisDepth: publicProfiles.axisDepth,
-			axisOutput: publicProfiles.axisOutput,
-			axisCost: publicProfiles.axisCost,
-			activeDays: publicProfiles.activeDays,
-			rank: sql<number>`(
-				select count(*) from public_profiles ahead
-				join auth.users au on au.id = ahead.user_id
-				where ahead.visibility = 'public'
-					and ahead.revoked_at is null
-					and ahead.flagged_at is null
-					and au.deleted_at is null
-					and ahead.tokens > ${publicProfiles.tokens}
-			)::int + 1`,
-		})
-		.from(publicProfiles)
-		.innerJoin(users, eq(users.id, publicProfiles.userId))
-		.where(
-			and(
-				onTheBoard,
-				isNull(users.deletedAt),
-				or(
-					ilike(publicProfiles.handle, `${query}%`),
-					ilike(users.name, `%${query}%`),
-				),
-			),
-		)
-		.orderBy(desc(publicProfiles.tokens))
-		.limit(Math.min(limit, SEARCH_LIMIT));
+	const range = resolveWindow(opts);
+	const byCost = opts.metric === "cost";
+	const prefix = `${escapeLike(query)}%`;
+	const contains = `%${escapeLike(query)}%`;
+	const take = Math.min(limit, SEARCH_LIMIT);
 
-	return rows.map((row) => ({
-		...row,
+	const ranked = range
+		? sql`
+			select
+				p.handle,
+				u.name,
+				sum(d.tokens)::bigint as tokens,
+				sum(d.usd_estimate) as usd,
+				sum(d.sessions)::int as sessions,
+				bool_or(d.approximate) as approximate,
+				p.tier,
+				p.axis_width, p.axis_depth, p.axis_output, p.axis_cost, p.active_days,
+				row_number() over (
+					order by ${byCost ? sql`sum(d.usd_estimate)` : sql`sum(d.tokens)`} desc, d.user_id
+				)::int as rank
+			from leaderboard_daily d
+			join public_profiles p on p.user_id = d.user_id
+			join auth.users u on u.id = p.user_id
+			where d.day >= ${range.from}
+				and d.day <= ${range.to}
+				and p.visibility = 'public'
+				and p.revoked_at is null
+				and p.flagged_at is null
+				and u.deleted_at is null
+			group by d.user_id, p.handle, p.tier, p.axis_width, p.axis_depth,
+				p.axis_output, p.axis_cost, p.active_days, u.name
+		`
+		: sql`
+			select
+				p.handle,
+				u.name,
+				p.tokens,
+				p.usd,
+				p.sessions,
+				p.approximate,
+				p.tier,
+				p.axis_width, p.axis_depth, p.axis_output, p.axis_cost, p.active_days,
+				row_number() over (
+					order by ${byCost ? sql`p.usd` : sql`p.tokens`} desc, p.user_id
+				)::int as rank
+			from public_profiles p
+			join auth.users u on u.id = p.user_id
+			where p.visibility = 'public'
+				and p.revoked_at is null
+				and p.flagged_at is null
+				and u.deleted_at is null
+				and p.tokens > 0
+		`;
+
+	const result = await db.execute<SearchRow>(sql`
+		with ranked as (${ranked})
+		select
+			handle, name, tokens, usd, sessions, approximate, tier,
+			axis_width as "axisWidth", axis_depth as "axisDepth",
+			axis_output as "axisOutput", axis_cost as "axisCost",
+			active_days as "activeDays", rank
+		from ranked
+		where handle ilike ${prefix} escape '\\'
+			or name ilike ${contains} escape '\\'
+		order by rank
+		limit ${take}
+	`);
+
+	return result.rows.map((row) => ({
+		handle: row.handle,
+		name: row.name,
+		usd: row.usd,
+		approximate: row.approximate,
 		tokens: Number(row.tokens),
 		sessions: Number(row.sessions),
 		tier: Number(row.tier),

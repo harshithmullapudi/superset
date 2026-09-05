@@ -55,7 +55,7 @@ export function FighterPanel({
 				<div
 					className="absolute inset-px transition-[width] duration-[900ms] delay-300 ease-out bg-[rgb(214,64,52)]"
 					style={{
-						width: `calc(${share * 100}% - 2px)`,
+						width: share <= 0 ? "0px" : `calc(${share * 100}% - 2px)`,
 						left: right ? "auto" : undefined,
 						right: right ? "1px" : undefined,
 					}}
@@ -63,7 +63,7 @@ export function FighterPanel({
 				<div
 					className="absolute inset-px transition-[width] duration-200 ease-out"
 					style={{
-						width: `calc(${share * 100}% - 2px)`,
+						width: share <= 0 ? "0px" : `calc(${share * 100}% - 2px)`,
 						left: right ? "auto" : undefined,
 						right: right ? "1px" : undefined,
 						background: critical ? "rgb(236,120,64)" : `rgb(${rgb})`,
