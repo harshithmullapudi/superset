@@ -14,7 +14,7 @@ BEGIN
 			'Cannot migrate leaderboard_participants: % handle(s) violate the canonical handle grammar: %',
 			offender_count, offenders
 		USING HINT =
-			'Reconcile these handles in leaderboard_participants before applying 0108.';
+			'Reconcile these handles in leaderboard_participants before applying 0109.';
 	END IF;
 END $$;
 --> statement-breakpoint

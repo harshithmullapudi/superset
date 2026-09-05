@@ -1,6 +1,6 @@
 {
-  "id": "da231589-f8c8-4efc-8453-2520aa6b70be",
-  "prevId": "6d6da7c3-4e20-47b6-b7d1-f0e1e8517322",
+  "id": "ba5e019e-f4a4-4164-825c-73045bb9bdfd",
+  "prevId": "da231589-f8c8-4efc-8453-2520aa6b70be",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -2867,10 +2867,10 @@
         }
       },
       "foreignKeys": {
-        "leaderboard_daily_user_id_leaderboard_participants_user_id_fk": {
-          "name": "leaderboard_daily_user_id_leaderboard_participants_user_id_fk",
+        "leaderboard_daily_user_id_public_profiles_user_id_fk": {
+          "name": "leaderboard_daily_user_id_public_profiles_user_id_fk",
           "tableFrom": "leaderboard_daily",
-          "tableTo": "leaderboard_participants",
+          "tableTo": "public_profiles",
           "columnsFrom": [
             "user_id"
           ],
@@ -3003,10 +3003,10 @@
         }
       },
       "foreignKeys": {
-        "leaderboard_daily_factory_user_id_leaderboard_participants_user_id_fk": {
-          "name": "leaderboard_daily_factory_user_id_leaderboard_participants_user_id_fk",
+        "leaderboard_daily_factory_user_id_public_profiles_user_id_fk": {
+          "name": "leaderboard_daily_factory_user_id_public_profiles_user_id_fk",
           "tableFrom": "leaderboard_daily_factory",
-          "tableTo": "leaderboard_participants",
+          "tableTo": "public_profiles",
           "columnsFrom": [
             "user_id"
           ],
