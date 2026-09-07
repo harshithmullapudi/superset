@@ -13,6 +13,13 @@ Turn "I keep doing X every morning" into an automation that does X on a schedule
 
 Pin down: the outcome, the cadence, the inputs it reads, and what "done" looks like. Then draft the automation prompt as instructions for an agent with zero context. If the task has rules that will evolve (triage criteria, formats), put them in a document the automation reads at runtime so they can be edited without touching the prompt.
 
+Nobody watches a run, so a chore whose product is a digest, a report, or a scorecard needs somewhere for that product to land. End the prompt by publishing a page to the same path every run: the user opens one link instead of digging through run logs, and each run adds a version, so the page becomes the history of the thing it tracks.
+
+```
+...then publish the digest: superset pages publish digest.html \
+  --workspace $SUPERSET_WORKSPACE_ID --title "Nightly triage" --label "what changed today"
+```
+
 ## 2. Pick the target
 
 - `superset projects list`: a project target creates a fresh workspace per run (most tasks)
@@ -36,4 +43,4 @@ superset automations create \
 
 (`--workspace <id>` instead of `--project` for reuse mode; `--host <id>` if it should run on another machine; prefer `--prompt-file` for multiline prompts.)
 
-Then trigger a first run now with `superset automations run <id>`, review `superset automations logs <id>` with the user, and refine the prompt via `superset automations prompt set <id>` until the run output is right. An automation isn't done until one real run looked good.
+Then trigger a first run now with `superset automations run <id>`, review `superset automations logs <id>` with the user, and refine the prompt via `superset automations prompt set <id>` until the run output is right. An automation isn't done until one real run looked good. If the prompt publishes a page, open the published page as part of that review, not just the run log.

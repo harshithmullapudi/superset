@@ -28,6 +28,17 @@ The last screen of a terminal shows whether the agent finished, asked a question
 
 Lead with what needs the user, one line per item: workspace, agent, state, and the next action. Then in-flight, then completed, then stale-workspace cleanup suggestions. Keep the whole digest scannable: no terminal dumps, quote at most the single relevant line an agent printed.
 
+Offer the digest as a page when someone other than the user will read it, or when they want it
+to persist past the scrollback. Publishing the same path every morning versions one page
+instead of scattering a new one each day, so the history becomes the record of the week.
+
+```bash
+superset pages publish standup.html --workspace <id> --title "Standup" --label "what shipped overnight"
+```
+
+A digest often runs from outside any workspace, and a publish with no workspace is refused, so
+pass `--workspace` explicitly. Offer it; never publish one unasked.
+
 ## Rules
 
 Never send input to a terminal, modify tasks, or clean anything up as part of the digest. Offer those as follow-ups and act only when asked.
