@@ -200,6 +200,13 @@ along at their relative paths, so nothing needs inlining.
 superset pages publish ./evidence/ --workspace <id> --title "Checkout flow: 3 blockers"
 ```
 
+Read every screenshot before it goes up. This browser is signed into the user's
+accounts, so a capture can hold a session token, an email address, a customer
+name, or a dashboard that was never meant to leave the tab. New pages default
+to org-wide visibility. Crop or redact what does not belong in the report, pass
+`--visibility just_me` when the org does not need it, and confirm with the user
+before publishing.
+
 ## Safety
 
 - In-app panes share one browser profile, so `eval` and CDP reach whatever the

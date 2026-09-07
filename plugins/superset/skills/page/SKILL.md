@@ -28,8 +28,10 @@ Other skills produce exactly that and stop at the terminal. A standup digest, a
 summary of a parallel run across several workspaces, a feature scorecard, the
 screenshots from a browser or desktop verification: each has a reader who is not
 in the session, and each is better as a link than as scrollback. Recurring ones
-gain the most, since republishing the same path versions one page rather than
-littering the org with a new one every day.
+gain the most, since republishing versions one page rather than littering the
+org with a new one every day. That only holds when the workspace and the path
+both stay the same, which is the identity of a page: a job that runs somewhere
+new each time needs `--page <id>` instead.
 
 Don't publish when the artifact belongs in the repo (source, docs, config: put
 those in files and commit them), or when it genuinely needs a server, a

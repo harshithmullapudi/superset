@@ -13,12 +13,14 @@ Turn "I keep doing X every morning" into an automation that does X on a schedule
 
 Pin down: the outcome, the cadence, the inputs it reads, and what "done" looks like. Then draft the automation prompt as instructions for an agent with zero context. If the task has rules that will evolve (triage criteria, formats), put them in a document the automation reads at runtime so they can be edited without touching the prompt.
 
-Nobody watches a run, so a chore whose product is a digest, a report, or a scorecard needs somewhere for that product to land. End the prompt by publishing a page to the same path every run: the user opens one link instead of digging through run logs, and each run adds a version, so the page becomes the history of the thing it tracks.
+Nobody watches a run, so a chore whose product is a digest, a report, or a scorecard needs somewhere for that product to land. End the prompt by writing the report to an `.html` file and publishing it, so the user opens one link instead of digging through run logs.
 
 ```
-...then publish the digest: superset pages publish digest.html \
-  --workspace $SUPERSET_WORKSPACE_ID --title "Nightly triage" --label "what changed today"
+...write the digest to digest.html, then publish it:
+superset pages publish digest.html --title "Nightly triage" --label "what changed today"
 ```
+
+A page is identified by its workspace plus its path, so **which target you picked in step 2 decides whether history accumulates**. A project target creates a fresh workspace per run, which means a new page every run rather than a new version of one. For a report meant to build up history, use a workspace target, or capture the page id from the first run and have the prompt pass `--page <id>` from then on.
 
 ## 2. Pick the target
 
