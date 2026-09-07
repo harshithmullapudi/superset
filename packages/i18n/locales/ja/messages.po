@@ -3908,6 +3908,9 @@ msgstr "環境を読み込めませんでした"
 msgid "Could not load environments."
 msgstr "環境を読み込めませんでした。"
 
+msgid "Could not load image"
+msgstr "画像を読み込めませんでした"
+
 msgid "Could not load plugins. Check your connection and try again."
 msgstr "プラグインを読み込めませんでした。接続を確認して再試行してください。"
 
@@ -5093,8 +5096,8 @@ msgstr "ドラッグして移動"
 msgid "Drag to reorder"
 msgstr "ドラッグして並べ替え"
 
-msgid "Drag to reorder in Manual order"
-msgstr "手動順ではドラッグして並べ替え"
+msgid "Drag workspaces to reorder in Manual order"
+msgstr "手動順ではワークスペースをドラッグして並べ替え"
 
 msgid "Drawer"
 msgstr "Drawer"
@@ -5250,6 +5253,9 @@ msgstr "エディタのタイポグラフィ"
 
 msgid "Efficient"
 msgstr "効率"
+
+msgid "Effort"
+msgstr "推論の強度"
 
 msgid "Electron/tRPC-coupled, so referenced rather than rendered. Badge = import sites today; high counts are promotion candidates for packages/ui"
 msgstr "Electron/tRPCに依存するため、描画せず参照のみです。バッジは現在のインポート箇所数で、数が多いものはpackages/uiへの昇格候補です"
@@ -12946,14 +12952,11 @@ msgstr "並び替え"
 msgid "Sort by {label}, currently {sortLabel}"
 msgstr "{label}で並べ替え、現在{sortLabel}"
 
-msgid "Sort projects"
-msgstr "プロジェクトを並び替え"
-
-msgid "Sort projects ({currentLabel})"
-msgstr "プロジェクトを並び替え({currentLabel})"
-
 msgid "Sort workspaces"
 msgstr "ワークスペースを並べ替え"
+
+msgid "Sort workspaces ({currentLabel})"
+msgstr "ワークスペースを並べ替え（{currentLabel}）"
 
 msgid "Sounds and ringtone for completed tasks"
 msgstr "タスク完了時のサウンドと着信音"

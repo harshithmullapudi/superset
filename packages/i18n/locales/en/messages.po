@@ -3908,6 +3908,9 @@ msgstr "Could not load environments"
 msgid "Could not load environments."
 msgstr "Could not load environments."
 
+msgid "Could not load image"
+msgstr "Could not load image"
+
 msgid "Could not load plugins. Check your connection and try again."
 msgstr "Could not load plugins. Check your connection and try again."
 
@@ -5093,8 +5096,8 @@ msgstr "Drag to move"
 msgid "Drag to reorder"
 msgstr "Drag to reorder"
 
-msgid "Drag to reorder in Manual order"
-msgstr "Drag to reorder in Manual order"
+msgid "Drag workspaces to reorder in Manual order"
+msgstr "Drag workspaces to reorder in Manual order"
 
 msgid "Drawer"
 msgstr "Drawer"
@@ -5250,6 +5253,9 @@ msgstr "Editor typography"
 
 msgid "Efficient"
 msgstr "Efficient"
+
+msgid "Effort"
+msgstr "Effort"
 
 msgid "Electron/tRPC-coupled, so referenced rather than rendered. Badge = import sites today; high counts are promotion candidates for packages/ui"
 msgstr "Electron/tRPC-coupled, so referenced rather than rendered. Badge = import sites today; high counts are promotion candidates for packages/ui"
@@ -12946,14 +12952,11 @@ msgstr "Sort by"
 msgid "Sort by {label}, currently {sortLabel}"
 msgstr "Sort by {label}, currently {sortLabel}"
 
-msgid "Sort projects"
-msgstr "Sort projects"
-
-msgid "Sort projects ({currentLabel})"
-msgstr "Sort projects ({currentLabel})"
-
 msgid "Sort workspaces"
 msgstr "Sort workspaces"
+
+msgid "Sort workspaces ({currentLabel})"
+msgstr "Sort workspaces ({currentLabel})"
 
 msgid "Sounds and ringtone for completed tasks"
 msgstr "Sounds and ringtone for completed tasks"

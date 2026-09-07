@@ -3908,6 +3908,9 @@ msgstr "Не удалось загрузить окружения"
 msgid "Could not load environments."
 msgstr "Не удалось загрузить окружения."
 
+msgid "Could not load image"
+msgstr "Не удалось загрузить изображение"
+
 msgid "Could not load plugins. Check your connection and try again."
 msgstr "Не удалось загрузить плагины. Проверьте подключение и попробуйте снова."
 
@@ -5093,8 +5096,8 @@ msgstr "Перетащите, чтобы переместить"
 msgid "Drag to reorder"
 msgstr "Перетащите, чтобы изменить порядок"
 
-msgid "Drag to reorder in Manual order"
-msgstr "Перетащите для изменения порядка в ручной сортировке"
+msgid "Drag workspaces to reorder in Manual order"
+msgstr "Перетаскивайте рабочие области для изменения порядка в ручной сортировке"
 
 msgid "Drawer"
 msgstr "Шторка"
@@ -5250,6 +5253,9 @@ msgstr "Типографика редактора"
 
 msgid "Efficient"
 msgstr "Эффективность"
+
+msgid "Effort"
+msgstr "Уровень усилий"
 
 msgid "Electron/tRPC-coupled, so referenced rather than rendered. Badge = import sites today; high counts are promotion candidates for packages/ui"
 msgstr "Завязаны на Electron/tRPC, поэтому только упомянуты, а не отрисованы. Значок = количество мест импорта сегодня; высокие значения — кандидаты на переезд в packages/ui"
@@ -12946,14 +12952,11 @@ msgstr "Сортировать по"
 msgid "Sort by {label}, currently {sortLabel}"
 msgstr "Сортировать по {label}, сейчас {sortLabel}"
 
-msgid "Sort projects"
-msgstr "Сортировать проекты"
-
-msgid "Sort projects ({currentLabel})"
-msgstr "Сортировать проекты ({currentLabel})"
-
 msgid "Sort workspaces"
 msgstr "Сортировать рабочие области"
+
+msgid "Sort workspaces ({currentLabel})"
+msgstr "Сортировать рабочие области ({currentLabel})"
 
 msgid "Sounds and ringtone for completed tasks"
 msgstr "Звуки и мелодия для завершённых задач"

@@ -3908,6 +3908,9 @@ msgstr "Kan omgevingen niet laden"
 msgid "Could not load environments."
 msgstr "Kon omgevingen niet laden."
 
+msgid "Could not load image"
+msgstr "Afbeelding kon niet worden geladen"
+
 msgid "Could not load plugins. Check your connection and try again."
 msgstr "Plugins konden niet worden geladen. Controleer je verbinding en probeer het opnieuw."
 
@@ -5093,8 +5096,8 @@ msgstr "Sleep om te verplaatsen"
 msgid "Drag to reorder"
 msgstr "Sleep om te herordenen"
 
-msgid "Drag to reorder in Manual order"
-msgstr "Sleep om te herordenen in Handmatige volgorde"
+msgid "Drag workspaces to reorder in Manual order"
+msgstr "Sleep werkruimtes om ze te herordenen in Handmatige volgorde"
 
 msgid "Drawer"
 msgstr "Drawer"
@@ -5250,6 +5253,9 @@ msgstr "Editortypografie"
 
 msgid "Efficient"
 msgstr "Efficiënt"
+
+msgid "Effort"
+msgstr "Effort"
 
 msgid "Electron/tRPC-coupled, so referenced rather than rendered. Badge = import sites today; high counts are promotion candidates for packages/ui"
 msgstr "Gekoppeld aan Electron/tRPC, dus alleen genoemd in plaats van gerenderd. Badge = huidige importplekken; hoge aantallen zijn kandidaten voor promotie naar packages/ui"
@@ -12946,14 +12952,11 @@ msgstr "Sorteren op"
 msgid "Sort by {label}, currently {sortLabel}"
 msgstr "Sorteren op {label}, nu {sortLabel}"
 
-msgid "Sort projects"
-msgstr "Projecten sorteren"
-
-msgid "Sort projects ({currentLabel})"
-msgstr "Projecten sorteren ({currentLabel})"
-
 msgid "Sort workspaces"
 msgstr "Werkruimtes sorteren"
+
+msgid "Sort workspaces ({currentLabel})"
+msgstr "Werkruimtes sorteren ({currentLabel})"
 
 msgid "Sounds and ringtone for completed tasks"
 msgstr "Geluiden en beltoon voor afgeronde taken"

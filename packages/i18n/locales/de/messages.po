@@ -3908,6 +3908,9 @@ msgstr "Umgebungen konnten nicht geladen werden"
 msgid "Could not load environments."
 msgstr "Umgebungen konnten nicht geladen werden."
 
+msgid "Could not load image"
+msgstr "Bild konnte nicht geladen werden"
+
 msgid "Could not load plugins. Check your connection and try again."
 msgstr "Plugins konnten nicht geladen werden. Prüfe deine Verbindung und versuche es erneut."
 
@@ -5093,8 +5096,8 @@ msgstr "Ziehen zum Verschieben"
 msgid "Drag to reorder"
 msgstr "Zum Umsortieren ziehen"
 
-msgid "Drag to reorder in Manual order"
-msgstr "Ziehen zum Neuordnen in manueller Reihenfolge"
+msgid "Drag workspaces to reorder in Manual order"
+msgstr "Arbeitsbereiche ziehen zum Neuordnen in manueller Reihenfolge"
 
 msgid "Drawer"
 msgstr "Drawer"
@@ -5250,6 +5253,9 @@ msgstr "Editor-Typografie"
 
 msgid "Efficient"
 msgstr "Effizient"
+
+msgid "Effort"
+msgstr "Aufwand"
 
 msgid "Electron/tRPC-coupled, so referenced rather than rendered. Badge = import sites today; high counts are promotion candidates for packages/ui"
 msgstr "An Electron/tRPC gekoppelt, daher nur referenziert statt gerendert. Badge = heutige Import-Stellen; hohe Zahlen sind Kandidaten für packages/ui"
@@ -12946,14 +12952,11 @@ msgstr "Sortieren nach"
 msgid "Sort by {label}, currently {sortLabel}"
 msgstr "Nach {label} sortieren, aktuell {sortLabel}"
 
-msgid "Sort projects"
-msgstr "Projekte sortieren"
-
-msgid "Sort projects ({currentLabel})"
-msgstr "Projekte sortieren ({currentLabel})"
-
 msgid "Sort workspaces"
 msgstr "Arbeitsbereiche sortieren"
+
+msgid "Sort workspaces ({currentLabel})"
+msgstr "Arbeitsbereiche sortieren ({currentLabel})"
 
 msgid "Sounds and ringtone for completed tasks"
 msgstr "Töne und Klingelton für abgeschlossene Aufgaben"

@@ -3908,6 +3908,9 @@ msgstr "Tidak dapat memuat environment"
 msgid "Could not load environments."
 msgstr "Tidak dapat memuat environment."
 
+msgid "Could not load image"
+msgstr "Gambar tidak dapat dimuat"
+
 msgid "Could not load plugins. Check your connection and try again."
 msgstr "Tidak dapat memuat plugin. Periksa koneksi Anda dan coba lagi."
 
@@ -5093,8 +5096,8 @@ msgstr "Seret untuk memindahkan"
 msgid "Drag to reorder"
 msgstr "Seret untuk mengurutkan ulang"
 
-msgid "Drag to reorder in Manual order"
-msgstr "Seret untuk mengatur ulang dalam Urutan manual"
+msgid "Drag workspaces to reorder in Manual order"
+msgstr "Seret workspace untuk mengatur ulang dalam Urutan manual"
 
 msgid "Drawer"
 msgstr "Drawer"
@@ -5250,6 +5253,9 @@ msgstr "Tipografi editor"
 
 msgid "Efficient"
 msgstr "Efisien"
+
+msgid "Effort"
+msgstr "Upaya"
 
 msgid "Electron/tRPC-coupled, so referenced rather than rendered. Badge = import sites today; high counts are promotion candidates for packages/ui"
 msgstr "Terikat Electron/tRPC, jadi dirujuk alih-alih dirender. Badge = jumlah tempat impor saat ini; angka tinggi adalah kandidat untuk dipromosikan ke packages/ui"
@@ -12946,14 +12952,11 @@ msgstr "Urutkan menurut"
 msgid "Sort by {label}, currently {sortLabel}"
 msgstr "Urutkan menurut {label}, saat ini {sortLabel}"
 
-msgid "Sort projects"
-msgstr "Urutkan proyek"
-
-msgid "Sort projects ({currentLabel})"
-msgstr "Urutkan proyek ({currentLabel})"
-
 msgid "Sort workspaces"
 msgstr "Urutkan workspace"
+
+msgid "Sort workspaces ({currentLabel})"
+msgstr "Urutkan workspace ({currentLabel})"
 
 msgid "Sounds and ringtone for completed tasks"
 msgstr "Suara dan nada dering untuk tugas yang selesai"

@@ -3908,6 +3908,9 @@ msgstr "환경을 불러오지 못했습니다"
 msgid "Could not load environments."
 msgstr "환경을 불러오지 못했습니다."
 
+msgid "Could not load image"
+msgstr "이미지를 불러올 수 없음"
+
 msgid "Could not load plugins. Check your connection and try again."
 msgstr "플러그인을 불러오지 못했습니다. 연결을 확인하고 다시 시도하세요."
 
@@ -5093,8 +5096,8 @@ msgstr "드래그하여 이동"
 msgid "Drag to reorder"
 msgstr "끌어서 순서 변경"
 
-msgid "Drag to reorder in Manual order"
-msgstr "수동 정렬에서 드래그하여 순서 변경"
+msgid "Drag workspaces to reorder in Manual order"
+msgstr "수동 정렬에서 워크스페이스를 드래그하여 순서 변경"
 
 msgid "Drawer"
 msgstr "드로어"
@@ -5250,6 +5253,9 @@ msgstr "편집기 타이포그래피"
 
 msgid "Efficient"
 msgstr "효율"
+
+msgid "Effort"
+msgstr "추론 강도"
 
 msgid "Electron/tRPC-coupled, so referenced rather than rendered. Badge = import sites today; high counts are promotion candidates for packages/ui"
 msgstr "Electron/tRPC에 묶여 있어 렌더링하지 않고 참조만 합니다. 배지는 현재 import 지점 수이며, 수가 많으면 packages/ui로 승격할 후보입니다"
@@ -12946,14 +12952,11 @@ msgstr "정렬 기준"
 msgid "Sort by {label}, currently {sortLabel}"
 msgstr "{label} 기준 정렬, 현재 {sortLabel}"
 
-msgid "Sort projects"
-msgstr "프로젝트 정렬"
-
-msgid "Sort projects ({currentLabel})"
-msgstr "프로젝트 정렬 ({currentLabel})"
-
 msgid "Sort workspaces"
 msgstr "워크스페이스 정렬"
+
+msgid "Sort workspaces ({currentLabel})"
+msgstr "워크스페이스 정렬 ({currentLabel})"
 
 msgid "Sounds and ringtone for completed tasks"
 msgstr "완료된 작업에 사용할 소리와 벨소리"

@@ -3908,6 +3908,9 @@ msgstr "无法加载环境"
 msgid "Could not load environments."
 msgstr "无法加载环境。"
 
+msgid "Could not load image"
+msgstr "无法加载图片"
+
 msgid "Could not load plugins. Check your connection and try again."
 msgstr "无法加载插件。请检查网络连接后重试。"
 
@@ -5093,8 +5096,8 @@ msgstr "拖动以移动"
 msgid "Drag to reorder"
 msgstr "拖动以重新排序"
 
-msgid "Drag to reorder in Manual order"
-msgstr "在手动排序下可拖拽重新排列"
+msgid "Drag workspaces to reorder in Manual order"
+msgstr "在手动排序下可拖拽工作区重新排列"
 
 msgid "Drawer"
 msgstr "抽屉"
@@ -5250,6 +5253,9 @@ msgstr "编辑器排版"
 
 msgid "Efficient"
 msgstr "高效"
+
+msgid "Effort"
+msgstr "推理强度"
 
 msgid "Electron/tRPC-coupled, so referenced rather than rendered. Badge = import sites today; high counts are promotion candidates for packages/ui"
 msgstr "与Electron/tRPC耦合，因此只做引用而不实际渲染。徽章=当前的导入处数量；数量高的可以考虑提升到packages/ui"
@@ -12946,14 +12952,11 @@ msgstr "排序方式"
 msgid "Sort by {label}, currently {sortLabel}"
 msgstr "按{label}排序，当前为{sortLabel}"
 
-msgid "Sort projects"
-msgstr "项目排序"
-
-msgid "Sort projects ({currentLabel})"
-msgstr "项目排序（{currentLabel}）"
-
 msgid "Sort workspaces"
 msgstr "排序工作区"
+
+msgid "Sort workspaces ({currentLabel})"
+msgstr "排序工作区（{currentLabel}）"
 
 msgid "Sounds and ringtone for completed tasks"
 msgstr "任务完成时的声音和铃声"

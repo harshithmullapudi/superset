@@ -3908,6 +3908,9 @@ msgstr "Nepodařilo se načíst prostředí"
 msgid "Could not load environments."
 msgstr "Nepodařilo se načíst prostředí."
 
+msgid "Could not load image"
+msgstr "Obrázek se nepodařilo načíst"
+
 msgid "Could not load plugins. Check your connection and try again."
 msgstr "Pluginy se nepodařilo načíst. Zkontrolujte připojení a zkuste to znovu."
 
@@ -5093,8 +5096,8 @@ msgstr "Přetažením přesunete"
 msgid "Drag to reorder"
 msgstr "Přetažením změníte pořadí"
 
-msgid "Drag to reorder in Manual order"
-msgstr "Přetažením změníte pořadí v ručním řazení"
+msgid "Drag workspaces to reorder in Manual order"
+msgstr "Přetažením pracovních prostorů změníte pořadí v ručním řazení"
 
 msgid "Drawer"
 msgstr "Drawer"
@@ -5250,6 +5253,9 @@ msgstr "Typografie editoru"
 
 msgid "Efficient"
 msgstr "Efektivní"
+
+msgid "Effort"
+msgstr "Úsilí"
 
 msgid "Electron/tRPC-coupled, so referenced rather than rendered. Badge = import sites today; high counts are promotion candidates for packages/ui"
 msgstr "Svázané s Electronem/tRPC, proto jen odkazované, ne vykreslené. Odznak = dnešní místa importu; vysoká čísla jsou kandidáti na přesun do packages/ui"
@@ -12946,14 +12952,11 @@ msgstr "Řadit podle"
 msgid "Sort by {label}, currently {sortLabel}"
 msgstr "Seřadit podle {label}, aktuálně {sortLabel}"
 
-msgid "Sort projects"
-msgstr "Seřadit projekty"
-
-msgid "Sort projects ({currentLabel})"
-msgstr "Seřadit projekty ({currentLabel})"
-
 msgid "Sort workspaces"
 msgstr "Seřadit pracovní prostory"
+
+msgid "Sort workspaces ({currentLabel})"
+msgstr "Seřadit pracovní prostory ({currentLabel})"
 
 msgid "Sounds and ringtone for completed tasks"
 msgstr "Zvuky a vyzvánění pro dokončené úkoly"
