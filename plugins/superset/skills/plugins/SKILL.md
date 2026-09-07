@@ -67,7 +67,7 @@ superset mcp call-tool linear create_issue --connection <id> '{"team":"ENG","tit
 
 List the tools before calling one. Names and argument schemas come from the plugin's server,
 not from anything in this repo, and they change between versions. The `integrations` skill
-covers this end in full — reading a tool's arguments, choosing an account, parsing the
+covers this end in full: reading a tool's arguments, choosing an account, parsing the
 result.
 
 The call goes out from Superset's API, which attaches the credential. That is why this
@@ -94,7 +94,10 @@ superset plugins marketplace remove <name>
 ```
 
 `uninstall` reaps only what the plugin provisioned; hand-written skills in the same directory
-are left alone.
+are left alone. It removes the plugin locally even when the account call fails, and says so.
+Read that message: the stored credential is revoked as part of the account removal, so an
+unconfirmed removal means the skills are gone from this machine while the connection lives
+on. Check with `superset plugins connections --plugin <name>` and run `uninstall` again.
 
 ## Anti-patterns
 
