@@ -1,6 +1,6 @@
 ---
 name: integrations
-description: Discover and call the tools a connected integration exposes, such as Linear, GitHub, Sentry, or Notion, through `superset mcp`. Use when the user wants something done in a connected service, asks what an integration can do or which tools it has, wants a specific tool called, or asks why an integration's tools are failing.
+description: Discover and call the tools a connected integration exposes, such as Linear, GitHub, Sentry, or Notion, through `superset mcp`. Use when the user wants something done in a connected service, asks what an integration can do or which tools it has, wants a specific tool called, asks why an integration's tools are failing, or when another skill expects `mcp__linear__*`-style tools that are not in your tool list.
 argument-hint: what you want done in a connected service
 allowed-tools: Bash(superset mcp:*) Bash(superset plugins:*) Bash(superset skills:*)
 ---
@@ -64,6 +64,26 @@ themselves JSON strings.
 ```bash
 superset mcp call-tool linear list_issues | jq -r '.content[0].text' | jq
 ```
+
+## When another skill expects tools you do not have
+
+A plugin ships its own skills, and they are written against native MCP tools: the Linear,
+GitHub, and Sentry skills declare `allowed-tools: mcp__linear__*` and reach for tools by that
+name. Those tools exist only where the plugin's MCP server was written into this agent's
+config, which installing through the CLI does not do, and which today happens for Claude Code
+and Codex only. On every other agent the tool list will not have them.
+
+That is this skill's job. When the tools a plugin's skill assumes are missing, do not stop and
+do not tell the user the integration is unavailable. The same operations sit on the connected
+account, one command away:
+
+```bash
+superset mcp tools linear                       # what the account can actually do
+superset mcp call-tool linear create_issue '{"team":"ENG","title":"..."}'
+```
+
+Keep following the skill you were reading, since its judgment about what makes a good issue or
+a good triage still applies. Only the transport changes.
 
 ## Reading a failure
 
